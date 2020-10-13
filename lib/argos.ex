@@ -4,14 +4,17 @@ defmodule Argos do
   """
   import Plug.Conn
 
-  def init(options) do
-    # initialize options
-    options
+  use Plug.Router
+
+  plug :match
+  plug :dispatch
+
+  get "/search" do
+    send_resp(conn, 200, "Welcome!")
   end
 
-  def call(conn, _opts) do
-    conn
-    |> put_resp_content_type("text/plain")
-    |> send_resp(200, "Hello world")
+  get "/project/:id" do
+    send_resp(conn, 200, "Project: #{id}")
   end
+
 end
