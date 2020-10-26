@@ -5,6 +5,11 @@ defmodule Argos do
   import Plug.Conn
 
   use Plug.Router
+
+  if Mix.env == :dev do
+    use Plug.Debugger, otp_app: :argos
+  end
+
   require Logger
 
   @elasticsearch_url Application.get_env(:argos, :elasticsearch_url)
@@ -13,42 +18,15 @@ defmodule Argos do
   plug :dispatch
 
   get "/search" do
-    HTTPoison.post("#{@elasticsearch_url}/_search", build_query_template('*', 10, 0), [{"Content-Type", "application/json"}])
-    |> handle_result
-    send_resp(conn, 200, "Welcome!")
-  end
+    conn = put_resp_content_type(conn, "application/json")
+    result = HTTPoison.post("#{@elasticsearch_url}/_search", "", [{"Content-Type", "application/json"}])
+      |> handle_result()
 
-  get "/project/:id" do
-    send_resp(conn, 200, "Project: #{id}")
-  end
-
-  defp build_query_template(q, size, from) do
-    %{
-      query: %{
-        bool: %{
-          must: %{
-            query_string: %{
-              query: q
-            }
-          },
-          filter: [],
-          must_not: []
-        }
-      },
-      size: size,
-      from: from
-    }
+    send_resp(conn, 200, Poison.encode!(result))
   end
 
   defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
     Poison.decode! body
   end
-  defp handle_result({:ok, %HTTPoison.Response{status_code: 400, body: body}}) do
-    Logger.error "Elasticsearch query failed with status 400! Response: #{inspect body}"
-    %{error: "bad_request"}
-  end
-  defp handle_result({:error, %HTTPoison.Error{reason: reason}}) do
-    Logger.error "Elasticsearch query failed! Reason: #{inspect reason}"
-    %{error: "unknown"}
-  end
+
 end
