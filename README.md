@@ -19,3 +19,18 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/argos](https://hexdocs.pm/argos).
 
+## Development
+
+Start dockerized Elasticsearch using
+```bash
+docker-compose up
+```
+
+Running the cowboy server using
+```bash
+mix run --no-halt
+```
+
+## Troubleshooting
+
+If Elasticsearch fails to create files on startup, try chmod in data/elasticsearch to your host user.
