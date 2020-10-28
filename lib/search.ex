@@ -1,4 +1,4 @@
-defmodule Argos do
+defmodule Argos.Search do
   @moduledoc """
   Documentation for `Argos`.
   """
