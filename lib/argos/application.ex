@@ -7,7 +7,8 @@ defmodule Argos.Application do
 
   def start(_type, _args) do
     children = [
-      {Plug.Cowboy, scheme: :http, plug: Argos, options: [port: 4001]}
+      {Plug.Cowboy, scheme: :http, plug: Argos, options: [port: 4001]},
+      Argos.Harvesting
       # Starts a worker by calling: Argos.Worker.start_link(arg)
       # {Argos.Worker, arg}
     ]
