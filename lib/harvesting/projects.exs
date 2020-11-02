@@ -1,7 +1,7 @@
 require Logger
 
 defmodule CLI do
-  def parse_arguments() do
+  def parse_arguments([]) do
     {:ok}
   end
 
