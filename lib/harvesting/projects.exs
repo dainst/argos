@@ -1,11 +1,11 @@
 require Logger
 
 defmodule CLI do
-  def parse_arguments([]) do
+  def parse_arguments(["--script"]) do
     {:ok}
   end
 
-  def parse_arguments([date_string]) do
+  def parse_arguments(["--script", date_string]) do
     case DateTime.from_iso8601(date_string) do
       {:ok, _datetime} = result ->
         result

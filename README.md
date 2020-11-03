@@ -22,8 +22,9 @@ mix run --no-halt
 
 Running individual exs scripts for data import (example)
 ```bash
-mix run lib/harvesting/projects.exs
+mix run lib/harvesting/projects.exs --script 2020-01-10
 ```
+The `--script` option is required to prevent mix trying to start the application (again).
 
 ## Troubleshooting
 
