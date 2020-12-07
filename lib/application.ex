@@ -24,6 +24,7 @@ defmodule Argos.Application do
       else
         [
           {Plug.Cowboy, scheme: :http, plug: Argos.Search, options: [port: 4001]},
+          Argos.Harvesting.Chronontology,
           Argos.Harvesting.Projects
           # Starts a worker by calling: Argos.Worker.start_link(arg)
           # {Argos.Worker, arg}
