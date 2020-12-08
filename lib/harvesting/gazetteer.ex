@@ -8,7 +8,6 @@ defmodule Argos.Harvesting.Gazetteer do
       params = %{q: query, limit: limit, offset: offset}
 
       HTTPoison.get!(base_url(), [], [{:params, params}])
-      |> IO.inspect
       |> response_unwrap
     end
 
@@ -68,7 +67,6 @@ defmodule Argos.Harvesting.Gazetteer do
 
     def harvest!(%Date{} = lastModified) do
       query = build_query_string(lastModified)
-      IO.inspect(query)
       total = GazetteerClient.fetch_total!(query)
       offsets = Enum.filter(0..total, fn i -> rem(i, @batch_size) == 0 end)
 
@@ -116,10 +114,7 @@ defmodule Argos.Harvesting.Gazetteer do
 
   def handle_info(:run, state) do
     # Schedules a harvesting of gazetteer datasets and sets the state.last_run
-    # field to the date just before the harvesting started. Note that the chronontology
-    # API does only support Date, not time granularity via an the Elasticsearch Range
-    # query in a QueryString. This means that modified documents will be picked up by
-    # the harvester more than once, if they changed on the date of a harvesting run.
+    # field to the date just before the harvesting started. 
     today = Date.utc_today()
     result = run_harvest(state.last_run)
 
