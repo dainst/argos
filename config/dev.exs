@@ -7,4 +7,4 @@ config :argos,
 
   chronontology_url: "https://chronontology.dainst.org/data",
   chronontology_batch_size: 10,
-  chronontology_harvest_interval: 1000 * 10 # 10 seconds
+  chronontology_harvest_interval: 1000 * 60 * 5 # 5 minutes
