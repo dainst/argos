@@ -23,7 +23,7 @@ defmodule Argos.Application do
         [] # We do not want to (re)start the application (harvestes + cowboy webserver) when running exs scripts.
       else
         [
-          {Plug.Cowboy, scheme: :http, plug: Argos.Search, options: [port: 4001]},
+          {Plug.Cowboy, scheme: :http, plug: Argos.API.Router, options: [port: 4001]},
           Argos.Harvesting.Chronontology,
           Argos.Harvesting.Projects
           # Starts a worker by calling: Argos.Worker.start_link(arg)
