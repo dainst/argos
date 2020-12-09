@@ -5,17 +5,17 @@
 ## Installation
 
 ```
-mix run deps.get
+mix deps.get
 ```
 
 ## Development
 
-Start dockerized Elasticsearch using
+Start dockerized Elasticsearch on http://localhost:9200 using
 ```bash
 docker-compose up
 ```
 
-Running the cowboy server using
+Run the cowboy server (harvesting scripts and search endpoint on http://localhost:4001 ) using
 ```bash
 mix run --no-halt
 ```
@@ -28,4 +28,4 @@ The `--script` option is required to prevent mix trying to start the application
 
 ## Troubleshooting
 
-If Elasticsearch fails to create files on startup, try chmod in data/elasticsearch to your host user.
+If Elasticsearch fails to create files on startup, try chown in data/elasticsearch to your host user.

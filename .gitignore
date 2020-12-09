@@ -22,5 +22,15 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 argos-*.tar
 
-# Elasticsearch data
-data/elasticsearch/
+# Ignore elasticsearch data, but keep the directory
+data/elasticsearch/*
+!data/elasticsearch/.gitkeep
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
