@@ -9,6 +9,6 @@ config :argos,
   chronontology_batch_size: 10,
   chronontology_harvest_interval: 1000 * 10, # 10 seconds
 
-  gazetteer_url: "https://gazetteer.dainst.org/",
+  gazetteer_url: "https://gazetteer.dainst.org",
   gazetteer_batch_size: 10,
   gazetteer_harvest_interval: 1000 * 10 # 10 seconds

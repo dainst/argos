@@ -19,7 +19,7 @@ defmodule Argos.Harvesting.Gazetteer do
     end
 
     defp base_url do
-      Application.get_env(:argos, :gazetteer_url) <> "search.json"
+      Application.get_env(:argos, :gazetteer_url) <> "/search.json"
     end
 
     defp response_unwrap(%HTTPoison.Response{status_code: 200, body: body}) do
@@ -114,7 +114,7 @@ defmodule Argos.Harvesting.Gazetteer do
 
   def handle_info(:run, state) do
     # Schedules a harvesting of gazetteer datasets and sets the state.last_run
-    # field to the date just before the harvesting started. 
+    # field to the date just before the harvesting started.
     today = Date.utc_today()
     result = run_harvest(state.last_run)
 
