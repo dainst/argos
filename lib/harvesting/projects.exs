@@ -10,14 +10,12 @@ defmodule CLI do
       {:ok, _datetime} = result ->
         result
       {:error, :invalid_format} ->
-        parse_arguments("#{date_string}T00:00:00Z")
-    end
-  end
-
-  def parse_arguments(date_string) do
-    case DateTime.from_iso8601(date_string) do
-      {:ok, _date} = result -> result
-      error -> error
+        case Date.from_iso8601(date_string) do
+          {:ok, _date} ->
+            DateTime.from_iso8601("#{date_string}T00:00:00Z")
+          error ->
+            error
+        end
     end
   end
 
