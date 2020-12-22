@@ -4,18 +4,18 @@ defmodule Argos.Harvesting.Gazetteer do
   require Logger
 
   defmodule GazetteerClient do
-    def fetch!(query \\ "*", offset \\ 0, limit \\ 1) do
-      params = %{q: query, limit: limit, offset: offset}
+
+    @spec fetch!(any, any, any) :: false | nil | true | binary | [any] | number | map
+
+    def fetch!(query \\ "*", limit \\ 1, scroll \\ true) do
+      params =  if is_boolean(scroll) do
+        %{q: query, limit: limit, scroll: scroll}
+      else
+        %{q: query, limit: limit, scrollId: scroll}
+      end
 
       HTTPoison.get!(base_url(), [], [{:params, params}])
       |> response_unwrap
-    end
-
-    def fetch_total!(query) do
-      case fetch!(query, 0, 0) do
-        %{"total" => total} -> total
-        _ -> raise "Unexpected response without a total."
-      end
     end
 
     defp base_url do
@@ -67,10 +67,7 @@ defmodule Argos.Harvesting.Gazetteer do
 
     def harvest!(%Date{} = lastModified) do
       query = build_query_string(lastModified)
-      total = GazetteerClient.fetch_total!(query)
-      offsets = Enum.filter(0..total, fn i -> rem(i, @batch_size) == 0 end)
-
-      Enum.map(offsets, &harvest_batch!(query, &1, @batch_size))
+      total = harvest_batch!(query, @batch_size)
       total
     end
 
@@ -79,13 +76,40 @@ defmodule Argos.Harvesting.Gazetteer do
       "(lastChangeDate:>=#{date_s})"
     end
 
-    defp harvest_batch!(query, offset, batch_size) do
-      GazetteerClient.fetch!(query, offset, batch_size)
-      |> save_resources!
+    defp harvest_batch!(query, batch_size) do
+      total = case GazetteerClient.fetch!(query, batch_size) do
+        
+        # in case there is a scroll id start scrolling
+        %{"scrollId" => scrollId} = response ->
+          save_resources!(response)
+          harvest_batch!(query, batch_size, scrollId)
+          response["total"]
+
+        # in every other case, try to save the response and return the total
+        response ->
+          save_resources!(response)
+          response["total"]
+      end
+
+      total
     end
 
-    defp save_resources!(%{"result" => results}) do
+    defp harvest_batch!(query, batch_size, scroll_id) do
+      case GazetteerClient.fetch!(query, batch_size, scroll_id) do
+        %{"scrollId" => scrollId, "result" => results} = response  when results != [] ->
+          save_resources!(response)
+          harvest_batch!(query, batch_size, scrollId)
+        response -> save_resources!(response)
+      end
+
+    end
+
+    defp save_resources!(%{"result" => results}) when results != [] do
       Enum.map(results, &save_resource!(&1))
+    end
+
+    defp save_resources!(%{"result" => []}) do
+      Logger.info("End of scroll")
     end
 
     defp save_resources!(_) do
