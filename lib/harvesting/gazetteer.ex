@@ -78,7 +78,7 @@ defmodule Argos.Harvesting.Gazetteer do
 
     defp harvest_batch!(query, batch_size) do
       total = case GazetteerClient.fetch!(query, batch_size) do
-        
+
         # in case there is a scroll id start scrolling
         %{"scrollId" => scrollId} = response ->
           save_resources!(response)
@@ -154,7 +154,7 @@ defmodule Argos.Harvesting.Gazetteer do
   end
 
   def run_harvest(%Date{} = date) do
-    # Gets all chronontology documents changed since the provided date and puts them
+    # Gets all gazetteer documents changed since the provided date and puts them
     # in our index.
     Logger.debug("Starting harvest for documents changed since: #{date}")
 
