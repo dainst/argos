@@ -5,8 +5,6 @@ defmodule Argos.Harvesting.Gazetteer do
 
   defmodule GazetteerClient do
 
-    @spec fetch!(any, any, any) :: false | nil | true | binary | [any] | number | map
-
     def fetch!(query \\ "*", limit \\ 1, scroll \\ true) do
       params =  if is_boolean(scroll) do
         %{q: query, limit: limit, scroll: scroll}
