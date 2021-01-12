@@ -21,6 +21,14 @@ defmodule Argos.Harvesting.Gazetteer do
       |> response_unwrap
     end
 
+    def fetch_one!(%{id: id}) do
+      query = "#{id}"
+      %{"result" => response} =
+        HTTPoison.get!(base_url(), [], [{:params,  %{q: query}}])
+        |> response_unwrap
+      response
+    end
+
     defp base_url do
       Application.get_env(:argos, :gazetteer_url) <> "/search.json"
     end
@@ -69,6 +77,9 @@ defmodule Argos.Harvesting.Gazetteer do
     @batch_size 100
 
     def harvest!(%Date{} = lastModified) do
+      """
+      Loads data from gazetteer and saves it into the database
+      """
       query = build_query_string(lastModified)
       total = harvest_batch!(query, @batch_size)
       total
@@ -82,6 +93,9 @@ defmodule Argos.Harvesting.Gazetteer do
     end
 
     def request!(%{placeid: _pid} = place) do
+      """
+
+      """
       query = build_query_string(place)
       %{"result" => response} = GazetteerClient.fetch!(query)
       response

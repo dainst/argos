@@ -18,7 +18,7 @@ defmodule CLI do
   end
 
   def handle_arguments({:ok, gid}) when is_integer(gid) do
-    Argos.Harvesting.Gazetteer.GazetteerHarvester.request!(%{placeid: gid})
+    Argos.Harvesting.Gazetteer.GazetteerClient.fetch_one!(%{id: gid})
   end
 
   def handle_arguments({:ok, date}) do
