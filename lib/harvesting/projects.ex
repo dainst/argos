@@ -2,7 +2,7 @@ defmodule Argos.Harvesting.Projects do
   use GenServer
 
   require Logger
-
+  alias Argos.Harvesting.Gazetteer.GazetteerClient
 
   @base_url Application.get_env(:argos, :projects_url)
   @interval Application.get_env(:argos, :projects_harvest_interval)
@@ -56,17 +56,28 @@ defmodule Argos.Harvesting.Projects do
       url
       |> HTTPoison.get
       |> handle_result
-
     # TODO: Switch to project code after Erga got updated
-    query_result["data"]
-    |> Enum.map(&get_details(&1["id"]))
-    |> Enum.each(&upsert(&1["data"]))
+   query_result["data"]
+    |> Enum.map(&denormalize/1)
+    |> Enum.each(&upsert/1)
+
   end
 
-  defp get_details(id) do
-    "#{@base_url}/api/projects/#{id}"
-      |> HTTPoison.get
-      |> handle_result
+  defp denormalize(proj) do
+    rich_res = get_linked_resources(proj["linked_resources"])
+    Map.put(proj, "linked_resources", rich_res)
+  end
+
+  defp get_linked_resources(resources) when is_list(resources) do
+    Enum.map(resources, &get_linked_resources/1)
+  end
+
+  defp get_linked_resources(%{"linked_system" => _ } = resource) do
+     response = case resource["linked_system"] do
+        "Gazetteer" -> "https://gazetteer.dainst.org/place/" <> id = resource["uri"]
+                        GazetteerClient.fetch_one!(%{id: id})
+     end
+     Map.put(resource, :linked_data, response)
   end
 
   defp upsert(project) do
@@ -84,6 +95,11 @@ defmodule Argos.Harvesting.Projects do
 
   defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}} = _response) do
     Poison.decode!(body)
+  end
+
+  defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}) do
+    Logger.warn("No connection")
+    exit('no db connection')
   end
 
   # TODO: Handle error results
