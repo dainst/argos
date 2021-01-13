@@ -94,7 +94,7 @@ defmodule Argos.Harvesting.Gazetteer do
 
     def request!(%{placeid: _pid} = place) do
       """
-
+      Loads one document and returns it, instead of saving
       """
       query = build_query_string(place)
       %{"result" => response} = GazetteerClient.fetch!(query)
