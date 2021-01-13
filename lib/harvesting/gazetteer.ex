@@ -76,10 +76,10 @@ defmodule Argos.Harvesting.Gazetteer do
   defmodule GazetteerHarvester do
     @batch_size 100
 
+    @doc """
+    Loads data from gazetteer and saves it into the database
+    """
     def harvest!(%Date{} = lastModified) do
-      """
-      Loads data from gazetteer and saves it into the database
-      """
       query = build_query_string(lastModified)
       total = harvest_batch!(query, @batch_size)
       total
@@ -92,10 +92,10 @@ defmodule Argos.Harvesting.Gazetteer do
       response["total"]
     end
 
+    @doc """
+    Loads one document and returns it, instead of saving
+    """
     def request!(%{placeid: _pid} = place) do
-      """
-      Loads one document and returns it, instead of saving
-      """
       query = build_query_string(place)
       %{"result" => response} = GazetteerClient.fetch!(query)
       response
