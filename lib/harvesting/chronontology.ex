@@ -17,8 +17,8 @@ defmodule Argos.Harvesting.Chronontology do
     end
 
     def fetch_one!(%{id: id}) do
-      HTTPoison.get!(base_url(), [], [{:params, %{q: id}}])
-      |> response_unwrap
+      %{"results" => results} = HTTPoison.get!(base_url(), [], [{:params, %{q: id}}]) |> response_unwrap
+      results
     end
 
     def fetch_total!(query) do
