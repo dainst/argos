@@ -85,21 +85,6 @@ defmodule Argos.Harvesting.Gazetteer do
       total
     end
 
-    def harvest!(%{placeid: _pid} = place) do
-      query = build_query_string(place)
-      response = GazetteerClient.fetch!(query)
-      save_resources!(response)
-      response["total"]
-    end
-
-    @doc """
-    Loads one document and returns it, instead of saving
-    """
-    def request!(%{placeid: _pid} = place) do
-      query = build_query_string(place)
-      %{"result" => response} = GazetteerClient.fetch!(query)
-      response
-    end
 
     defp build_query_string(%Date{} = date) do
       date_s = Date.to_iso8601(date)
@@ -195,21 +180,6 @@ defmodule Argos.Harvesting.Gazetteer do
     try do
       total = GazetteerHarvester.harvest!(date)
       Logger.debug("Successfully indexd #{total} documents changed since: #{date}")
-      {:ok, nil}
-    rescue
-      e in RuntimeError ->
-        Logger.error(e.message)
-        {:error, e.message}
-    end
-  end
-
-  def run_harvest(%{placeid: pid} = place) do
-    # Load one gazetteer documents specified by its id
-    Logger.debug("Start harvest document with id #{pid}")
-
-    try do
-      total = GazetteerHarvester.harvest!(place)
-      Logger.debug("Successfully indexd #{total} document with id: #{pid}")
       {:ok, nil}
     rescue
       e in RuntimeError ->
