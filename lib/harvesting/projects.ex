@@ -79,11 +79,8 @@ defmodule Argos.Harvesting.Projects do
 
   defp get_linked_resources(%{"linked_system" => _ } = resource) do
      response = case resource["linked_system"] do
-        "Gazetteer" -> "https://gazetteer.dainst.org/place/" <> id = resource["uri"]
-                        GazetteerClient.fetch_one!(%{id: id})
-        "Chronontology" -> "https://chronontology.dainst.org/period/" <> id = resource["uri"]
-                        ChronontologyClient.fetch_one!(%{id: id})
-
+        "Gazetteer" ->  GazetteerClient.fetch_one!(%{id: resource["res_id"]})
+        "Chronontology" -> ChronontologyClient.fetch_one!(%{id: resource["res_id"]})
      end
      Map.put(resource, :linked_data, response)
   end
