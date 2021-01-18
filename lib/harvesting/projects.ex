@@ -3,6 +3,7 @@ defmodule Argos.Harvesting.Projects do
 
   require Logger
   alias Argos.Harvesting.Gazetteer.GazetteerClient
+  alias Argos.Harvesting.Chronontology.ChronontologyClient
 
   @base_url Application.get_env(:argos, :projects_url)
   @interval Application.get_env(:argos, :projects_harvest_interval)
@@ -76,6 +77,9 @@ defmodule Argos.Harvesting.Projects do
      response = case resource["linked_system"] do
         "Gazetteer" -> "https://gazetteer.dainst.org/place/" <> id = resource["uri"]
                         GazetteerClient.fetch_one!(%{id: id})
+        "Chronontology" -> "https://chronontology.dainst.org/period/" <> id = resource["uri"]
+                        ChronontologyClient.fetch_one!(%{id: id})
+
      end
      Map.put(resource, :linked_data, response)
   end
@@ -99,6 +103,12 @@ defmodule Argos.Harvesting.Projects do
 
   defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}) do
     Logger.warn("No connection")
+    exit('no db connection')
+  end
+
+  defp handle_result(call) do
+    IO.inspect(call)
+    Logger.error("Cannot process result: #{call}")
     exit('no db connection')
   end
 
