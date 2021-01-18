@@ -9,7 +9,7 @@ defmodule CLI do
     {:ok, pid}
   end
 
-  def parse_arguments(["--script", date_string]) do
+  def parse_arguments(["--script", "date=" <> date_string]) do
     Date.from_iso8601(date_string)
   end
 
