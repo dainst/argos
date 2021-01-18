@@ -70,7 +70,11 @@ defmodule Argos.Harvesting.Projects do
   end
 
   defp get_linked_resources(resources) when is_list(resources) do
-    Enum.map(resources, &get_linked_resources/1)
+    if length(resources) > 0 do
+      Enum.map(resources, &get_linked_resources/1)
+    else
+      resources
+    end
   end
 
   defp get_linked_resources(%{"linked_system" => _ } = resource) do
