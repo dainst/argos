@@ -23,10 +23,15 @@ defmodule Argos.Harvesting.Gazetteer do
 
     def fetch_one!(%{id: id}) do
       query = "#{id}"
-      %{"result" => response} =
-        HTTPoison.get!(base_url(), [], [{:params,  %{q: query}}])
-        |> response_unwrap
-      response
+      case HTTPoison.get(base_url(), [], [{:params,  %{q: query}}]) do
+        {:ok, %{"result" => response}} ->
+            response_unwrap(response)
+            response
+        {:error, %HTTPoison.Error{reason: reason}} ->
+            Logger.error(reason)
+            exit("Error during http request")
+      end
+
     end
 
     defp base_url do

@@ -1,3 +1,100 @@
+defmodule TranslatedContent do
+  @type t() :: Map.t()
+end
+
+defmodule TemporalConcept do
+  @enforce_keys [:uri, :title, :begin, :end]
+  defstruct [:uri, :title, :begin, :end]
+  @type t() :: %__MODULE__{
+    uri: String.t(),
+    title: TranslatedContent.t(),
+    begin: integer(),
+    end: integer()
+  }
+end
+
+defmodule Concept do
+  @enforce_keys [:uri, :title]
+  defstruct [:uri, :title]
+  @type t() :: %__MODULE__{
+    uri: String.t(),
+    title: TranslatedContent.t(),
+  }
+end
+
+defmodule Place do
+  alias Geo
+
+  @enforce_keys [:uri, :title]
+  defstruct [:uri, :title, :geometry]
+  @type t() :: %__MODULE__{
+    uri: String.t(),
+    title: TranslatedContent.t(),
+    geometry: [Geo.geometry()]
+  }
+end
+
+defmodule Stakeholder do
+  @enforce_keys [:label]
+  defstruct [:label, :role, :uri, :type]
+  @type t() :: %__MODULE__{
+    label: TranslatedContent.t(),
+    role: String.t(),
+    uri: String.t(),
+    type: String.t(),
+  }
+end
+
+defmodule Person do
+  @enforce_keys [:firstname, :lastname]
+  defstruct [:firstname, :lastname, title: "", external_id: ""]
+  @type t() :: %__MODULE__{
+    firstname: String.t(),
+    lastname: String.t(),
+    title: String.t(),
+    external_id: String.t()
+  }
+end
+
+defmodule Image do
+  @enforce_keys [:uri]
+  defstruct [:uri, label: ""]
+  @type t() :: %__MODULE__{
+    label: TranslatedContent.t(),
+    uri: String.t()
+  }
+end
+
+defmodule ExternalLink do
+  @enforce_keys [:uri]
+  defstruct [:uri, label: "", role: "data"]
+  @type t() :: %__MODULE__{
+    label: TranslatedContent.t(),
+    uri: String.t(),
+    role: String.t()
+  }
+end
+
+
+defmodule ApiProjects do
+  @enforce_keys [:id, :title]
+  defstruct [:id, :title, description: %{}, doi: "", start_date: nil, end_date: nil, subject: [], spatial: [], temporal: [], images: [], stakeholders: [], external_links: [] ]
+  @type t() :: %__MODULE__{
+    id: String.t(),
+    title: TranslatedContent.t(),
+    description: TranslatedContent.t(),
+    doi: String.t(),
+    start_date: Date.t(),
+    end_date: Date.t(),
+    subject: [Concept.t()],
+    spatial: [Place.t()],
+    temporal: [TemporalConcept.t()],
+    stakeholders: [Stakeholder.t()],
+    images: [Image.t()]
+  }
+end
+
+
 defmodule Argos.Harvesting.Projects do
   use GenServer
 
@@ -60,8 +157,103 @@ defmodule Argos.Harvesting.Projects do
     # TODO: Switch to project code after Erga got updated
    query_result["data"]
     |> Enum.map(&denormalize/1)
-    |> Enum.each(&upsert/1)
+    |> Enum.map(&convert_to_struct/1)
+    #|> IO.inspect()
+    #|> Enum.each(&upsert/1)
 
+  end
+
+  defp convert_to_struct(proj) do
+    doi = if Map.has_key?(proj, "doi"), do: proj["doi"], else: ""
+    %{spatial: s, temporal: t, subject: c} = convert_linked_resources(proj["linked_resources"])
+    stakeholders = convert_stakeholders(proj["stakeholders"])
+    images = convert_images(proj["images"])
+    ex_link = convert_external_links(proj["external_links"])
+    project = %ApiProjects{
+      id: proj["project_key"],
+      title:  get_translated_content(proj["titles"]),
+      description: get_translated_content(proj["descriptions"]),
+      start_date: Date.from_iso8601!(proj["starts_at"]),
+      end_date: Date.from_iso8601!(proj["ends_at"]),
+      doi: doi,
+      spatial: s,
+      temporal: t,
+      subject: c,
+      stakeholders: stakeholders,
+      images: images,
+      external_links: ex_link
+    }
+
+
+    IO.inspect(project)
+    project
+  end
+
+  defp convert_external_links(ex_list) do
+    for ex <- ex_list, do: %ExternalLink{uri: ex["url"], label: get_translated_content(ex["labels"])}
+  end
+
+  defp convert_images(i_list) do
+    for i <- i_list, do: %Image{uri: i["path"], label: get_translated_content(i["labels"])}
+  end
+
+  defp convert_stakeholders(st_list) do
+    Enum.map(st_list, fn steak ->
+        case steak do
+          %{"title" => title, "person" => %{"firstname" => p_fn, "lastname" => p_ln, "title" => tp, "external_id" => ex_id}} ->
+              name = "#{tp} #{p_ln}, #{p_fn}"
+              %Stakeholder{label: %{default: name}, role: title, uri: ex_id, type: :person}
+        end
+      end)
+    end
+
+
+  defp convert_linked_resources(lr) do
+    Enum.map(lr,
+                  fn resource ->
+                      case resource["linked_system"] do
+                          "Gazetteer" -> place = %Place{ uri: resource["uri"], title: get_translated_content(resource["labels"])}
+                                place = if resource[:linked_data] do
+                                            geometries = get_geometries(resource[:linked_data])
+                                           %{place | geometry: geometries }
+                                        end
+                                place
+
+                          "Chronontology" ->
+                                %{:linked_data => [%{"resource" => main} | _]} = resource
+                                %{"begin" => %{"notBefore" => begin}, "end" => %{"notAfter" => ending}} = main["hasTimespan"]
+                                time = %TemporalConcept{uri: resource["uri"], title: get_translated_content(resource["labels"]), begin: begin, end: ending }
+                                time
+                      end # end case
+                    end # emd fn
+                  )
+    |> sort_linked_resources
+  end
+
+  defp sort_linked_resources(lr_list) do
+    spatial = for %Place{} = p <- lr_list, do: p
+    temporal = for %TemporalConcept{} = t <- lr_list, do: t
+    concept = for %Concept{} = c <- lr_list, do: c
+    %{spatial: spatial, temporal: temporal, subject: concept}
+  end
+
+  defp get_geometries(geo_content) do
+    Enum.reduce(geo_content, [], &(&2 ++ create_geometries(&1["prefLocation"])))
+  end
+
+  defp create_geometries(locations) do
+    geo = case locations do
+      %{"coordinates" => coor, "shape" => shape} -> [%Geo.Point{ coordinates: List.to_tuple(coor) }, %Geo.Polygon{coordinates: shape}]
+      %{"coordinates" => coor } -> [%Geo.Point{ coordinates: List.to_tuple(coor) }]
+      %{"shape" => shape} -> [%Geo.Polygon{coordinates: shape}]
+    end
+    geo
+  end
+
+  @spec get_translated_content(List.t()) :: TranslatedContent.t()
+  defp get_translated_content(ts_content)  do
+    # takes a list with translated content items coming from the project-api and reduce them to a search-api conform map
+    Enum.reduce(ts_content, %{}, &(Map.put(&2, String.to_atom(&1["language_code"]), &1["content"])) )
   end
 
   defp denormalize(proj) do
