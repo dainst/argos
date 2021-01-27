@@ -7,7 +7,7 @@ defmodule Argos.Harvesting.Projects do
   alias Argos.Harvesting.Gazetteer.GazetteerClient
   alias Argos.Harvesting.Chronontology.ChronontologyClient
   alias DataModel.{Projects, ExternalLink, Image, Stakeholder, Place, TemporalConcept, Concept}
-  
+
   @base_url Application.get_env(:argos, :projects_url)
   @interval Application.get_env(:argos, :projects_harvest_interval)
 
@@ -65,7 +65,7 @@ defmodule Argos.Harvesting.Projects do
     |> Enum.map(&denormalize/1)
     |> Enum.map(&convert_to_struct/1)
     #|> IO.inspect()
-    #|> Enum.each(&upsert/1)
+    |> Enum.each(&upsert/1)
 
   end
 
@@ -177,8 +177,8 @@ defmodule Argos.Harvesting.Projects do
 
   defp get_linked_resources(%{"linked_system" => _ } = resource) do
      response = case resource["linked_system"] do
-        "Gazetteer" ->  GazetteerClient.fetch_one!(%{id: resource["res_id"]})
-        "Chronontology" -> ChronontologyClient.fetch_one!(%{id: resource["res_id"]})
+        "Gazetteer" ->  GazetteerClient.fetch_by_id!(%{id: resource["res_id"]})
+        "Chronontology" -> ChronontologyClient.fetch_by_id!(%{id: resource["res_id"]})
      end
      Map.put(resource, :linked_data, response)
   end

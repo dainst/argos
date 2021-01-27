@@ -22,7 +22,7 @@ defmodule CLI do
   end
 
   def handle_arguments({:ok, pid}) do
-    Argos.Harvesting.Chronontology.ChronontologyClient.fetch_one!(%{id: pid})
+    Argos.Harvesting.Chronontology.ChronontologyClient.fetch_by_id!(%{id: pid})
   end
 
   def handle_arguments({:error, reason}) do
