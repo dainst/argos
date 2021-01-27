@@ -21,7 +21,7 @@ defmodule Argos.Harvesting.Gazetteer do
       |> response_unwrap
     end
 
-    def fetch_one!(%{id: id}) do
+    def fetch_by_id!(%{id: id}) do
       query = "#{id}"
       %{"result" => result} = case HTTPoison.get(base_url(), [], [{:params,  %{q: query}}]) do
         {:ok, %HTTPoison.Response{} = response} ->
