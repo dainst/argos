@@ -151,8 +151,8 @@ defmodule Argos.Harvesting.Projects do
 
   defp create_geometries(locations) do
     geo = case locations do
-      %{"coordinates" => coor, "shape" => shape} -> [%Geo.Point{ coordinates: List.to_tuple(coor) }, %Geo.Polygon{coordinates: shape}]
-      %{"coordinates" => coor } -> [%Geo.Point{ coordinates: List.to_tuple(coor) }]
+      %{"coordinates" => coor, "shape" => shape} -> [Geo.JSON.encode!(%Geo.Point{ coordinates: List.to_tuple(coor) }), %Geo.Polygon{coordinates: shape}]
+      %{"coordinates" => coor } -> [Geo.JSON.encode!(%Geo.Point{ coordinates: List.to_tuple(coor) })]
       %{"shape" => shape} -> [%Geo.Polygon{coordinates: shape}]
     end
     geo
@@ -195,7 +195,7 @@ defmodule Argos.Harvesting.Projects do
       }
       |> Poison.encode!
 
-    "#{@elastic_search}/_update/project-#{project["project_key"]}"
+    "#{@elastic_search}/_update/project-#{project.id}"
     |> HTTPoison.post!(body, [{"Content-Type", "application/json"}])
   end
 
