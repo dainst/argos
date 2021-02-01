@@ -104,11 +104,11 @@ defmodule Argos.Harvesting.Projects do
   end
 
   defp convert_stakeholders(st_list) do
-    Enum.map(st_list, fn steak ->
-        case steak do
-          %{"title" => title, "person" => %{"firstname" => p_fn, "lastname" => p_ln, "title" => tp, "external_id" => ex_id}} ->
+    Enum.map(st_list, fn stake ->
+        case stake do
+          %{ "person" => %{"first_name" => p_fn, "last_name" => p_ln, "title" => tp, "orc_id" => orc_id }, "role" => role} ->
               name = "#{tp} #{p_ln}, #{p_fn}"
-              %Stakeholder{label: %{default: name}, role: title, uri: ex_id, type: :person}
+              %Stakeholder{label: %{default: name}, role: role, uri: orc_id, type: :person}
         end
       end)
     end
@@ -118,21 +118,23 @@ defmodule Argos.Harvesting.Projects do
     Enum.map(lr,
                   fn resource ->
                       case resource["linked_system"] do
-                          "Gazetteer" -> place = %Place{ uri: resource["uri"], title: get_translated_content(resource["labels"])}
+                          "gazetteer" -> place = %Place{ uri: resource["uri"], title: get_translated_content(resource["labels"])}
                                 place = if resource[:linked_data] do
                                             geometries = get_geometries(resource[:linked_data])
                                            %{place | geometry: geometries }
                                         end
                                 place
 
-                          "Chronontology" ->
+                          "chronontology" ->
                                 %{:linked_data => [%{"resource" => main} | _]} = resource
-                                %{"begin" => %{"notBefore" => begin}, "end" => %{"notAfter" => ending}} = main["hasTimespan"]
+                                [%{"begin" => %{"notBefore" => begin}, "end" => %{"notAfter" => ending}}] = main["hasTimespan"]
                                 time = %TemporalConcept{uri: resource["uri"], title: get_translated_content(resource["labels"]), begin: begin, end: ending }
                                 time
+                          _ -> nil
                       end # end case
                     end # emd fn
                   )
+    |> Enum.filter(&(&1 != nil))
     |> sort_linked_resources
   end
 
@@ -177,14 +179,15 @@ defmodule Argos.Harvesting.Projects do
 
   defp get_linked_resources(%{"linked_system" => _ } = resource) do
      response = case resource["linked_system"] do
-        "Gazetteer" ->  GazetteerClient.fetch_by_id!(%{id: resource["res_id"]})
-        "Chronontology" -> ChronontologyClient.fetch_by_id!(%{id: resource["res_id"]})
+        "gazetteer" ->  GazetteerClient.fetch_by_id!(%{id: resource["res_id"]})
+        "chronontology" -> ChronontologyClient.fetch_by_id!(%{id: resource["res_id"]})
+        _ -> nil
      end
      Map.put(resource, :linked_data, response)
   end
 
   defp upsert(project) do
-    Logger.info("Upserting '#{project["project_key"]}'.")
+    Logger.info("Upserting '#{project.id}'.")
     body =
       %{
         doc: project,
