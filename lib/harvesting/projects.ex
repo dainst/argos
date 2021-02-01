@@ -151,11 +151,24 @@ defmodule Argos.Harvesting.Projects do
 
   defp create_geometries(locations) do
     geo = case locations do
-      %{"coordinates" => coor, "shape" => shape} -> [Geo.JSON.encode!(%Geo.Point{ coordinates: List.to_tuple(coor) }), %Geo.Polygon{coordinates: shape}]
+      %{"coordinates" => coor, "shape" => [shape]} ->
+        [
+          Geo.JSON.encode!(
+            %Geo.Point{ coordinates: List.to_tuple(coor) }),
+          Geo.JSON.encode!(
+            %Geo.Polygon{coordinates: Enum.map(shape, &convert_shape/1)})]
       %{"coordinates" => coor } -> [Geo.JSON.encode!(%Geo.Point{ coordinates: List.to_tuple(coor) })]
-      %{"shape" => shape} -> [%Geo.Polygon{coordinates: shape}]
+      %{"shape" => [shape]} -> [Geo.JSON.encode!(%Geo.Polygon{coordinates: Enum.map(shape, &convert_shape/1)})]
     end
     geo
+  end
+
+  defp convert_shape([] = shape) do shape end
+  defp convert_shape([a,_] = shape) when is_number(a) do
+    List.to_tuple(shape)
+  end
+  defp convert_shape([h|_] = shape) when is_list(h) do
+    Enum.map(shape, &convert_shape/1)
   end
 
   @spec get_translated_content(List.t()) :: TranslatedContent.t()
