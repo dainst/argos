@@ -64,7 +64,6 @@ defmodule Argos.Harvesting.Projects do
    query_result["data"]
     |> Enum.map(&denormalize/1)
     |> Enum.map(&convert_to_struct/1)
-    #|> IO.inspect()
     |> Enum.each(&upsert/1)
 
   end
@@ -91,7 +90,6 @@ defmodule Argos.Harvesting.Projects do
     }
 
 
-    IO.inspect(project)
     project
   end
 
@@ -222,7 +220,6 @@ defmodule Argos.Harvesting.Projects do
   end
 
   defp handle_result(call) do
-    IO.inspect(call)
     Logger.error("Cannot process result: #{call}")
     exit('no db connection')
   end
