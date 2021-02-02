@@ -14,15 +14,6 @@ defmodule DataModel do
     }
   end
 
-  defmodule Concept do
-    @enforce_keys [:uri, :title]
-    defstruct [:uri, :title]
-    @type t() :: %__MODULE__{
-      uri: String.t(),
-      title: TranslatedContent.t(),
-    }
-  end
-
   defmodule Place do
     alias Geo
 
@@ -87,7 +78,7 @@ defmodule DataModel do
       doi: String.t(),
       start_date: Date.t(),
       end_date: Date.t(),
-      subject: [Concept.t()],
+      subject: [Argos.Data.Thesauri.Concept.t()],
       spatial: [Place.t()],
       temporal: [TemporalConcept.t()],
       stakeholders: [Stakeholder.t()],

@@ -10,7 +10,9 @@ use Mix.Config
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
 config :argos,
-  projects_harvest_interval: 1000 * 60 * 30 # 30 minutes
+  projects_harvest_interval: 1000 * 60 * 30, # 30 minutes
+
+  thesauri_url: "http://thesauri.dainst.org"
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
