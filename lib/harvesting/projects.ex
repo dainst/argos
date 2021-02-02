@@ -143,7 +143,7 @@ defmodule Argos.Harvesting.Projects do
   defp sort_linked_resources(lr_list) do
     spatial = for %Place{} = p <- lr_list, do: p
     temporal = for %TemporalConcept{} = t <- lr_list, do: t
-    concept = for %Concept{} = c <- lr_list, do: c
+    concept = for %Argos.Data.Thesauri.Concept{} = c <- lr_list, do: c
     %{spatial: spatial, temporal: temporal, subject: concept}
   end
 
