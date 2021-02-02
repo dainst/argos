@@ -89,7 +89,6 @@ defmodule Argos.Harvesting.Projects do
       external_links: ex_link
     }
 
-
     project
   end
 
@@ -105,7 +104,12 @@ defmodule Argos.Harvesting.Projects do
     Enum.map(st_list, fn stake ->
         case stake do
           %{ "person" => %{"first_name" => p_fn, "last_name" => p_ln, "title" => tp, "orc_id" => orc_id }, "role" => role} ->
-              name = "#{tp} #{p_ln}, #{p_fn}"
+              name = if tp != "" do
+                "#{tp} #{p_ln}, #{p_fn}"
+              else
+                "#{p_ln}, #{p_fn}"
+              end
+
               %Stakeholder{label: %{default: name}, role: role, uri: orc_id, type: :person}
         end
       end)
