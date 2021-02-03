@@ -14,17 +14,7 @@ defmodule DataModel do
     }
   end
 
-  defmodule Place do
-    alias Geo
-
-    @enforce_keys [:uri, :title]
-    defstruct [:uri, :title, :geometry]
-    @type t() :: %__MODULE__{
-      uri: String.t(),
-      title: TranslatedContent.t(),
-      geometry: [Geo.geometry()]
-    }
-  end
+ 
 
   defmodule Stakeholder do
     @enforce_keys [:label]
