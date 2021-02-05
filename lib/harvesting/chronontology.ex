@@ -4,11 +4,21 @@ defmodule Argos.Harvesting.Chronontology do
   require Logger
 
   defmodule ChronontologyClient do
-    def fetch!(query \\ "*", offset \\ 0, limit \\ 1) do
+    def fetch!(query, offset, limit) do
       params = %{q: query, size: limit, from: offset}
 
       HTTPoison.get!(base_url(), [], [{:params, params}])
       |> response_unwrap
+    end
+
+    def fetch!(query) do
+      HTTPoison.get!(base_url(), [], [{:params, %{q: query}}])
+      |> response_unwrap
+    end
+
+    def fetch_by_id!(%{id: id}) do
+      %{"results" => results} = HTTPoison.get!(base_url(), [], [{:params, %{q: id}}]) |> response_unwrap
+      results
     end
 
     def fetch_total!(query) do

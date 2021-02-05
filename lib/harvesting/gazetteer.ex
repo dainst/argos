@@ -5,7 +5,7 @@ defmodule Argos.Harvesting.Gazetteer do
 
   defmodule GazetteerClient do
 
-    def fetch!(query \\ "*", limit \\ 1, scroll \\ true) do
+    def fetch!(query, limit, scroll) do
       params =  if is_boolean(scroll) do
         %{q: query, limit: limit, scroll: scroll}
       else
@@ -14,6 +14,23 @@ defmodule Argos.Harvesting.Gazetteer do
 
       HTTPoison.get!(base_url(), [], [{:params, params}])
       |> response_unwrap
+    end
+
+    def fetch!(query) do
+      HTTPoison.get!(base_url(), [], [{:params,  %{q: query}}])
+      |> response_unwrap
+    end
+
+    def fetch_by_id!(%{id: id}) do
+      query = "#{id}"
+      %{"result" => result} = case HTTPoison.get(base_url(), [], [{:params,  %{q: query}}]) do
+        {:ok, %HTTPoison.Response{} = response} ->
+            response_unwrap(response)
+        {:error, %HTTPoison.Error{reason: reason}} ->
+            Logger.error("#{reason}")
+            exit("Error during http request")
+      end
+      result
     end
 
     defp base_url do
@@ -63,19 +80,28 @@ defmodule Argos.Harvesting.Gazetteer do
   defmodule GazetteerHarvester do
     @batch_size 100
 
+    @doc """
+    Loads data from gazetteer and saves it into the database
+    """
     def harvest!(%Date{} = lastModified) do
       query = build_query_string(lastModified)
       total = harvest_batch!(query, @batch_size)
       total
     end
 
+
     defp build_query_string(%Date{} = date) do
       date_s = Date.to_iso8601(date)
       "(lastChangeDate:>=#{date_s})"
     end
 
+    defp build_query_string(%{placeid: pid}) do
+      "#{pid}"
+    end
+
+
     defp harvest_batch!(query, batch_size) do
-      total = case GazetteerClient.fetch!(query, batch_size) do
+      total = case GazetteerClient.fetch!(query, batch_size, true) do
 
         # in case there is a scroll id start scrolling
         %{"scrollId" => scrollId} = response ->
@@ -99,7 +125,6 @@ defmodule Argos.Harvesting.Gazetteer do
           harvest_batch!(query, batch_size, scrollId)
         response -> save_resources!(response)
       end
-
     end
 
     defp save_resources!(%{"result" => results}) when results != [] do
@@ -107,7 +132,7 @@ defmodule Argos.Harvesting.Gazetteer do
     end
 
     defp save_resources!(%{"result" => []}) do
-      Logger.info("End of scroll")
+      Logger.info("End of scroll/No result")
     end
 
     defp save_resources!(_) do

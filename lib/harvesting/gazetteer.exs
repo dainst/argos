@@ -5,12 +5,20 @@ defmodule CLI do
     {:ok}
   end
 
-  def parse_arguments(["--script", date_string]) do
+  def parse_arguments(["--script", "gid=" <> gid ]) do
+    {:ok, String.to_integer(gid)}
+  end
+
+  def parse_arguments(["--script", "date=" <> date_string]) do
     Date.from_iso8601(date_string)
   end
 
   def handle_arguments({:ok}) do
     Argos.Harvesting.Gazetteer.run_harvest(Date.utc_today())
+  end
+
+  def handle_arguments({:ok, gid}) when is_integer(gid) do
+    Argos.Harvesting.Gazetteer.GazetteerClient.fetch_by_id!(%{id: gid})
   end
 
   def handle_arguments({:ok, date}) do

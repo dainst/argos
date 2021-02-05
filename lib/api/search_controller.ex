@@ -19,15 +19,15 @@ defmodule Argos.API.SearchController do
 
     q =
       conn.params
-      |>get_query_paramater("q", "*")
+      |> get_query_parameter("q", "*")
 
     {size, _} =
       conn.params
-      |> get_query_paramater("size", "50")
+      |> get_query_parameter("size", "50")
       |> Integer.parse()
 
     from =
-      case Integer.parse(get_query_paramater(conn.params, "from", "0")) do
+      case Integer.parse(get_query_parameter(conn.params, "from", "0")) do
         {val, _} when val > 10000 -> 10000
         {val, _} -> val
       end
@@ -54,7 +54,7 @@ defmodule Argos.API.SearchController do
   end
 
 
-  defp get_query_paramater(params, key, default) do
+  defp get_query_parameter(params, key, default) do
     if Map.has_key?(params, key) do
       params[key]
     else
