@@ -7,7 +7,7 @@ defmodule Argos.Data.Thesauri do
     defstruct [:uri, :title]
     @type t() :: %__MODULE__{
       uri: String.t(),
-      title: TranslatedContent.t(),
+      title: list(TranslatedContent.t()),
     }
   end
 
@@ -50,14 +50,14 @@ defmodule Argos.Data.Thesauri do
           xml
           |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skos:prefLabel)l)
           |> Enum.map(fn(pref_label) ->
-            %{
-              "language_code" => xpath(pref_label, ~x(./@xml:lang)),
-              "content" => xpath(pref_label, ~x"./text()")
+            %DataModel.TranslatedContent{
+              lang: xpath(pref_label, ~x(./@xml:lang)s),
+              text: xpath(pref_label, ~x(./text(\))s)
             }
           end),
         uri:
           "#{@base_url}/#{id}"
-      } |> IO.inspect
+      }
     end
   end
 
