@@ -1,6 +1,11 @@
 defmodule DataModel do
   defmodule TranslatedContent do
-    @type t() :: Map.t()
+    @enforce_keys [:text, :lang]
+    defstruct [:text, :lang]
+    @type t() :: %__MODULE__{
+      text: String,
+      lang: String
+    }
   end
 
   defmodule TemporalConcept do
