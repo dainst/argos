@@ -7,9 +7,9 @@ defmodule Argos.Harvesting.Projects do
   alias Argos.Harvesting.Gazetteer.GazetteerClient
   alias Argos.Harvesting.Chronontology.ChronontologyClient
   alias Argos.Data.{
-    Thesauri
+    Thesauri, Gazetteer
   }
-  alias DataModel.{Projects, ExternalLink, Image, Stakeholder, Place, TemporalConcept}
+  alias DataModel.{Projects, ExternalLink, Image, Stakeholder, Place, TemporalConcept, TranslatedContent}
 
   @base_url Application.get_env(:argos, :projects_url)
   @interval Application.get_env(:argos, :projects_harvest_interval)
@@ -122,23 +122,33 @@ defmodule Argos.Harvesting.Projects do
   defp convert_linked_resources(lr) do
     Enum.map(lr,
       fn resource ->
+
+        labels =
+          resource["descriptions"]
+          |> Enum.map(fn(%{"language_code" => lang, "content" => content}) ->
+            %TranslatedContent{
+              lang: lang,
+              text: content
+            }
+          end)
+
         case resource["linked_system"] do
           "gazetteer" ->
-            place = %Place{ uri: resource["uri"], title: get_translated_content(resource["labels"])}
-            place =
-              if resource[:linked_data] do
-                geometries = get_geometries(resource[:linked_data])
-                %{place | geometry: geometries }
-              end
-            place
-
+            %{
+              label: labels,
+              resource: resource.linked_data
+            }
+            resource.linked_data
           "chronontology" ->
             %{:linked_data => [%{"resource" => main} | _]} = resource
             [%{"begin" => %{"notBefore" => begin}, "end" => %{"notAfter" => ending}}] = main["hasTimespan"]
             time = %TemporalConcept{uri: resource["uri"], title: get_translated_content(resource["labels"]), begin: begin, end: ending }
             time
           "thesaurus" ->
-            resource.linked_data
+            %{
+              label: labels,
+              resource: resource.linked_data
+            }
           _ ->
             nil
         end # end case
@@ -148,36 +158,12 @@ defmodule Argos.Harvesting.Projects do
   end
 
   defp sort_linked_resources(lr_list) do
-    spatial = for %Place{} = p <- lr_list, do: p
+    # TODO: das sortiern geht nich tmehr, weil für gazetteer + thesauri nicht die
+    # Place/Concept in der liste sind sondern %{labe: [...], resource: %Place{}}
+    spatial = for %Argos.Data.Gazetteer.Place{} = p.resource <- lr_list, do: p
     temporal = for %TemporalConcept{} = t <- lr_list, do: t
-    concept = for %Argos.Data.Thesauri.Concept{} = c <- lr_list, do: c
+    concept = for %Argos.Data.Thesauri.Concept{} = c.resource <- lr_list, do: c
     %{spatial: spatial, temporal: temporal, subject: concept}
-  end
-
-  defp get_geometries(geo_content) do
-    Enum.reduce(geo_content, [], &(&2 ++ create_geometries(&1["prefLocation"])))
-  end
-
-  defp create_geometries(locations) do
-    geo = case locations do
-      %{"coordinates" => coor, "shape" => [shape]} ->
-        [
-          Geo.JSON.encode!(
-            %Geo.Point{ coordinates: List.to_tuple(coor) }),
-          Geo.JSON.encode!(
-            %Geo.Polygon{coordinates: Enum.map(shape, &convert_shape/1)})]
-      %{"coordinates" => coor } -> [Geo.JSON.encode!(%Geo.Point{ coordinates: List.to_tuple(coor) })]
-      %{"shape" => [shape]} -> [Geo.JSON.encode!(%Geo.Polygon{coordinates: Enum.map(shape, &convert_shape/1)})]
-    end
-    geo
-  end
-
-  defp convert_shape([] = shape) do shape end
-  defp convert_shape([a,_] = shape) when is_number(a) do
-    List.to_tuple(shape)
-  end
-  defp convert_shape([h|_] = shape) when is_list(h) do
-    Enum.map(shape, &convert_shape/1)
   end
 
   @spec get_translated_content(List.t()) :: TranslatedContent.t()
@@ -201,7 +187,9 @@ defmodule Argos.Harvesting.Projects do
 
   defp get_linked_resources(%{"linked_system" => _ } = resource) do
      response = case resource["linked_system"] do
-        "gazetteer" ->  GazetteerClient.fetch_by_id!(%{id: resource["res_id"]})
+        "gazetteer" ->
+          {:ok, place } = Gazetteer.DataProvider.get_by_id(resource["res_id"])
+          place
         "chronontology" -> ChronontologyClient.fetch_by_id!(%{id: resource["res_id"]})
         "thesaurus" ->
           {:ok, concept} = Thesauri.DataProvider.get_by_id(resource["res_id"])

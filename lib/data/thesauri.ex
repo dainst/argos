@@ -3,11 +3,11 @@ defmodule Argos.Data.Thesauri do
   defmodule Concept do
     import DataModel.TranslatedContent
 
-    @enforce_keys [:uri, :title]
-    defstruct [:uri, :title]
+    @enforce_keys [:uri, :label]
+    defstruct [:uri, :label]
     @type t() :: %__MODULE__{
       uri: String.t(),
-      title: list(TranslatedContent.t()),
+      label: list(TranslatedContent.t()),
     }
   end
 
@@ -16,19 +16,27 @@ defmodule Argos.Data.Thesauri do
 
     @base_url Application.get_env(:argos, :thesauri_url)
     @behaviour Argos.Data.GenericProvider
+
     @doc """
     Retrieves the XML for a given thesauri id.
     Returns
     - {:ok, xml_struct} on success, where xml_struct is the RDF XML parsed by SweetXML
     - {:error, response} for all HTTP responses besides status 200.
     """
+    @impl Argos.Data.GenericProvider
+    def get_all() do
+      []
+    end
+
+    @impl Argos.Data.GenericProvider
     def get_by_id(id) do
       "#{@base_url}/#{id}.rdf"
       |> HTTPoison.get()
       |> parse_result(id)
     end
 
-    def search(_q) do
+    @impl Argos.Data.GenericProvider
+    def get_by_date(%NaiveDateTime{} = _date) do
       []
     end
 
@@ -46,7 +54,7 @@ defmodule Argos.Data.Thesauri do
 
     defp xml_to_concept(xml, id) do
       %Concept{
-        title:
+        label:
           xml
           |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skos:prefLabel)l)
           |> Enum.map(fn(pref_label) ->
