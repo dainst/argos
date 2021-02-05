@@ -6,7 +6,10 @@ defmodule Argos.Harvesting.Projects do
   require Logger
   alias Argos.Harvesting.Gazetteer.GazetteerClient
   alias Argos.Harvesting.Chronontology.ChronontologyClient
-  alias DataModel.{Projects, ExternalLink, Image, Stakeholder, Place, TemporalConcept, Concept}
+  alias Argos.Data.{
+    Thesauri
+  }
+  alias DataModel.{Projects, ExternalLink, Image, Stakeholder, Place, TemporalConcept}
 
   @base_url Application.get_env(:argos, :projects_url)
   @interval Application.get_env(:argos, :projects_harvest_interval)
@@ -118,24 +121,28 @@ defmodule Argos.Harvesting.Projects do
 
   defp convert_linked_resources(lr) do
     Enum.map(lr,
-                  fn resource ->
-                      case resource["linked_system"] do
-                          "gazetteer" -> place = %Place{ uri: resource["uri"], title: get_translated_content(resource["labels"])}
-                                place = if resource[:linked_data] do
-                                            geometries = get_geometries(resource[:linked_data])
-                                           %{place | geometry: geometries }
-                                        end
-                                place
+      fn resource ->
+        case resource["linked_system"] do
+          "gazetteer" ->
+            place = %Place{ uri: resource["uri"], title: get_translated_content(resource["labels"])}
+            place =
+              if resource[:linked_data] do
+                geometries = get_geometries(resource[:linked_data])
+                %{place | geometry: geometries }
+              end
+            place
 
-                          "chronontology" ->
-                                %{:linked_data => [%{"resource" => main} | _]} = resource
-                                [%{"begin" => %{"notBefore" => begin}, "end" => %{"notAfter" => ending}}] = main["hasTimespan"]
-                                time = %TemporalConcept{uri: resource["uri"], title: get_translated_content(resource["labels"]), begin: begin, end: ending }
-                                time
-                          _ -> nil
-                      end # end case
-                    end # emd fn
-                  )
+          "chronontology" ->
+            %{:linked_data => [%{"resource" => main} | _]} = resource
+            [%{"begin" => %{"notBefore" => begin}, "end" => %{"notAfter" => ending}}] = main["hasTimespan"]
+            time = %TemporalConcept{uri: resource["uri"], title: get_translated_content(resource["labels"]), begin: begin, end: ending }
+            time
+          "thesaurus" ->
+            resource.linked_data
+          _ ->
+            nil
+        end # end case
+      end) # emd fn
     |> Enum.filter(&(&1 != nil))
     |> sort_linked_resources
   end
@@ -196,6 +203,9 @@ defmodule Argos.Harvesting.Projects do
      response = case resource["linked_system"] do
         "gazetteer" ->  GazetteerClient.fetch_by_id!(%{id: resource["res_id"]})
         "chronontology" -> ChronontologyClient.fetch_by_id!(%{id: resource["res_id"]})
+        "thesaurus" ->
+          {:ok, concept} = Thesauri.DataProvider.get_by_id(resource["res_id"])
+          concept
         _ -> nil
      end
      Map.put(resource, :linked_data, response)
