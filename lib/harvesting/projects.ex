@@ -4,12 +4,11 @@ defmodule Argos.Harvesting.Projects do
   use GenServer
 
   require Logger
-  alias Argos.Harvesting.Gazetteer.GazetteerClient
   alias Argos.Harvesting.Chronontology.ChronontologyClient
   alias Argos.Data.{
     Thesauri, Gazetteer
   }
-  alias DataModel.{Projects, ExternalLink, Image, Stakeholder, Place, TemporalConcept, TranslatedContent}
+  alias DataModel.{Projects, ExternalLink, Image, Stakeholder, TemporalConcept, TranslatedContent}
 
   @base_url Application.get_env(:argos, :projects_url)
   @interval Application.get_env(:argos, :projects_harvest_interval)
@@ -119,10 +118,9 @@ defmodule Argos.Harvesting.Projects do
     end
 
 
-  defp convert_linked_resources(lr) do
-    Enum.map(lr,
-      fn resource ->
-
+  defp convert_linked_resources(linked_resources) do
+    linked_resources
+    |> Enum.map(fn resource ->
         labels =
           resource["descriptions"]
           |> Enum.map(fn(%{"language_code" => lang, "content" => content}) ->
@@ -131,39 +129,36 @@ defmodule Argos.Harvesting.Projects do
               text: content
             }
           end)
-
-        case resource["linked_system"] do
-          "gazetteer" ->
-            %{
-              label: labels,
-              resource: resource.linked_data
-            }
-            resource.linked_data
-          "chronontology" ->
-            %{:linked_data => [%{"resource" => main} | _]} = resource
-            [%{"begin" => %{"notBefore" => begin}, "end" => %{"notAfter" => ending}}] = main["hasTimespan"]
-            time = %TemporalConcept{uri: resource["uri"], title: get_translated_content(resource["labels"]), begin: begin, end: ending }
-            time
-          "thesaurus" ->
-            %{
-              label: labels,
-              resource: resource.linked_data
-            }
-          _ ->
-            nil
-        end # end case
-      end) # emd fn
-    |> Enum.filter(&(&1 != nil))
-    |> sort_linked_resources
-  end
-
-  defp sort_linked_resources(lr_list) do
-    # TODO: das sortiern geht nich tmehr, weil für gazetteer + thesauri nicht die
-    # Place/Concept in der liste sind sondern %{labe: [...], resource: %Place{}}
-    spatial = for %Argos.Data.Gazetteer.Place{} = p.resource <- lr_list, do: p
-    temporal = for %TemporalConcept{} = t <- lr_list, do: t
-    concept = for %Argos.Data.Thesauri.Concept{} = c.resource <- lr_list, do: c
-    %{spatial: spatial, temporal: temporal, subject: concept}
+        {labels, resource}
+      end)
+    |> Enum.reduce(%{
+      spatial: [],
+      temporal: [],
+      subject: []
+    }, fn({labels, lr}, acc) ->
+      case lr["linked_system"] do
+        "gazetteer" ->
+          Map.put(acc, :spatial, acc.spatial ++ [%{
+            label: labels,
+            resource: lr.linked_data
+          }])
+        "chronontology" ->
+          %{:linked_data => [%{"resource" => main} | _]} = lr
+          [%{"begin" => %{"notBefore" => begin}, "end" => %{"notAfter" => ending}}] = main["hasTimespan"]
+          time = %TemporalConcept{uri: lr["uri"], label: get_translated_content(lr["labels"]), begin: begin, end: ending }
+          Map.put(acc, :temporal, acc.temporal ++ [%{
+            label: labels,
+            resource: time
+          }])
+        "thesaurus" ->
+          Map.put(acc, :subject, acc.subject ++ [%{
+            label: labels,
+            resource: lr.linked_data
+          }])
+        _ ->
+          acc
+      end
+    end)
   end
 
   @spec get_translated_content(List.t()) :: TranslatedContent.t()

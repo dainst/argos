@@ -9,17 +9,15 @@ defmodule DataModel do
   end
 
   defmodule TemporalConcept do
-    @enforce_keys [:uri, :title, :begin, :end]
-    defstruct [:uri, :title, :begin, :end]
+    @enforce_keys [:uri, :label, :begin, :end]
+    defstruct [:uri, :label, :begin, :end]
     @type t() :: %__MODULE__{
       uri: String.t(),
-      title: TranslatedContent.t(),
+      label: TranslatedContent.t(),
       begin: integer(),
       end: integer()
     }
   end
-
- 
 
   defmodule Stakeholder do
     @enforce_keys [:label]
