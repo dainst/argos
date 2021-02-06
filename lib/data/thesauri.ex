@@ -33,7 +33,8 @@ defmodule Argos.Data.Thesauri do
     def get_by_id(id) do
       "#{@base_url}/#{id}.rdf"
       |> HTTPoison.get()
-      |> parse_result(id)
+      |> parse_response()
+      |> parse_concept_data(id)
     end
 
     @impl Argos.Data.GenericProvider
@@ -41,32 +42,43 @@ defmodule Argos.Data.Thesauri do
       []
     end
 
-    defp parse_result({:ok, %{status_code: 200, body: body}}, id) do
-      xml =
-        body
+    defp parse_response({:ok, %{status_code: 200, body: body}}) do
+      {:ok, body}
+    end
+
+    defp parse_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
+      {:error, "Received unhandled status code #{code} for #{req.url}."}
+    end
+
+    defp parse_response({:error, error}) do
+      {:error, error.reason()}
+    end
+
+    defp parse_concept_data({:ok, data}, id) do
+      labels =
+        data
         |> SweetXml.parse()
-        |> xml_to_concept(id)
-      {:ok, xml}
+        |> xml_to_labels(id)
+
+      {:ok, %Concept{
+        label: labels,
+        uri: "#{@base_url}/#{id}"
+      }}
     end
 
-    defp parse_result({_, response}, _id) do
-      {:error, response}
+    defp parse_concept_data({:error, _} = error, _id) do
+      error
     end
 
-    defp xml_to_concept(xml, id) do
-      %Concept{
-        label:
-          xml
-          |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skos:prefLabel)l)
-          |> Enum.map(fn(pref_label) ->
-            %TranslatedContent{
-              lang: xpath(pref_label, ~x(./@xml:lang)s),
-              text: xpath(pref_label, ~x(./text(\))s)
-            }
-          end),
-        uri:
-          "#{@base_url}/#{id}"
-      }
+    defp xml_to_labels(xml, id) do
+      xml
+      |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skos:prefLabel)l)
+      |> Enum.map(fn(pref_label) ->
+        %TranslatedContent{
+          lang: xpath(pref_label, ~x(./@xml:lang)s),
+          text: xpath(pref_label, ~x(./text(\))s)
+        }
+      end)
     end
   end
 
