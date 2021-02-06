@@ -6,9 +6,8 @@ defmodule Argos.Harvesting.Projects do
 
   require Logger
   alias Argos.Data.{
-    Thesauri, Gazetteer, Chronontology
+    Thesauri, Gazetteer, Chronontology, TranslatedContent
   }
-  alias DataModel.TranslatedContent
 
   defmodule Stakeholder do
     @enforce_keys [:label]

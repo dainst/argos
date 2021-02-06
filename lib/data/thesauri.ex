@@ -1,7 +1,7 @@
 defmodule Argos.Data.Thesauri do
 
   defmodule Concept do
-    alias DataModel.TranslatedContent
+    alias Argos.Data.TranslatedContent
 
     @enforce_keys [:uri, :label]
     defstruct [:uri, :label]
@@ -13,9 +13,9 @@ defmodule Argos.Data.Thesauri do
 
   defmodule DataProvider do
     @base_url Application.get_env(:argos, :thesauri_url)
-    @behaviour Argos.Data.GenericProvider
+    @behaviour Argos.Data.GenericDataProvider
 
-    alias DataModel.TranslatedContent
+    alias Argos.Data.TranslatedContent
     import SweetXml
 
     @doc """
@@ -24,12 +24,12 @@ defmodule Argos.Data.Thesauri do
     - {:ok, xml_struct} on success, where xml_struct is the RDF XML parsed by SweetXML
     - {:error, response} for all HTTP responses besides status 200.
     """
-    @impl Argos.Data.GenericProvider
+    @impl Argos.Data.GenericDataProvider
     def get_all() do
       []
     end
 
-    @impl Argos.Data.GenericProvider
+    @impl Argos.Data.GenericDataProvider
     def get_by_id(id) do
       "#{@base_url}/#{id}.rdf"
       |> HTTPoison.get()
@@ -37,7 +37,7 @@ defmodule Argos.Data.Thesauri do
       |> parse_concept_data(id)
     end
 
-    @impl Argos.Data.GenericProvider
+    @impl Argos.Data.GenericDataProvider
     def get_by_date(%Date{} = _date) do
       []
     end

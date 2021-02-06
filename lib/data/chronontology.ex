@@ -1,7 +1,7 @@
 defmodule Argos.Data.Chronontology do
 
   defmodule TemporalConcept do
-    alias DataModel.TranslatedContent
+    alias Argos.Data.TranslatedContent
 
     @enforce_keys [:uri, :label, :begin, :end]
     defstruct [:uri, :label, :begin, :end]
@@ -14,26 +14,26 @@ defmodule Argos.Data.Chronontology do
   end
 
   defmodule DataProvider do
-    @behaviour Argos.Data.GenericProvider
+    @behaviour Argos.Data.GenericDataProvider
     @base_url Application.get_env(:argos, :chronontology_url)
 
-    alias DataModel.TranslatedContent
+    alias Argos.Data.TranslatedContent
 
     require Logger
 
-    @impl Argos.Data.GenericProvider
+    @impl Argos.Data.GenericDataProvider
     def get_all() do
       []
     end
 
-    @impl Argos.Data.GenericProvider
+    @impl Argos.Data.GenericDataProvider
     def get_by_id(id) do
       HTTPoison.get("#{@base_url}/period/#{id}")
       |> parse_response()
       |> parse_period_data()
     end
 
-    @impl Argos.Data.GenericProvider
+    @impl Argos.Data.GenericDataProvider
     def get_by_date(%Date{} = _date) do
       []
     end
