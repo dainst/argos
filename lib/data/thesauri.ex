@@ -1,7 +1,7 @@
 defmodule Argos.Data.Thesauri do
 
   defmodule Concept do
-    import DataModel.TranslatedContent
+    alias DataModel.TranslatedContent
 
     @enforce_keys [:uri, :label]
     defstruct [:uri, :label]
@@ -12,10 +12,11 @@ defmodule Argos.Data.Thesauri do
   end
 
   defmodule DataProvider do
-    import SweetXml
-
     @base_url Application.get_env(:argos, :thesauri_url)
     @behaviour Argos.Data.GenericProvider
+
+    alias DataModel.TranslatedContent
+    import SweetXml
 
     @doc """
     Retrieves the XML for a given thesauri id.
@@ -58,7 +59,7 @@ defmodule Argos.Data.Thesauri do
           xml
           |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skos:prefLabel)l)
           |> Enum.map(fn(pref_label) ->
-            %DataModel.TranslatedContent{
+            %TranslatedContent{
               lang: xpath(pref_label, ~x(./@xml:lang)s),
               text: xpath(pref_label, ~x(./text(\))s)
             }

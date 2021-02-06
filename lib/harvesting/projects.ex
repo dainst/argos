@@ -6,9 +6,9 @@ defmodule Argos.Harvesting.Projects do
   require Logger
   alias Argos.Harvesting.Chronontology.ChronontologyClient
   alias Argos.Data.{
-    Thesauri, Gazetteer
+    Thesauri, Gazetteer, Chronontology
   }
-  alias DataModel.{Projects, ExternalLink, Image, Stakeholder, TemporalConcept, TranslatedContent}
+  alias DataModel.{Projects, ExternalLink, Image, Stakeholder, TranslatedContent}
 
   @base_url Application.get_env(:argos, :projects_url)
   @interval Application.get_env(:argos, :projects_harvest_interval)
@@ -145,7 +145,7 @@ defmodule Argos.Harvesting.Projects do
         "chronontology" ->
           %{:linked_data => [%{"resource" => main} | _]} = lr
           [%{"begin" => %{"notBefore" => begin}, "end" => %{"notAfter" => ending}}] = main["hasTimespan"]
-          time = %TemporalConcept{uri: lr["uri"], label: get_translated_content(lr["labels"]), begin: begin, end: ending }
+          time = %Chronontology.TemporalConcept{uri: lr["uri"], label: get_translated_content(lr["labels"]), begin: begin, end: ending }
           Map.put(acc, :temporal, acc.temporal ++ [%{
             label: labels,
             resource: time

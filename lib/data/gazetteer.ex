@@ -2,7 +2,7 @@ defmodule Argos.Data.Gazetteer do
 
   defmodule Place do
     alias Geo
-    import DataModel.TranslatedContent
+    alias DataModel.TranslatedContent
 
     @enforce_keys [:uri, :label]
     defstruct [:uri, :label, :geometry]
@@ -16,11 +16,10 @@ defmodule Argos.Data.Gazetteer do
   require Logger
 
   defmodule DataProvider do
-
-    alias DataModel.TranslatedContent
-
     @base_url Application.get_env(:argos, :gazetteer_url)
     @behaviour Argos.Data.GenericProvider
+
+    alias DataModel.TranslatedContent
 
     @impl Argos.Data.GenericProvider
     def get_all() do
