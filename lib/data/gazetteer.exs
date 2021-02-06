@@ -17,13 +17,14 @@ defmodule CLI do
     Argos.Harvesting.Gazetteer.run_harvest(Date.utc_today())
   end
 
+  def handle_arguments({:ok, Date{} = date}) do
+    Argos.Harvesting.Gazetteer.run_harvest(date)
+  end
+
   def handle_arguments({:ok, gid}) when is_integer(gid) do
     Argos.Harvesting.Gazetteer.GazetteerClient.fetch_by_id!(%{id: gid})
   end
 
-  def handle_arguments({:ok, date}) do
-    Argos.Harvesting.Gazetteer.run_harvest(date)
-  end
 
   def handle_arguments({:error, reason}) do
     Logger.error(reason)

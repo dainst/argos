@@ -35,7 +35,7 @@ defmodule Argos.Data.Gazetteer do
     end
 
     @impl Argos.Data.GenericProvider
-    def get_by_date(%NaiveDateTime{} = _date) do
+    def get_by_date(%Date{} = _date) do
       []
     end
 
