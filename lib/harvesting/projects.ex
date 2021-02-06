@@ -4,7 +4,6 @@ defmodule Argos.Harvesting.Projects do
   use GenServer
 
   require Logger
-  alias Argos.Harvesting.Chronontology.ChronontologyClient
   alias Argos.Data.{
     Thesauri, Gazetteer, Chronontology
   }
@@ -143,12 +142,9 @@ defmodule Argos.Harvesting.Projects do
             resource: lr.linked_data
           }])
         "chronontology" ->
-          %{:linked_data => [%{"resource" => main} | _]} = lr
-          [%{"begin" => %{"notBefore" => begin}, "end" => %{"notAfter" => ending}}] = main["hasTimespan"]
-          time = %Chronontology.TemporalConcept{uri: lr["uri"], label: get_translated_content(lr["labels"]), begin: begin, end: ending }
           Map.put(acc, :temporal, acc.temporal ++ [%{
             label: labels,
-            resource: time
+            resource: lr.linked_data
           }])
         "thesaurus" ->
           Map.put(acc, :subject, acc.subject ++ [%{
@@ -185,7 +181,9 @@ defmodule Argos.Harvesting.Projects do
         "gazetteer" ->
           {:ok, place } = Gazetteer.DataProvider.get_by_id(resource["res_id"])
           place
-        "chronontology" -> ChronontologyClient.fetch_by_id!(%{id: resource["res_id"]})
+        "chronontology" ->
+          {:ok, period } = Chronontology.DataProvider.get_by_id(resource["res_id"])
+          period
         "thesaurus" ->
           {:ok, concept} = Thesauri.DataProvider.get_by_id(resource["res_id"])
           concept
