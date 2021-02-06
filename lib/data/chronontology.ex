@@ -14,26 +14,26 @@ defmodule Argos.Data.Chronontology do
   end
 
   defmodule DataProvider do
-    @behaviour Argos.Data.GenericDataProvider
+    @behaviour Argos.Data.AbstractDataProvider
     @base_url Application.get_env(:argos, :chronontology_url)
 
     alias Argos.Data.TranslatedContent
 
     require Logger
 
-    @impl Argos.Data.GenericDataProvider
+    @impl Argos.Data.AbstractDataProvider
     def get_all() do
       []
     end
 
-    @impl Argos.Data.GenericDataProvider
+    @impl Argos.Data.AbstractDataProvider
     def get_by_id(id) do
       HTTPoison.get("#{@base_url}/period/#{id}")
       |> parse_response()
       |> parse_period_data()
     end
 
-    @impl Argos.Data.GenericDataProvider
+    @impl Argos.Data.AbstractDataProvider
     def get_by_date(%Date{} = _date) do
       []
     end
