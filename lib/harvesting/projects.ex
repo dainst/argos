@@ -1,12 +1,72 @@
 
 
 defmodule Argos.Harvesting.Projects do
+
   use GenServer
 
   require Logger
-  alias Argos.Harvesting.Gazetteer.GazetteerClient
-  alias Argos.Harvesting.Chronontology.ChronontologyClient
-  alias DataModel.{Projects, ExternalLink, Image, Stakeholder, Place, TemporalConcept, Concept}
+  alias Argos.Data.{
+    Thesauri, Gazetteer, Chronontology, TranslatedContent
+  }
+
+  defmodule Stakeholder do
+    @enforce_keys [:label]
+    defstruct [:label, :role, :uri, :type]
+    @type t() :: %__MODULE__{
+      label: TranslatedContent.t(),
+      role: String.t(),
+      uri: String.t(),
+      type: String.t(),
+    }
+  end
+
+  defmodule Person do
+    @enforce_keys [:firstname, :lastname]
+    defstruct [:firstname, :lastname, title: "", external_id: ""]
+    @type t() :: %__MODULE__{
+      firstname: String.t(),
+      lastname: String.t(),
+      title: String.t(),
+      external_id: String.t()
+    }
+  end
+
+  defmodule Image do
+    @enforce_keys [:uri]
+    defstruct [:uri, label: ""]
+    @type t() :: %__MODULE__{
+      label: TranslatedContent.t(),
+      uri: String.t()
+    }
+  end
+
+  defmodule ExternalLink do
+    @enforce_keys [:uri]
+    defstruct [:uri, label: "", role: "data"]
+    @type t() :: %__MODULE__{
+      label: TranslatedContent.t(),
+      uri: String.t(),
+      role: String.t()
+    }
+  end
+
+  defmodule Projects do
+    @enforce_keys [:id, :title]
+    defstruct [:id, :title, description: %{}, doi: "", start_date: nil, end_date: nil, subject: [], spatial: [], temporal: [], images: [], stakeholders: [], external_links: [] ]
+    @type t() :: %__MODULE__{
+      id: String.t(),
+      title: TranslatedContent.t(),
+      description: TranslatedContent.t(),
+      doi: String.t(),
+      start_date: Date.t(),
+      end_date: Date.t(),
+      subject: [Argos.Data.Thesauri.Concept.t()],
+      spatial: [Place.t()],
+      temporal: [TemporalConcept.t()],
+      stakeholders: [Stakeholder.t()],
+      images: [Image.t()]
+    }
+  end
 
   @base_url Application.get_env(:argos, :projects_url)
   @interval Application.get_env(:argos, :projects_harvest_interval)
@@ -116,61 +176,44 @@ defmodule Argos.Harvesting.Projects do
     end
 
 
-  defp convert_linked_resources(lr) do
-    Enum.map(lr,
-                  fn resource ->
-                      case resource["linked_system"] do
-                          "gazetteer" -> place = %Place{ uri: resource["uri"], title: get_translated_content(resource["labels"])}
-                                place = if resource[:linked_data] do
-                                            geometries = get_geometries(resource[:linked_data])
-                                           %{place | geometry: geometries }
-                                        end
-                                place
-
-                          "chronontology" ->
-                                %{:linked_data => [%{"resource" => main} | _]} = resource
-                                [%{"begin" => %{"notBefore" => begin}, "end" => %{"notAfter" => ending}}] = main["hasTimespan"]
-                                time = %TemporalConcept{uri: resource["uri"], title: get_translated_content(resource["labels"]), begin: begin, end: ending }
-                                time
-                          _ -> nil
-                      end # end case
-                    end # emd fn
-                  )
-    |> Enum.filter(&(&1 != nil))
-    |> sort_linked_resources
-  end
-
-  defp sort_linked_resources(lr_list) do
-    spatial = for %Place{} = p <- lr_list, do: p
-    temporal = for %TemporalConcept{} = t <- lr_list, do: t
-    concept = for %Argos.Data.Thesauri.Concept{} = c <- lr_list, do: c
-    %{spatial: spatial, temporal: temporal, subject: concept}
-  end
-
-  defp get_geometries(geo_content) do
-    Enum.reduce(geo_content, [], &(&2 ++ create_geometries(&1["prefLocation"])))
-  end
-
-  defp create_geometries(locations) do
-    geo = case locations do
-      %{"coordinates" => coor, "shape" => [shape]} ->
-        [
-          Geo.JSON.encode!(
-            %Geo.Point{ coordinates: List.to_tuple(coor) }),
-          Geo.JSON.encode!(
-            %Geo.Polygon{coordinates: Enum.map(shape, &convert_shape/1)})]
-      %{"coordinates" => coor } -> [Geo.JSON.encode!(%Geo.Point{ coordinates: List.to_tuple(coor) })]
-      %{"shape" => [shape]} -> [Geo.JSON.encode!(%Geo.Polygon{coordinates: Enum.map(shape, &convert_shape/1)})]
-    end
-    geo
-  end
-
-  defp convert_shape([] = shape) do shape end
-  defp convert_shape([a,_] = shape) when is_number(a) do
-    List.to_tuple(shape)
-  end
-  defp convert_shape([h|_] = shape) when is_list(h) do
-    Enum.map(shape, &convert_shape/1)
+  defp convert_linked_resources(linked_resources) do
+    linked_resources
+    |> Enum.map(fn resource ->
+        labels =
+          resource["descriptions"]
+          |> Enum.map(fn(%{"language_code" => lang, "content" => content}) ->
+            %TranslatedContent{
+              lang: lang,
+              text: content
+            }
+          end)
+        {labels, resource}
+      end)
+    |> Enum.reduce(%{
+      spatial: [],
+      temporal: [],
+      subject: []
+    }, fn({labels, lr}, acc) ->
+      case lr["linked_system"] do
+        "gazetteer" ->
+          Map.put(acc, :spatial, acc.spatial ++ [%{
+            label: labels,
+            resource: lr.linked_data
+          }])
+        "chronontology" ->
+          Map.put(acc, :temporal, acc.temporal ++ [%{
+            label: labels,
+            resource: lr.linked_data
+          }])
+        "thesaurus" ->
+          Map.put(acc, :subject, acc.subject ++ [%{
+            label: labels,
+            resource: lr.linked_data
+          }])
+        _ ->
+          acc
+      end
+    end)
   end
 
   @spec get_translated_content(List.t()) :: TranslatedContent.t()
@@ -194,8 +237,15 @@ defmodule Argos.Harvesting.Projects do
 
   defp get_linked_resources(%{"linked_system" => _ } = resource) do
      response = case resource["linked_system"] do
-        "gazetteer" ->  GazetteerClient.fetch_by_id!(%{id: resource["res_id"]})
-        "chronontology" -> ChronontologyClient.fetch_by_id!(%{id: resource["res_id"]})
+        "gazetteer" ->
+          {:ok, place } = Gazetteer.DataProvider.get_by_id(resource["res_id"])
+          place
+        "chronontology" ->
+          {:ok, period } = Chronontology.DataProvider.get_by_id(resource["res_id"])
+          period
+        "thesaurus" ->
+          {:ok, concept} = Thesauri.DataProvider.get_by_id(resource["res_id"])
+          concept
         _ -> nil
      end
      Map.put(resource, :linked_data, response)
@@ -220,12 +270,11 @@ defmodule Argos.Harvesting.Projects do
 
   defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}) do
     Logger.warn("No connection")
-    exit('no db connection')
+    exit("no connection to Erga server.")
   end
 
   defp handle_result(call) do
     Logger.error("Cannot process result: #{call}")
-    exit('no db connection')
   end
 
   # TODO: Handle error results

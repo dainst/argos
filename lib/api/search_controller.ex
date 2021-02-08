@@ -7,7 +7,6 @@ defmodule Argos.API.SearchController do
       conn
       |> build_query
       |> Poison.encode!
-      |> IO.inspect
 
     "#{@elasticsearch_url}/_search"
     |> HTTPoison.post(query, [{"Content-Type", "application/json"}])
