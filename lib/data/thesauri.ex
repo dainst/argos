@@ -22,12 +22,15 @@ defmodule Argos.Data.Thesauri do
     - {:ok, xml_struct} on success, where xml_struct is the RDF XML parsed by SweetXML
     - {:error, response} for all HTTP responses besides status 200.
     """
+    @impl Argos.Data.GenericProvider
     def get_by_id(id) do
       "#{@base_url}/#{id}.rdf"
       |> HTTPoison.get()
       |> parse_result(id)
     end
 
+
+    @impl Argos.Data.GenericProvider
     def search(_q) do
       []
     end
