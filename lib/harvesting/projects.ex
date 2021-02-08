@@ -161,65 +161,48 @@ defmodule Argos.Harvesting.Projects do
   end
 
   defp convert_stakeholders(st_list) do
-    Enum.map(st_list, fn stake ->
-        case stake do
-          %{ "person" => %{"first_name" => p_fn, "last_name" => p_ln, "title" => tp, "orc_id" => orc_id }, "role" => role} ->
-              name = if tp != "" do
-                "#{tp} #{p_ln}, #{p_fn}"
-              else
-                "#{p_ln}, #{p_fn}"
-              end
+    Enum.map(st_list, &create_stakeholder/1)
+  end
 
-              %Stakeholder{label: %{default: name}, role: role, uri: orc_id, type: :person}
-        end
-      end)
-    end
+  defp create_stakeholder(%{ "person" => %{"first_name" => p_fn, "last_name" => p_ln, "title" => tp, "orc_id" => orc_id }, "role" => role}) do
+    name = create_name(tp, p_ln, p_fn)
+    %Stakeholder{label: %{default: name}, role: role, uri: orc_id, type: :person}
+  end
 
+  defp create_name(_tp = "", p_ln, p_fn), do: "#{p_ln}, #{p_fn}"
+  defp create_name(tp, p_ln, p_fn), do: "#{tp} #{p_ln}, #{p_fn}"
 
   defp convert_linked_resources(linked_resources) do
     linked_resources
     |> Enum.map(fn resource ->
-        labels =
-          resource["descriptions"]
-          |> Enum.map(fn(%{"language_code" => lang, "content" => content}) ->
-            %TranslatedContent{
-              lang: lang,
-              text: content
-            }
-          end)
+        labels = get_translated_content(resource["description"])
         {labels, resource}
       end)
     |> Enum.reduce(%{
       spatial: [],
       temporal: [],
       subject: []
-    }, fn({labels, lr}, acc) ->
-      case lr["linked_system"] do
-        "gazetteer" ->
-          Map.put(acc, :spatial, acc.spatial ++ [%{
-            label: labels,
-            resource: lr.linked_data
-          }])
-        "chronontology" ->
-          Map.put(acc, :temporal, acc.temporal ++ [%{
-            label: labels,
-            resource: lr.linked_data
-          }])
-        "thesaurus" ->
-          Map.put(acc, :subject, acc.subject ++ [%{
-            label: labels,
-            resource: lr.linked_data
-          }])
-        _ ->
-          acc
-      end
-    end)
+    }, &put_resource/2)
   end
+
+  defp put_resource({labels, %{"linked_system" => "gazetteer"} = lr}, acc) do
+    Map.put(acc, :spatial, acc.spatial ++ [ %{label: labels, resource: lr.linked_data}])
+  end
+
+  defp put_resource({labels, %{"linked_system" => "chronontology"} = lr}, acc) do
+    Map.put(acc, :spatial, acc.temporal ++ [ %{label: labels, resource: lr.linked_data}])
+  end
+
+  defp put_resource({labels, %{"linked_system" => "thesaurus"} = lr}, acc) do
+    Map.put(acc, :spatial, acc.subject ++ [ %{label: labels, resource: lr.linked_data}])
+  end
+
+  defp put_resource(_, acc), do: acc
 
   @spec get_translated_content(List.t()) :: TranslatedContent.t()
   defp get_translated_content(ts_content)  do
     # takes a list with translated content items coming from the project-api and reduce them to a search-api conform map
-    Enum.reduce(ts_content, %{}, &(Map.put(&2, String.to_atom(&1["language_code"]), &1["content"])) )
+    Enum.reduce(ts_content, [], &(&2 ++ %{ lang: &1["language_code"], text: &1["content"]}))
   end
 
   defp denormalize(proj) do
