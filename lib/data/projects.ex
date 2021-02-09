@@ -74,7 +74,20 @@ defmodule Argos.Harvesting.Projects do
 
     @impl Argos.Data.AbstractDataProvider
     def get_all() do
-      url = "#{@base_url}/api/projects"
+      query_projects("#{@base_url}/api/projects")
+    end
+
+    @impl Argos.Data.AbstractDataProvider
+    def get_by_date(%Date{} = date) do
+      url = "#{@base_url}/api/projects/?since=" <> Date.to_iso8601(date)
+      query_projects(url)
+    end
+    def get_by_date(date) when is_binary(date) do
+      parse_date(date)
+      |> get_by_date
+    end
+
+    defp query_projects(url) do
       Logger.info("Running projects harvest at #{url}.")
       %{"data" => data} =
         url
@@ -84,17 +97,17 @@ defmodule Argos.Harvesting.Projects do
       ProjectParser.parse_project(data)
     end
 
-    @impl Argos.Data.AbstractDataProvider
-    def get_by_date(date) do
 
+    defp parse_date(date_string) do
+      {:ok, date} = Date.from_iso8601(date_string)
+      date
     end
 
     @impl Argos.Data.AbstractDataProvider
     def get_by_id(id) do
-
+      url = "#{@base_url}/api/projects/#{id}"
+      query_projects(url)
     end
-
-
 
     defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}} = _response), do: Poison.decode!(body)
     defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}) do
@@ -186,15 +199,12 @@ defmodule Argos.Harvesting.Projects do
     defp put_resource({labels, %{"linked_system" => "gazetteer"} = lr}, acc) do
       Map.put(acc, :spatial, acc.spatial ++ [ %{label: labels, resource: lr.linked_data}])
     end
-
     defp put_resource({labels, %{"linked_system" => "chronontology"} = lr}, acc) do
       Map.put(acc, :spatial, acc.temporal ++ [ %{label: labels, resource: lr.linked_data}])
     end
-
     defp put_resource({labels, %{"linked_system" => "thesaurus"} = lr}, acc) do
       Map.put(acc, :spatial, acc.subject ++ [ %{label: labels, resource: lr.linked_data}])
     end
-
     defp put_resource(_, acc), do: acc
 
     @spec create_translated_content_list(List.t()) :: [TranslatedContent.t()]
@@ -202,7 +212,6 @@ defmodule Argos.Harvesting.Projects do
       # takes a list with translated content items coming from the project-api and reduce them to a search-api conform list of maps
       for tlc <- tlc_list, do: %{lang: tlc["language_code"], text: tlc["content"]}
     end
-
     def create_translated_content_list([] = tlc_list), do: tlc_list
 
   end
