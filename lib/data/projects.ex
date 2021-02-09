@@ -1,0 +1,274 @@
+
+
+defmodule Argos.Harvesting.Projects do
+
+  require Logger
+  alias Argos.Data.{
+    Thesauri, Gazetteer, Chronontology, TranslatedContent
+  }
+
+  defmodule Stakeholder do
+    @enforce_keys [:label]
+    defstruct [:label, :role, :uri, :type]
+    @type t() :: %__MODULE__{
+      label: TranslatedContent.t(),
+      role: String.t(),
+      uri: String.t(),
+      type: String.t(),
+    }
+  end
+
+  defmodule Person do
+    @enforce_keys [:firstname, :lastname]
+    defstruct [:firstname, :lastname, title: "", external_id: ""]
+    @type t() :: %__MODULE__{
+      firstname: String.t(),
+      lastname: String.t(),
+      title: String.t(),
+      external_id: String.t()
+    }
+  end
+
+  defmodule Image do
+    @enforce_keys [:uri]
+    defstruct [:uri, label: ""]
+    @type t() :: %__MODULE__{
+      label: TranslatedContent.t(),
+      uri: String.t()
+    }
+  end
+
+  defmodule ExternalLink do
+    @enforce_keys [:uri]
+    defstruct [:uri, label: "", role: "data"]
+    @type t() :: %__MODULE__{
+      label: TranslatedContent.t(),
+      uri: String.t(),
+      role: String.t()
+    }
+  end
+
+  defmodule Projects do
+    @enforce_keys [:id, :title]
+    defstruct [:id, :title, description: %{}, doi: "", start_date: nil, end_date: nil, subject: [], spatial: [], temporal: [], images: [], stakeholders: [], external_links: [] ]
+    @type t() :: %__MODULE__{
+      id: String.t(),
+      title: TranslatedContent.t(),
+      description: TranslatedContent.t(),
+      doi: String.t(),
+      start_date: Date.t(),
+      end_date: Date.t(),
+      subject: [Argos.Data.Thesauri.Concept.t()],
+      spatial: [Place.t()],
+      temporal: [TemporalConcept.t()],
+      stakeholders: [Stakeholder.t()],
+      images: [Image.t()]
+    }
+  end
+
+  defmodule DataProvider do
+    @base_url Application.get_env(:argos, :projects_url)
+    @behaviour Argos.Data.AbstractDataProvider
+
+    alias Argos.Harvesting.Projects.ProjectParser
+
+    @impl Argos.Data.AbstractDataProvider
+    def get_all() do
+      url = "#{@base_url}/api/projects"
+      Logger.info("Running projects harvest at #{url}.")
+      %{"data" => data} =
+        url
+        |> HTTPoison.get
+        |> handle_result
+      # TODO: Switch to project code after Erga got updated
+      ProjectParser.parse_project(data)
+    end
+
+    @impl Argos.Data.AbstractDataProvider
+    def get_by_date(date) do
+
+    end
+
+    @impl Argos.Data.AbstractDataProvider
+    def get_by_id(id) do
+
+    end
+
+
+
+    defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}} = _response), do: Poison.decode!(body)
+    defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}) do
+      Logger.warn("No connection")
+      exit("no connection to Erga server.")
+    end
+    defp handle_result(call), do: Logger.error("Cannot process result: #{call}")
+  end
+
+  defmodule ProjectParser do
+    def parse_project(data) do
+      Enum.map(data, &denormalize/1)
+      |> Enum.map(&convert_to_struct/1)
+    end
+
+    defp denormalize(%{"linked_resources" => lr} = proj) do
+      rich_res = get_linked_resources(lr)
+      Map.put(proj, "linked_resources", rich_res)
+    end
+
+    defp get_linked_resources([] = res), do: res
+    defp get_linked_resources([_] = resources), do: Enum.map(resources, &get_linked_resources/1)
+    defp get_linked_resources(%{"linked_system" => sys_name, "res_id" => rid } = resource) do
+      {:ok, response } = case sys_name do
+         "gazetteer" -> Gazetteer.DataProvider.get_by_id(rid)
+         "chronontology" -> Chronontology.DataProvider.get_by_id(rid)
+         "thesaurus" -> Thesauri.DataProvider.get_by_id(rid)
+         _ -> {:ok, nil}
+      end
+      Map.put(resource, :linked_data, response)
+    end
+
+    defp convert_to_struct(proj) do
+      %{spatial: s, temporal: t, subject: c} = convert_linked_resources(proj)
+      project = %Projects{
+        id: proj["project_key"],
+        title:  create_translated_content_list(proj["titles"]),
+        description: create_translated_content_list(proj["descriptions"]),
+        start_date: Date.from_iso8601!(proj["starts_at"]),
+        end_date: Date.from_iso8601!(proj["ends_at"]),
+        doi: get_doi(proj),
+        spatial: s,
+        temporal: t,
+        subject: c,
+        stakeholders: create_stakeholder_list(proj),
+        images: create_images(proj),
+        external_links: create_external_links(proj)
+      }
+
+      project
+    end
+
+    defp get_doi(%{"doi" => doi}), do: doi
+    defp get_doi(_), do: ""
+
+    defp create_external_links(%{"external_links" => ex_list}) do
+      for %{"url" => u, "labels" => l} <- ex_list, do: %ExternalLink{uri: u, label: create_translated_content_list(l)}
+    end
+
+    defp create_images(%{"images" => i_list}) do
+      for %{"path" => p, "labels" => l} <- i_list, do: %Image{uri: p, label: create_translated_content_list(l)}
+    end
+
+    defp create_stakeholder_list(%{"stakeholders" => st_list}) do
+      for st <- st_list, do: create_stakeholder(st)
+    end
+
+    defp create_stakeholder(%{ "person" => %{"first_name" => p_fn, "last_name" => p_ln, "title" => tp, "orc_id" => orc_id }, "role" => role}) do
+      name = create_name(tp, p_ln, p_fn)
+      %Stakeholder{label: %{default: name}, role: role, uri: orc_id, type: :person}
+    end
+
+    defp create_name("" = _tp, p_ln, p_fn), do: "#{p_ln}, #{p_fn}"
+    defp create_name(tp, p_ln, p_fn), do: "#{tp} #{p_ln}, #{p_fn}"
+
+    defp convert_linked_resources(%{"linked_resources" => linked_resources}) do
+      linked_resources
+      |> Enum.map(fn resource ->
+          labels = create_translated_content_list(resource["description"])
+          {labels, resource}
+        end)
+      |> Enum.reduce(%{
+        spatial: [],
+        temporal: [],
+        subject: []
+      }, &put_resource/2)
+    end
+
+    defp put_resource({labels, %{"linked_system" => "gazetteer"} = lr}, acc) do
+      Map.put(acc, :spatial, acc.spatial ++ [ %{label: labels, resource: lr.linked_data}])
+    end
+
+    defp put_resource({labels, %{"linked_system" => "chronontology"} = lr}, acc) do
+      Map.put(acc, :spatial, acc.temporal ++ [ %{label: labels, resource: lr.linked_data}])
+    end
+
+    defp put_resource({labels, %{"linked_system" => "thesaurus"} = lr}, acc) do
+      Map.put(acc, :spatial, acc.subject ++ [ %{label: labels, resource: lr.linked_data}])
+    end
+
+    defp put_resource(_, acc), do: acc
+
+    @spec create_translated_content_list(List.t()) :: [TranslatedContent.t()]
+    def create_translated_content_list([%{"language_code" => _, "content" => _}|_] = tlc_list)  do
+      # takes a list with translated content items coming from the project-api and reduce them to a search-api conform list of maps
+      for tlc <- tlc_list, do: %{lang: tlc["language_code"], text: tlc["content"]}
+    end
+
+    def create_translated_content_list([] = tlc_list), do: tlc_list
+
+  end
+
+
+
+
+  defmodule Harvester do
+    @interval Application.get_env(:argos, :projects_harvest_interval)
+    # TODO Noch nicht refactored!
+    defp get_timezone() do
+      "Etc/UTC"
+    end
+
+    def init(state) do
+      state = Map.put(state, :last_run, DateTime.now!(get_timezone()))
+
+      Logger.info("Starting projects harvester with an interval of #{@interval}ms.")
+
+      Process.send(self(), :run, [])
+      {:ok, state}
+    end
+
+    def handle_info(:run, state) do # TODO: Übernommen, warum info und nicht cast/call?
+      now = DateTime.now!(get_timezone())
+      run_harvest(state.last_run)
+
+      state = %{state | last_run: now}
+      schedule_next_harvest()
+      {:noreply, state}
+    end
+
+    defp schedule_next_harvest() do
+      Process.send_after(self(), :run, @interval)
+    end
+    def run_harvest() do
+      "#{@base_url}/api/projects"
+      |> start
+    end
+
+    def run_harvest(%DateTime{} = datetime) do
+      query = URI.encode_query(%{ since: DateTime.to_naive(datetime) })
+
+      "#{@base_url}/api/projects?#{query}"
+      |> start
+    end
+
+    defp start(url) do
+    end
+
+    @elastic_search Application.get_env(:argos, :elasticsearch_url)
+    defp upsert(project) do
+      Logger.info("Upserting '#{project.id}'.")
+      body =
+        %{
+          doc: project,
+          doc_as_upsert: true
+        }
+        |> Poison.encode!
+
+      "#{@elastic_search}/_update/project-#{project.id}"
+      |> HTTPoison.post!(body, [{"Content-Type", "application/json"}])
+    end
+
+  end
+
+
+  # TODO: Handle error results
+end
