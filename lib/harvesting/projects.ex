@@ -131,13 +131,13 @@ defmodule Argos.Harvesting.Projects do
   defp convert_to_struct(proj) do
     doi = if Map.has_key?(proj, "doi"), do: proj["doi"], else: ""
     %{spatial: s, temporal: t, subject: c} = convert_linked_resources(proj["linked_resources"])
-    stakeholders = convert_stakeholders(proj["stakeholders"])
-    images = convert_images(proj["images"])
-    ex_link = convert_external_links(proj["external_links"])
+    stakeholders = create_stakeholder_list(proj["stakeholders"])
+    images = create_images(proj["images"])
+    ex_link = create_external_links(proj["external_links"])
     project = %Projects{
       id: proj["project_key"],
-      title:  get_translated_content(proj["titles"]),
-      description: get_translated_content(proj["descriptions"]),
+      title:  create_translated_content_list(proj["titles"]),
+      description: create_translated_content_list(proj["descriptions"]),
       start_date: Date.from_iso8601!(proj["starts_at"]),
       end_date: Date.from_iso8601!(proj["ends_at"]),
       doi: doi,
@@ -152,16 +152,16 @@ defmodule Argos.Harvesting.Projects do
     project
   end
 
-  defp convert_external_links(ex_list) do
-    for ex <- ex_list, do: %ExternalLink{uri: ex["url"], label: get_translated_content(ex["labels"])}
+  defp create_external_links(ex_list) do
+    for %{"url" => u, "labels" => l} <- ex_list, do: %ExternalLink{uri: u, label: create_translated_content_list(l)}
   end
 
-  defp convert_images(i_list) do
-    for i <- i_list, do: %Image{uri: i["path"], label: get_translated_content(i["labels"])}
+  defp create_images(i_list) do
+    for %{"path" => p, "labels" => l} <- i_list, do: %Image{uri: p, label: create_translated_content_list(l)}
   end
 
-  defp convert_stakeholders(st_list) do
-    Enum.map(st_list, &create_stakeholder/1)
+  defp create_stakeholder_list(st_list) do
+    for st <- st_list, do: create_stakeholder(st)
   end
 
   defp create_stakeholder(%{ "person" => %{"first_name" => p_fn, "last_name" => p_ln, "title" => tp, "orc_id" => orc_id }, "role" => role}) do
@@ -169,13 +169,13 @@ defmodule Argos.Harvesting.Projects do
     %Stakeholder{label: %{default: name}, role: role, uri: orc_id, type: :person}
   end
 
-  defp create_name(_tp = "", p_ln, p_fn), do: "#{p_ln}, #{p_fn}"
+  defp create_name("" = _tp, p_ln, p_fn), do: "#{p_ln}, #{p_fn}"
   defp create_name(tp, p_ln, p_fn), do: "#{tp} #{p_ln}, #{p_fn}"
 
   defp convert_linked_resources(linked_resources) do
     linked_resources
     |> Enum.map(fn resource ->
-        labels = get_translated_content(resource["description"])
+        labels = create_translated_content_list(resource["description"])
         {labels, resource}
       end)
     |> Enum.reduce(%{
@@ -199,11 +199,13 @@ defmodule Argos.Harvesting.Projects do
 
   defp put_resource(_, acc), do: acc
 
-  @spec get_translated_content(List.t()) :: TranslatedContent.t()
-  defp get_translated_content(ts_content)  do
-    # takes a list with translated content items coming from the project-api and reduce them to a search-api conform map
-    Enum.reduce(ts_content, [], &(&2 ++ %{ lang: &1["language_code"], text: &1["content"]}))
+  @spec create_translated_content_list(List.t()) :: [TranslatedContent.t()]
+  def create_translated_content_list([%{"language_code" => _, "content" => _}|_] = tlc_list)  do
+    # takes a list with translated content items coming from the project-api and reduce them to a search-api conform list of maps
+    for tlc <- tlc_list, do: %{lang: tlc["language_code"], text: tlc["content"]}
   end
+
+  def create_translated_content_list([] = tlc_list), do: tlc_list
 
   defp denormalize(proj) do
     rich_res = get_linked_resources(proj["linked_resources"])
