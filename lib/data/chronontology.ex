@@ -75,25 +75,21 @@ defmodule Argos.Data.Chronontology do
             ""
         end
 
-      labels =
-        data["resource"]["names"]
-        |> Enum.map(fn({k, v_list}) ->
-          v_list
-          |> Enum.map(fn(v) ->
-            %TranslatedContent{
-              lang: k,
-              text: v
-            }
-          end)
-        end)
-
       {:ok, %TemporalConcept{
         uri: data["resource"]["uri"],
-        label: labels,
+        label: create_translated_content_list( data["resource"]["names"]),
         begin: beginning,
         end: ending
       }}
     end
+
+    defp create_translated_content_list([{_key, [_]}|_] = tlc_list) do
+      for {key, sub_list} <- tlc_list do
+        for val <- sub_list, do: %{lang: key, text: val}
+      end
+      |> List.flatten()
+    end
+    defp create_translated_content_list([] = tlc_list), do: tlc_list
 
     defp parse_period_data(error) do
       error
