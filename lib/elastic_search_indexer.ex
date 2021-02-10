@@ -1,6 +1,6 @@
 defmodule Argos.ElasticSearchIndexer do
   alias Argos.Data.{
-    Chronontology, Gazetteer, Thesauri
+    Chronontology, Gazetteer, Thesauri, Project
   }
 
   @headers [{"Content-Type", "application/json"}]
@@ -41,6 +41,18 @@ defmodule Argos.ElasticSearchIndexer do
 
     upsert(payload, temporal_concept.uri)
     |> parse_response!()
+  end
+
+  def index(%Project.Project{} = project) do
+    payload =
+      %{
+        doc: project,
+        doc_as_upsert: true
+      }
+      |> Poison.encode!
+
+      upsert(payload, project.id)
+      |> parse_response!()
   end
 
   defp upsert(data, id) do

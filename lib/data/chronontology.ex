@@ -83,7 +83,7 @@ defmodule Argos.Data.Chronontology do
       }}
     end
 
-    defp create_translated_content_list([{_key, [_]}|_] = tlc_list) do
+    defp create_translated_content_list([{_key, [_|_]}|_] = tlc_list) do
       for {key, sub_list} <- tlc_list do
         for val <- sub_list, do: %{lang: key, text: val}
       end

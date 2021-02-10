@@ -1,6 +1,6 @@
 
 
-defmodule Argos.Harvesting.Projects do
+defmodule Argos.Data.Project do
 
   require Logger
   alias Argos.Data.{
@@ -48,7 +48,7 @@ defmodule Argos.Harvesting.Projects do
     }
   end
 
-  defmodule Projects do
+  defmodule Project do
     @enforce_keys [:id, :title]
     defstruct [:id, :title, description: %{}, doi: "", start_date: nil, end_date: nil, subject: [], spatial: [], temporal: [], images: [], stakeholders: [], external_links: [] ]
     @type t() :: %__MODULE__{
@@ -70,7 +70,7 @@ defmodule Argos.Harvesting.Projects do
     @base_url Application.get_env(:argos, :projects_url)
     @behaviour Argos.Data.AbstractDataProvider
 
-    alias Argos.Harvesting.Projects.ProjectParser
+    alias Argos.Data.Project.ProjectParser
 
     @impl Argos.Data.AbstractDataProvider
     def get_all() do
@@ -79,7 +79,13 @@ defmodule Argos.Harvesting.Projects do
 
     @impl Argos.Data.AbstractDataProvider
     def get_by_date(%Date{} = date) do
-      url = "#{@base_url}/api/projects/?since=" <> Date.to_iso8601(date)
+      query = URI.encode_query(%{ since: Date.to_string(date) })
+      url = "#{@base_url}/api/projects?#{query}"
+      query_projects(url)
+    end
+    def get_by_date(%DateTime{} = date) do
+      query = URI.encode_query(%{ since: DateTime.to_naive(date) })
+      url = "#{@base_url}/api/projects?#{query}"
       query_projects(url)
     end
     def get_by_date(date) when is_binary(date) do
@@ -142,7 +148,7 @@ defmodule Argos.Harvesting.Projects do
 
     defp convert_to_struct(proj) do
       %{spatial: s, temporal: t, subject: c} = convert_linked_resources(proj)
-      project = %Projects{
+      project = %Project{
         id: proj["project_key"],
         title:  create_translated_content_list(proj["titles"]),
         description: create_translated_content_list(proj["descriptions"]),
@@ -216,10 +222,10 @@ defmodule Argos.Harvesting.Projects do
 
   end
 
-
-
-
   defmodule Harvester do
+    use GenServer
+    alias Argos.ElasticSearchIndexer
+
     @interval Application.get_env(:argos, :projects_harvest_interval)
     # TODO Noch nicht refactored!
     defp get_timezone() do
@@ -235,6 +241,10 @@ defmodule Argos.Harvesting.Projects do
       {:ok, state}
     end
 
+    def start_link(_opts) do
+      GenServer.start_link(__MODULE__, %{})
+    end
+
     def handle_info(:run, state) do # TODO: Übernommen, warum info und nicht cast/call?
       now = DateTime.now!(get_timezone())
       run_harvest(state.last_run)
@@ -248,32 +258,13 @@ defmodule Argos.Harvesting.Projects do
       Process.send_after(self(), :run, @interval)
     end
     def run_harvest() do
-      "#{@base_url}/api/projects"
-      |> start
+      DataProvider.get_all()
+      |> Enum.each(&ElasticSearchIndexer.index/1)
     end
 
     def run_harvest(%DateTime{} = datetime) do
-      query = URI.encode_query(%{ since: DateTime.to_naive(datetime) })
-
-      "#{@base_url}/api/projects?#{query}"
-      |> start
-    end
-
-    defp start(url) do
-    end
-
-    @elastic_search Application.get_env(:argos, :elasticsearch_url)
-    defp upsert(project) do
-      Logger.info("Upserting '#{project.id}'.")
-      body =
-        %{
-          doc: project,
-          doc_as_upsert: true
-        }
-        |> Poison.encode!
-
-      "#{@elastic_search}/_update/project-#{project.id}"
-      |> HTTPoison.post!(body, [{"Content-Type", "application/json"}])
+      DataProvider.get_by_date(datetime)
+      |> Enum.each(&ElasticSearchIndexer.index/1)
     end
 
   end
