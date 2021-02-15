@@ -135,16 +135,20 @@ defmodule Argos.Data.Project do
     end
 
     defp get_linked_resources([] = res), do: res
-    defp get_linked_resources([_] = resources), do: Enum.map(resources, &get_linked_resources/1)
-    defp get_linked_resources(%{"linked_system" => sys_name, "res_id" => rid } = resource) do
-      {:ok, response } = case sys_name do
-         "gazetteer" -> Gazetteer.DataProvider.get_by_id(rid)
-         "chronontology" -> Chronontology.DataProvider.get_by_id(rid)
-         "thesaurus" -> Thesauri.DataProvider.get_by_id(rid)
-         _ -> {:ok, nil}
-      end
-      Map.put(resource, :linked_data, response)
+    defp get_linked_resources([_|_] = resources), do: Enum.map(resources, &get_linked_resources/1)
+    defp get_linked_resources(%{"linked_system" => "gazetteer", "res_id" => rid } = resource) do
+      Gazetteer.DataProvider.get_by_id(rid) |> handle_response(resource)
     end
+    defp get_linked_resources(%{"linked_system" => "chronontology", "res_id" => rid } = resource) do
+      Chronontology.DataProvider.get_by_id(rid) |> handle_response(resource)
+    end
+    defp get_linked_resources(%{"linked_system" => "thesaurus", "res_id" => rid } = resource) do
+      Thesauri.DataProvider.get_by_id(rid) |> handle_response(resource)
+    end
+    defp get_linked_resources(%{"linked_system" => _unknown }), do: {:ok, nil}
+
+    defp handle_response({:ok, res}, resource), do: Map.put(resource, :linked_data, res)
+    defp handle_response({:error, err}, _resource), do: Logger.error(err)
 
     defp convert_to_struct(proj) do
       %{spatial: s, temporal: t, subject: c} = convert_linked_resources(proj)
