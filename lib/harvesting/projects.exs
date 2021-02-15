@@ -20,11 +20,11 @@ defmodule CLI do
   end
 
   def handle_arguments({:ok}) do
-    Argos.Harvesting.Projects.run_harvest()
+    Argos.Data.Project.Harvester.run_harvest()
   end
 
   def handle_arguments({:ok, date, _offset}) do
-    Argos.Harvesting.Projects.run_harvest(date)
+    Argos.Data.Project.Harvester.run_harvest(date)
   end
 
   def handle_arguments({:error, reason}) do
