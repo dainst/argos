@@ -1,4 +1,5 @@
 defmodule Argos.ElasticSearchIndexer do
+  require Logger
   alias Argos.Data.{
     Chronontology, Gazetteer, Thesauri, Project
   }
@@ -50,7 +51,7 @@ defmodule Argos.ElasticSearchIndexer do
         doc_as_upsert: true
       }
       |> Poison.encode!
-
+      Logger.info("Upserting project with id #{project.id}")
       upsert(payload, project.id)
       |> parse_response!()
   end

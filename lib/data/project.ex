@@ -145,10 +145,17 @@ defmodule Argos.Data.Project do
     defp get_linked_resources(%{"linked_system" => "thesaurus", "res_id" => rid } = resource) do
       Thesauri.DataProvider.get_by_id(rid) |> handle_response(resource)
     end
-    defp get_linked_resources(%{"linked_system" => _unknown }), do: {:ok, nil}
+    defp get_linked_resources(%{"linked_system" => unknown } = resource ) do
+      Logger.info("Unknown resource #{unknown}. Please provider matching data provider")
+      resource
+    end
 
     defp handle_response({:ok, res}, resource), do: Map.put(resource, :linked_data, res)
-    defp handle_response({:error, err}, _resource), do: Logger.error(err)
+    defp handle_response({:error, err}, resource) do
+      Logger.error(err)
+      # TODO mark as retry candidate
+      resource
+    end
 
     defp convert_to_struct(proj) do
       %{spatial: s, temporal: t, subject: c} = convert_linked_resources(proj)
@@ -194,11 +201,10 @@ defmodule Argos.Data.Project do
     defp create_name(tp, p_ln, p_fn), do: "#{tp} #{p_ln}, #{p_fn}"
 
     defp convert_linked_resources(%{"linked_resources" => linked_resources}) do
-      linked_resources
-      |> Enum.map(fn resource ->
-          labels = create_translated_content_list(resource["description"])
-          {labels, resource}
-        end)
+      for %{:linked_data => _data, "description" => desc} = res <- linked_resources do
+        labels = create_translated_content_list(desc)
+        {labels, res}
+      end
       |> Enum.reduce(%{
         spatial: [],
         temporal: [],
@@ -223,6 +229,7 @@ defmodule Argos.Data.Project do
       for tlc <- tlc_list, do: %{lang: tlc["language_code"], text: tlc["content"]}
     end
     def create_translated_content_list([] = tlc_list), do: tlc_list
+    def create_translated_content_list(nil), do: []
 
   end
 
