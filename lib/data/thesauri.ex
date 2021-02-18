@@ -1,63 +1,84 @@
 defmodule Argos.Data.Thesauri do
 
   defmodule Concept do
-    import DataModel.TranslatedContent
+    alias Argos.Data.TranslatedContent
 
-    @enforce_keys [:uri, :title]
-    defstruct [:uri, :title]
+    @enforce_keys [:uri, :label]
+    defstruct [:uri, :label]
     @type t() :: %__MODULE__{
       uri: String.t(),
-      title: TranslatedContent.t(),
+      label: list(TranslatedContent.t()),
     }
   end
 
   defmodule DataProvider do
+    @base_url Application.get_env(:argos, :thesauri_url)
+    @behaviour Argos.Data.AbstractDataProvider
+
+    alias Argos.Data.TranslatedContent
     import SweetXml
 
-    @base_url Application.get_env(:argos, :thesauri_url)
-    @behaviour Argos.Data.GenericProvider
     @doc """
     Retrieves the XML for a given thesauri id.
     Returns
     - {:ok, xml_struct} on success, where xml_struct is the RDF XML parsed by SweetXML
     - {:error, response} for all HTTP responses besides status 200.
     """
-    def get_by_id(id) do
-      "#{@base_url}/#{id}.rdf"
-      |> HTTPoison.get()
-      |> parse_result(id)
-    end
-
-    def search(_q) do
+    @impl Argos.Data.AbstractDataProvider
+    def get_all() do
       []
     end
 
-    defp parse_result({:ok, %{status_code: 200, body: body}}, id) do
-      xml =
-        body
+    @impl Argos.Data.AbstractDataProvider
+    def get_by_id(id) do
+      "#{@base_url}/#{id}.rdf"
+      |> HTTPoison.get()
+      |> parse_response()
+      |> parse_concept_data(id)
+    end
+
+    @impl Argos.Data.AbstractDataProvider
+    def get_by_date(%Date{} = _date) do
+      []
+    end
+
+    defp parse_response({:ok, %{status_code: 200, body: body}}) do
+      {:ok, body}
+    end
+
+    defp parse_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
+      {:error, "Received unhandled status code #{code} for #{req.url}."}
+    end
+
+    defp parse_response({:error, error}) do
+      {:error, error.reason()}
+    end
+
+    defp parse_concept_data({:ok, data}, id) do
+      labels =
+        data
         |> SweetXml.parse()
-        |> xml_to_concept(id)
-      {:ok, xml}
+        |> xml_to_labels(id)
+
+      {:ok, %Concept{
+        label: labels,
+        uri: "#{@base_url}/#{id}"
+      }}
     end
 
-    defp parse_result({_, response}, _id) do
-      {:error, response}
+    defp parse_concept_data({:error, _} = error, _id) do
+      error
     end
 
-    defp xml_to_concept(xml, id) do
-      %Concept{
-        title:
-          xml
-          |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skos:prefLabel)l)
-          |> Enum.map(fn(pref_label) ->
-            %{
-              "language_code" => xpath(pref_label, ~x(./@xml:lang)),
-              "content" => xpath(pref_label, ~x"./text()")
-            }
-          end),
-        uri:
-          "#{@base_url}/#{id}"
-      } |> IO.inspect
+    defp xml_to_labels(xml, id) do
+      xml
+      |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skos:prefLabel)l)
+      |> Enum.map(fn(pref_label) ->
+        %TranslatedContent{
+          lang: xpath(pref_label, ~x(./@xml:lang)s),
+          text: xpath(pref_label, ~x(./text(\))s)
+        }
+      end)
     end
   end
 
