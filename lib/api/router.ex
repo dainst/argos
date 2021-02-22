@@ -15,6 +15,10 @@ defmodule Argos.API.Router do
   plug :fetch_query_params
   plug :dispatch
 
+  get "/doc/:id" do
+    Argos.API.DocumentController.get(conn)
+  end
+
   get "/search" do
     Argos.API.SearchController.search(conn)
   end
