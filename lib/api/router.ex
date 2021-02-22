@@ -15,12 +15,14 @@ defmodule Argos.API.Router do
   plug :dispatch
 
   get "/search" do
-
-    result = Argos.API.SearchController.run(conn)
+    result = Argos.API.SearchController.search(conn)
 
     conn
     |> put_resp_content_type("application/json")
     |> send_resp(200, Poison.encode!(result))
   end
 
+  match _ do
+    send_resp(conn, 404, "Requested page not found!")
+  end
 end
