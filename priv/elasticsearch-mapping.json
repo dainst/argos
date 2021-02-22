@@ -1,0 +1,16 @@
+{
+    "properties": {
+        "concept": {
+            "type": "flattened"
+        },
+        "spatial": {
+            "type": "flattened" 
+        }, 
+        "temporal": {
+            "type": "flattened"
+        },
+        "stakeholders": {
+            "type": "flattened"
+        }
+    }
+}

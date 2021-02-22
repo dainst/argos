@@ -8,6 +8,7 @@ defmodule Argos.MixProject do
       elixir: "~> 1.10",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
+      aliases: aliases(),
       deps: deps()
     ]
   end
@@ -36,6 +37,17 @@ defmodule Argos.MixProject do
       {:sweet_xml, "~> 0.6.6"},
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+    ]
+  end
+
+  defp aliases do
+    [
+      "update-mapping": [
+        "run priv/update-mapping.exs --script"
+      ],
+      "seed.projects": [
+        "run lib/data/projects.exs --script"
+      ]
     ]
   end
 end

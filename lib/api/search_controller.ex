@@ -16,29 +16,41 @@ defmodule Argos.API.SearchController do
       |> handle_result()
 
     case result do
-      val ->
+      {:ok, val} ->
         send_resp(conn, 200, Poison.encode!(val))
     end
   end
 
-
   defp build_query(conn) do
-    # TODO: Filter
-
     q =
       conn.params
-      |> get_query_parameter("q", "*")
+      |> Map.get("q", "*")
 
-    {size, _} =
+    size =
       conn.params
-      |> get_query_parameter("size", "50")
+      |> Map.get("size", "50")
       |> Integer.parse()
+      |> case do
+        {val, _} ->
+          val
+        :error ->
+          50
+      end
 
     from =
-      case Integer.parse(get_query_parameter(conn.params, "from", "0")) do
-        {val, _} when val > 10000 -> 10000
-        {val, _} -> val
+      Map.get(conn.params, "from", "0")
+      |> Integer.parse()
+      |> case do
+        {val, _} ->
+          val
+        :error ->
+          0
       end
+
+    filters =
+      conn.params
+      |> Map.get("filter", [])
+      |> parse_filters
 
     %{
       query: %{
@@ -48,7 +60,7 @@ defmodule Argos.API.SearchController do
               query: q
             }
           },
-          filter: [],
+          filter: filters,
           must_not: []
         }
       },
@@ -58,14 +70,18 @@ defmodule Argos.API.SearchController do
   end
 
   defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
-    Poison.decode! body
+    Poison.decode(body)
   end
 
-  defp get_query_parameter(params, key, default) do
-    if Map.has_key?(params, key) do
-      params[key]
-    else
-      default
-    end
+  defp parse_filters([]) do
+    []
+  end
+
+  defp parse_filters(requested_filters) do
+    requested_filters
+    |> Enum.map(&String.split(&1, ":", parts: 2))
+    |> Enum.map(fn [key, val] ->
+      %{"term" => %{key => val}}
+    end)
   end
 end
