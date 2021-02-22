@@ -10,19 +10,21 @@ defmodule Argos.API.Router do
     use Plug.Debugger, otp_app: :argos
   end
 
+  plug :json_response
   plug :match
   plug :fetch_query_params
   plug :dispatch
 
   get "/search" do
-    result = Argos.API.SearchController.search(conn)
-
-    conn
-    |> put_resp_content_type("application/json")
-    |> send_resp(200, Poison.encode!(result))
+    Argos.API.SearchController.search(conn)
   end
 
   match _ do
-    send_resp(conn, 404, "Requested page not found!")
+    send_resp(conn, 404, Poison.encode!(%{message: "Requested page not found!"}))
+  end
+
+  def json_response(conn, _opts) do
+    conn
+    |> put_resp_content_type("application/json")
   end
 end

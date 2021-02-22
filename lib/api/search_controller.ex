@@ -2,15 +2,23 @@ defmodule Argos.API.SearchController do
 
   @elasticsearch_url Application.get_env(:argos, :elasticsearch_url)
 
+  import Plug.Conn
+
   def search(conn) do
     query =
       conn
       |> build_query
       |> Poison.encode!
 
-    "#{@elasticsearch_url}/_search"
-    |> HTTPoison.post(query, [{"Content-Type", "application/json"}])
-    |> handle_result()
+    result =
+      "#{@elasticsearch_url}/_search"
+      |> HTTPoison.post(query, [{"Content-Type", "application/json"}])
+      |> handle_result()
+
+    case result do
+      val ->
+        send_resp(conn, 200, Poison.encode!(val))
+    end
   end
 
 
