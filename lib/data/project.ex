@@ -175,7 +175,7 @@ defmodule Argos.Data.Project do
           nil ->
             nil
           val ->
-            Date.from_iso8601(val)
+            Date.from_iso8601!(val)
         end,
         doi: get_doi(proj),
         spatial: s,
