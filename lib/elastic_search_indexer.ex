@@ -13,8 +13,7 @@ defmodule Argos.ElasticSearchIndexer do
       %{
         doc:
           concept
-          |> Map.put(:id, concept.uri)
-          |> Map.put(:type, "concept"),
+          |> Map.put(:type, :concept),
         doc_as_upsert: true
       }
 
@@ -27,8 +26,7 @@ defmodule Argos.ElasticSearchIndexer do
       %{
         doc:
           place
-          |> Map.put(:id, place.uri)
-          |> Map.put(:type, "place"),
+          |> Map.put(:type, :place),
         doc_as_upsert: true
       }
 
@@ -41,8 +39,7 @@ defmodule Argos.ElasticSearchIndexer do
       %{
         doc:
           temporal_concept
-          |> Map.put(:id, temporal_concept.uri)
-          |> Map.put(:type, "temporal_concept"),
+          |> Map.put(:type, :temporal_concept),
         doc_as_upsert: true
       }
 
@@ -53,7 +50,7 @@ defmodule Argos.ElasticSearchIndexer do
   def index(%Project.Project{} = project) do
     payload =
       %{
-        doc: Map.put(project, :type, "project"),
+        doc: Map.put(project, :type, :project),
         doc_as_upsert: true
       }
 
@@ -62,15 +59,13 @@ defmodule Argos.ElasticSearchIndexer do
   end
 
   defp upsert(%{doc: %{type: type, id: id}} = data) do
-    id_encoded = Base.encode64(id)
-
-    Logger.info("Indexing #{type} #{id} as #{id_encoded}.")
+    Logger.info("Indexing #{type}-#{id}.")
 
     data_json =
       data
       |> Poison.encode!
 
-    "#{@base_url}/_update/#{id_encoded}"
+    "#{@base_url}/_update/#{type}-#{id}"
     |> HTTPoison.post!(
       data_json,
       @headers

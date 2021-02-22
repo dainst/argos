@@ -160,7 +160,7 @@ defmodule Argos.Data.Project do
     defp convert_to_struct(proj) do
       %{spatial: s, temporal: t, subject: c} = convert_linked_resources(proj)
       project = %Project{
-        id: proj["project_key"],
+        id: proj["id"],
         title:  create_translated_content_list(proj["titles"]),
         description: create_translated_content_list(proj["descriptions"]),
         start_date:

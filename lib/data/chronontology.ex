@@ -3,9 +3,10 @@ defmodule Argos.Data.Chronontology do
   defmodule TemporalConcept do
     alias Argos.Data.TranslatedContent
 
-    @enforce_keys [:uri, :label, :begin, :end]
-    defstruct [:uri, :label, :begin, :end]
+    @enforce_keys [:id, :uri, :label, :begin, :end]
+    defstruct [:id, :uri, :label, :begin, :end]
     @type t() :: %__MODULE__{
+      id: String.t(),
       uri: String.t(),
       label: TranslatedContent.t(),
       begin: integer(),
@@ -74,6 +75,7 @@ defmodule Argos.Data.Chronontology do
         end
 
       {:ok, %TemporalConcept{
+        id: data["resource"]["id"],
         uri: data["resource"]["uri"],
         label: create_translated_content_list( data["resource"]["names"]),
         begin: beginning,

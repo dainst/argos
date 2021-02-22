@@ -4,9 +4,10 @@ defmodule Argos.Data.Gazetteer do
     alias Geo
     alias Argos.Data.TranslatedContent
 
-    @enforce_keys [:uri, :label]
-    defstruct [:uri, :label, :geometry]
+    @enforce_keys [:id, :uri, :label]
+    defstruct [:id, :uri, :label, :geometry]
     @type t() :: %__MODULE__{
+      id: Integer.t(),
       uri: String.t(),
       label: [TranslatedContent.t()],
       geometry: [Geo.geometry()]
@@ -55,8 +56,9 @@ defmodule Argos.Data.Gazetteer do
     defp parse_place_data({:ok, data}) do
       place =
         %Place{
-          label: parse_names(data["names"]),
           uri: data["@id"],
+          id: data["gazId"],
+          label: parse_names(data["names"]),
           geometry: parse_geometries_as_geo_json(data["prefLocation"])
         }
 

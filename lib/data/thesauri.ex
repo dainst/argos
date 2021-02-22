@@ -3,9 +3,10 @@ defmodule Argos.Data.Thesauri do
   defmodule Concept do
     alias Argos.Data.TranslatedContent
 
-    @enforce_keys [:uri, :label]
-    defstruct [:uri, :label]
+    @enforce_keys [:id, :uri, :label]
+    defstruct [:id, :uri, :label]
     @type t() :: %__MODULE__{
+      id: String.t(),
       uri: String.t(),
       label: list(TranslatedContent.t()),
     }
@@ -60,10 +61,13 @@ defmodule Argos.Data.Thesauri do
         |> SweetXml.parse()
         |> xml_to_labels(id)
 
-      {:ok, %Concept{
-        label: labels,
-        uri: "#{@base_url}/#{id}"
-      }}
+      {
+        :ok, %Concept{
+          id: id,
+          uri: "#{@base_url}/#{id}",
+          label: labels
+        }
+      }
     end
 
     defp parse_concept_data({:error, _} = error, _id) do
