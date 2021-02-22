@@ -11,7 +11,7 @@ defmodule Argos.Data.Project do
     @enforce_keys [:label]
     defstruct [:label, :role, :uri, :type]
     @type t() :: %__MODULE__{
-      label: TranslatedContent.t(),
+      label: [TranslatedContent.t()],
       role: String.t(),
       uri: String.t(),
       type: String.t(),
@@ -33,7 +33,7 @@ defmodule Argos.Data.Project do
     @enforce_keys [:uri]
     defstruct [:uri, label: ""]
     @type t() :: %__MODULE__{
-      label: TranslatedContent.t(),
+      label: [TranslatedContent.t()],
       uri: String.t()
     }
   end
@@ -42,7 +42,7 @@ defmodule Argos.Data.Project do
     @enforce_keys [:uri]
     defstruct [:uri, label: "", role: "data"]
     @type t() :: %__MODULE__{
-      label: TranslatedContent.t(),
+      label: [TranslatedContent.t()],
       uri: String.t(),
       role: String.t()
     }
@@ -53,8 +53,8 @@ defmodule Argos.Data.Project do
     defstruct [:id, :title, description: %{}, doi: "", start_date: nil, end_date: nil, subject: [], spatial: [], temporal: [], images: [], stakeholders: [], external_links: [] ]
     @type t() :: %__MODULE__{
       id: String.t(),
-      title: TranslatedContent.t(),
-      description: TranslatedContent.t(),
+      title: [TranslatedContent.t()],
+      description: [TranslatedContent.t()],
       doi: String.t(),
       start_date: Date.t(),
       end_date: Date.t(),
@@ -130,24 +130,30 @@ defmodule Argos.Data.Project do
     end
 
     defp denormalize(%{"linked_resources" => lr} = proj) do
-      rich_res = get_linked_resources(lr)
-      Map.put(proj, "linked_resources", rich_res)
+        Map.put(proj, "linked_resources", get_linked_resources(lr))
     end
 
     defp get_linked_resources([] = res), do: res
-    defp get_linked_resources([_|_] = resources), do: Enum.map(resources, &get_linked_resources/1)
-    defp get_linked_resources(%{"linked_system" => "gazetteer", "res_id" => rid } = resource) do
+    defp get_linked_resources([_|_] = resources) do
+      resources
+      |> Enum.map(&get_linked_resource(&1))
+      |> Enum.reject(fn (val) ->
+        val == :unknown
+      end)
+    end
+
+    defp get_linked_resource(%{"linked_system" => "gazetteer", "res_id" => rid } = resource) do
       Gazetteer.DataProvider.get_by_id(rid) |> handle_response(resource)
     end
-    defp get_linked_resources(%{"linked_system" => "chronontology", "res_id" => rid } = resource) do
+    defp get_linked_resource(%{"linked_system" => "chronontology", "res_id" => rid } = resource) do
       Chronontology.DataProvider.get_by_id(rid) |> handle_response(resource)
     end
-    defp get_linked_resources(%{"linked_system" => "thesaurus", "res_id" => rid } = resource) do
+    defp get_linked_resource(%{"linked_system" => "thesaurus", "res_id" => rid } = resource) do
       Thesauri.DataProvider.get_by_id(rid) |> handle_response(resource)
     end
-    defp get_linked_resources(%{"linked_system" => unknown } = resource ) do
+    defp get_linked_resource(%{"linked_system" => unknown } ) do
       Logger.info("Unknown resource #{unknown}. Please provider matching data provider")
-      resource
+      :unknown
     end
 
     defp handle_response({:ok, res}, resource), do: Map.put(resource, :linked_data, res)
@@ -206,17 +212,18 @@ defmodule Argos.Data.Project do
 
     defp create_stakeholder(%{ "person" => %{"first_name" => p_fn, "last_name" => p_ln, "title" => tp, "orc_id" => orc_id }, "role" => role}) do
       name = create_name(tp, p_ln, p_fn)
-      %Stakeholder{label: %{default: name}, role: role, uri: orc_id, type: :person}
+      %Stakeholder{label: [%{default: name}], role: role, uri: orc_id, type: :person}
     end
 
     defp create_name("" = _tp, p_ln, p_fn), do: "#{p_ln}, #{p_fn}"
     defp create_name(tp, p_ln, p_fn), do: "#{tp} #{p_ln}, #{p_fn}"
 
     defp convert_linked_resources(%{"linked_resources" => linked_resources}) do
-      for %{:linked_data => _data, "descriptions" => desc} = res <- linked_resources do
+      linked_resources
+      |> Enum.map(fn (%{:linked_data => _data, "descriptions" => desc} = res) ->
         labels = create_translated_content_list(desc)
         {labels, res}
-      end
+      end)
       |> Enum.reduce(%{
         spatial: [],
         temporal: [],
@@ -228,10 +235,10 @@ defmodule Argos.Data.Project do
       Map.put(acc, :spatial, acc.spatial ++ [ %{label: labels, resource: lr.linked_data}])
     end
     defp put_resource({labels, %{"linked_system" => "chronontology"} = lr}, acc) do
-      Map.put(acc, :spatial, acc.temporal ++ [ %{label: labels, resource: lr.linked_data}])
+      Map.put(acc, :temporal, acc.temporal ++ [ %{label: labels, resource: lr.linked_data}])
     end
     defp put_resource({labels, %{"linked_system" => "thesaurus"} = lr}, acc) do
-      Map.put(acc, :spatial, acc.subject ++ [ %{label: labels, resource: lr.linked_data}])
+      Map.put(acc, :subject, acc.subject ++ [ %{label: labels, resource: lr.linked_data}])
     end
     defp put_resource(_, acc), do: acc
 
