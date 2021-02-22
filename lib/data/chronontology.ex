@@ -17,8 +17,6 @@ defmodule Argos.Data.Chronontology do
     @behaviour Argos.Data.AbstractDataProvider
     @base_url Application.get_env(:argos, :chronontology_url)
 
-    alias Argos.Data.TranslatedContent
-
     require Logger
 
     @impl Argos.Data.AbstractDataProvider
@@ -82,13 +80,14 @@ defmodule Argos.Data.Chronontology do
         end: ending
       }}
     end
-    defp create_translated_content_list(%{} = tlc_map), do: Enum.map(tlc_map, &create_translated_content_list/1)
-    defp create_translated_content_list({key, sub_list}), do: for val <- sub_list, do: %{lang: key, text: val}
-    defp create_translated_content_list([] = tlc_list), do: tlc_list
 
     defp parse_period_data(error) do
       error
     end
+
+    defp create_translated_content_list(%{} = tlc_map), do: Enum.map(tlc_map, &create_translated_content_list/1)
+    defp create_translated_content_list({key, sub_list}), do: for val <- sub_list, do: %{lang: key, text: val}
+    defp create_translated_content_list([] = tlc_list), do: tlc_list
 
     # def fetch!(query, offset, limit) do
     #   params = %{q: query, size: limit, from: offset}
