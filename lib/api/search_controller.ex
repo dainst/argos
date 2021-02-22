@@ -2,7 +2,7 @@ defmodule Argos.API.SearchController do
 
   @elasticsearch_url Application.get_env(:argos, :elasticsearch_url)
 
-  def run(conn) do
+  def search(conn) do
     query =
       conn
       |> build_query
@@ -52,7 +52,6 @@ defmodule Argos.API.SearchController do
   defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
     Poison.decode! body
   end
-
 
   defp get_query_parameter(params, key, default) do
     if Map.has_key?(params, key) do
