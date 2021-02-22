@@ -11,55 +11,68 @@ defmodule Argos.ElasticSearchIndexer do
   def index(%Thesauri.Concept{} = concept) do
     payload =
       %{
-        doc: concept,
+        doc:
+          concept
+          |> Map.put(:id, concept.uri)
+          |> Map.put(:type, "concept"),
         doc_as_upsert: true
       }
-      |> Poison.encode!()
 
-    upsert(payload, concept.uri)
+    upsert(payload)
     |> parse_response!()
   end
 
   def index(%Gazetteer.Place{} = place) do
     payload =
       %{
-        doc: place,
+        doc:
+          place
+          |> Map.put(:id, place.uri)
+          |> Map.put(:type, "place"),
         doc_as_upsert: true
       }
-      |> Poison.encode!()
 
-    upsert(payload, place.uri)
+    upsert(payload)
     |> parse_response!()
   end
 
   def index(%Chronontology.TemporalConcept{} = temporal_concept) do
     payload =
       %{
-        doc: temporal_concept,
+        doc:
+          temporal_concept
+          |> Map.put(:id, temporal_concept.uri)
+          |> Map.put(:type, "temporal_concept"),
         doc_as_upsert: true
       }
-      |> Poison.encode!()
 
-    upsert(payload, temporal_concept.uri)
+    upsert(payload)
     |> parse_response!()
   end
 
   def index(%Project.Project{} = project) do
     payload =
       %{
-        doc: project,
+        doc: Map.put(project, :type, "project"),
         doc_as_upsert: true
       }
-      |> Poison.encode!
-      Logger.info("Upserting project with id #{project.id}")
-      upsert(payload, project.id)
+
+      upsert(payload)
       |> parse_response!()
   end
 
-  defp upsert(data, id) do
-    "#{@base_url}/_update/#{id}"
+  defp upsert(%{doc: %{type: type, id: id}} = data) do
+    id_encoded = Base.encode64(id)
+
+    Logger.info("Indexing #{type} #{id} as #{id_encoded}.")
+
+    data_json =
+      data
+      |> Poison.encode!
+
+    "#{@base_url}/_update/#{id_encoded}"
     |> HTTPoison.post!(
-      data,
+      data_json,
       @headers
     )
   end
