@@ -74,11 +74,20 @@ defmodule Argos.Data.Gazetteer do
 
     defp parse_names(names) do
       names
-      |> Enum.map(fn (%{"language" => lang, "title" => title}) ->
-        %TranslatedContent{
-          lang: lang,
-          text: title
-        }
+      |> Enum.map(fn (entry) ->
+        case entry do
+          %{"language" => lang, "title" => title} ->
+            %TranslatedContent{
+              lang: lang,
+              text: title
+            }
+          %{"title" => title} ->
+            %TranslatedContent{
+              lang: "",
+              text: title
+            }
+        end
+
       end)
     end
 
