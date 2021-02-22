@@ -213,7 +213,7 @@ defmodule Argos.Data.Project do
     defp create_name(tp, p_ln, p_fn), do: "#{tp} #{p_ln}, #{p_fn}"
 
     defp convert_linked_resources(%{"linked_resources" => linked_resources}) do
-      for %{:linked_data => _data, "description" => desc} = res <- linked_resources do
+      for %{:linked_data => _data, "descriptions" => desc} = res <- linked_resources do
         labels = create_translated_content_list(desc)
         {labels, res}
       end
