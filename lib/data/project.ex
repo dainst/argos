@@ -163,8 +163,20 @@ defmodule Argos.Data.Project do
         id: proj["project_key"],
         title:  create_translated_content_list(proj["titles"]),
         description: create_translated_content_list(proj["descriptions"]),
-        start_date: Date.from_iso8601!(proj["starts_at"]),
-        end_date: Date.from_iso8601!(proj["ends_at"]),
+        start_date:
+        case proj["starts_at"] do
+          nil ->
+            nil
+          val ->
+            Date.from_iso8601!(val)
+        end,
+        end_date:
+        case proj["ends_at"] do
+          nil ->
+            nil
+          val ->
+            Date.from_iso8601(val)
+        end,
         doi: get_doi(proj),
         spatial: s,
         temporal: t,
