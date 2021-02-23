@@ -74,59 +74,82 @@ defmodule Argos.Data.Project do
 
     @impl Argos.Data.AbstractDataProvider
     def get_all() do
-      query_projects("#{@base_url}/api/projects")
+      "#{@base_url}/api/projects"
+      |> get_project_list()
     end
 
     @impl Argos.Data.AbstractDataProvider
     def get_by_date(%Date{} = date) do
-      query = URI.encode_query(%{ since: Date.to_string(date) })
-      url = "#{@base_url}/api/projects?#{query}"
-      query_projects(url)
+      query =
+        URI.encode_query(%{
+          since: Date.to_string(date)
+        })
+
+      "#{@base_url}/api/projects?#{query}"
+      |> get_project_list()
     end
     def get_by_date(%DateTime{} = date) do
-      query = URI.encode_query(%{ since: DateTime.to_naive(date) })
-      url = "#{@base_url}/api/projects?#{query}"
-      query_projects(url)
-    end
-    def get_by_date(date) when is_binary(date) do
-      parse_date(date)
-      |> get_by_date
+      query =
+        URI.encode_query(%{
+          since: DateTime.to_naive(date)
+        })
+
+      "#{@base_url}/api/projects?#{query}"
+      |> get_project_list()
     end
 
-    defp query_projects(url) do
-      Logger.info("Running projects harvest at #{url}.")
-      %{"data" => data} =
+    defp get_project_list(url) do
+      result =
         url
-        |> HTTPoison.get
-        |> handle_result
-      # TODO: Switch to project code after Erga got updated
-      ProjectParser.parse_project(data)
-    end
+        |> HTTPoison.get()
+        |> handle_result()
 
-
-    defp parse_date(date_string) do
-      {:ok, date} = Date.from_iso8601(date_string)
-      date
+      case result do
+        {:ok, data} ->
+          data
+          |> Enum.map(&ProjectParser.parse_project(&1))
+        {:error, _ } ->
+          []
+      end
     end
 
     @impl Argos.Data.AbstractDataProvider
     def get_by_id(id) do
-      url = "#{@base_url}/api/projects/#{id}"
-      query_projects(url)
+      result =
+        "#{@base_url}/api/projects/#{id}"
+        |> HTTPoison.get()
+        |> handle_result()
+
+      case result do
+        {:ok, data} ->
+          ProjectParser.parse_project(data)
+        {:error, reason } ->
+          {:error, reason}
+      end
     end
 
-    defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}} = _response), do: Poison.decode!(body)
-    defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}) do
-      Logger.warn("No connection")
-      exit("no connection to Erga server.")
+    defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}} = _response) do
+      case Poison.decode(body) do
+        {:ok, data} ->
+          {:ok, data["data"]}
+        {:error, reason} ->
+          {:error, reason}
+      end
     end
-    defp handle_result(call), do: Logger.error("Cannot process result: #{call}")
+    defp handle_result({_, %HTTPoison.Response{status_code: 404}}) do
+      {:error, 404}
+    end
+    defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}) do
+      Logger.error("No connection to #{@base_url}")
+      {:error, :econnrefused}
+    end
   end
 
   defmodule ProjectParser do
     def parse_project(data) do
-      Enum.map(data, &denormalize/1)
-      |> Enum.map(&convert_to_struct/1)
+      data
+      |> denormalize()
+      |> convert_to_struct()
     end
 
     defp denormalize(%{"linked_resources" => lr} = proj) do
@@ -296,9 +319,5 @@ defmodule Argos.Data.Project do
       DataProvider.get_by_date(datetime)
       |> Enum.each(&ElasticSearchIndexer.index/1)
     end
-
   end
-
-
-  # TODO: Handle error results
 end
