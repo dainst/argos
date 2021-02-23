@@ -147,13 +147,18 @@ defmodule Argos.Data.Project do
 
   defmodule ProjectParser do
     def parse_project(data) do
-      data
-      |> denormalize()
+      denormalized_lr =
+        data["linked_resources"]
+        |> denormalize_linked_resources()
+
+      {data, denormalized_lr}
       |> convert_to_struct()
     end
 
-    defp denormalize(%{"linked_resources" => lr} = proj) do
-        Map.put(proj, "linked_resources", get_linked_resources(lr))
+    defp denormalize_linked_resources(lr) do
+      lr
+      |> get_linked_resources()
+      |> convert_linked_resources()
     end
 
     defp get_linked_resources([] = res), do: res
@@ -166,28 +171,32 @@ defmodule Argos.Data.Project do
     end
 
     defp get_linked_resource(%{"linked_system" => "gazetteer", "res_id" => rid } = resource) do
-      Gazetteer.DataProvider.get_by_id(rid) |> handle_response(resource)
+      Gazetteer.DataProvider.get_by_id(rid)
+      |> handle_response(resource)
     end
     defp get_linked_resource(%{"linked_system" => "chronontology", "res_id" => rid } = resource) do
-      Chronontology.DataProvider.get_by_id(rid) |> handle_response(resource)
+      Chronontology.DataProvider.get_by_id(rid)
+      |> handle_response(resource)
     end
     defp get_linked_resource(%{"linked_system" => "thesaurus", "res_id" => rid } = resource) do
-      Thesauri.DataProvider.get_by_id(rid) |> handle_response(resource)
+      Thesauri.DataProvider.get_by_id(rid)
+      |> handle_response(resource)
     end
     defp get_linked_resource(%{"linked_system" => unknown } ) do
       Logger.info("Unknown resource #{unknown}. Please provider matching data provider")
       :unknown
     end
 
-    defp handle_response({:ok, res}, resource), do: Map.put(resource, :linked_data, res)
+    defp handle_response({:ok, res}, resource) do
+      Map.put(resource, :linked_data, res)
+    end
     defp handle_response({:error, err}, resource) do
       Logger.error(err)
       # TODO mark as retry candidate
       resource
     end
 
-    defp convert_to_struct(proj) do
-      %{spatial: s, temporal: t, subject: c} = convert_linked_resources(proj)
+    defp convert_to_struct({proj, %{spatial: s, temporal: t, subject: c}}) do
       project = %Project{
         id: proj["id"],
         title:  create_translated_content_list(proj["titles"]),
@@ -241,7 +250,7 @@ defmodule Argos.Data.Project do
     defp create_name("" = _tp, p_ln, p_fn), do: "#{p_ln}, #{p_fn}"
     defp create_name(tp, p_ln, p_fn), do: "#{tp} #{p_ln}, #{p_fn}"
 
-    defp convert_linked_resources(%{"linked_resources" => linked_resources}) do
+    defp convert_linked_resources(linked_resources) do
       linked_resources
       |> Enum.map(fn (%{:linked_data => _data, "descriptions" => desc} = res) ->
         labels = create_translated_content_list(desc)
@@ -263,7 +272,6 @@ defmodule Argos.Data.Project do
     defp put_resource({labels, %{"linked_system" => "thesaurus"} = lr}, acc) do
       Map.put(acc, :subject, acc.subject ++ [ %{label: labels, resource: lr.linked_data}])
     end
-    defp put_resource(_, acc), do: acc
 
     @spec create_translated_content_list(List.t()) :: [TranslatedContent.t()]
     def create_translated_content_list([%{"language_code" => _, "content" => _}|_] = tlc_list)  do
