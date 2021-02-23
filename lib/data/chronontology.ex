@@ -27,7 +27,7 @@ defmodule Argos.Data.Chronontology do
 
     @impl Argos.Data.AbstractDataProvider
     def get_by_id(id) do
-      HTTPoison.get("#{@base_url}/period/#{id}")
+      HTTPoison.get("#{@base_url}/data/period/#{id}")
       |> parse_response()
       |> parse_period_data()
     end
@@ -76,7 +76,7 @@ defmodule Argos.Data.Chronontology do
 
       {:ok, %TemporalConcept{
         id: data["resource"]["id"],
-        uri: data["resource"]["uri"],
+        uri: "#{@base_url}/period/#{data["resource"]["id"]}",
         label: create_translated_content_list( data["resource"]["names"]),
         begin: beginning,
         end: ending
