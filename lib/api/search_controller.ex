@@ -52,6 +52,11 @@ defmodule Argos.API.SearchController do
       |> Map.get("filter", [])
       |> parse_filters
 
+    must_not =
+      conn.params
+      |> Map.get("!filter", [])
+      |> parse_filters
+
     %{
       query: %{
         bool: %{
@@ -61,7 +66,7 @@ defmodule Argos.API.SearchController do
             }
           },
           filter: filters,
-          must_not: []
+          must_not: must_not
         }
       },
       size: size,
