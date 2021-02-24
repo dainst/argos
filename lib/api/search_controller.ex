@@ -70,12 +70,17 @@ defmodule Argos.API.SearchController do
         }
       },
       size: size,
-      from: from
+      from: from,
+      aggs: get_default_filters()
     }
   end
 
   defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
-    Poison.decode(body)
+    data =
+      body
+      |> Poison.decode()
+      |> transform_elasticsearch_response()
+    {:ok, data}
   end
 
   defp parse_filters([]) do
@@ -88,5 +93,64 @@ defmodule Argos.API.SearchController do
     |> Enum.map(fn [key, val] ->
       %{"term" => %{key => val}}
     end)
+  end
+
+  defp transform_elasticsearch_response({:ok, es_response}) do
+    results =
+      case es_response do
+        %{"hits" => %{"hits" => list}} ->
+          list
+          |> Enum.map(fn hit ->
+            hit["_source"]
+          end)
+        _ ->
+          []
+      end
+
+      filters =
+        es_response["aggregations"]
+        |> Enum.map(fn ({name, content}) ->
+          values =
+            content["buckets"]
+            |> Enum.map(fn (%{"doc_count" => count, "key" => key}) ->
+              %{
+                key: key,
+                count: count
+              }
+            end)
+          %{
+            key: name,
+            values: values
+          }
+        end)
+
+    %{
+      results: results,
+      filters: filters
+    }
+  end
+
+  def get_default_filters() do
+    %{
+      type: %{
+        terms: %{ field: "type" }
+      },
+      "spatial.resource.id": %{
+        terms: %{
+          field: "spatial.resource.id"
+        }
+      },
+      "temporal.resource.id": %{
+        terms: %{
+          field: "temporal.resource.id",
+        }
+      },
+      "concept.resource.id": %{
+        terms: %{ field: "subject.resource.id"}
+      },
+      "stakeholders.uri": %{
+        terms: %{ field: "stakeholders.uri"}
+      }
+    }
   end
 end

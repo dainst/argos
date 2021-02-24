@@ -1,6 +1,9 @@
 {
     "properties": {
-        "concept": {
+        "type": {
+            "type": "keyword"
+        },
+        "subject": {
             "type": "flattened"
         },
         "spatial": {
