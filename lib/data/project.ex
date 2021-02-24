@@ -50,7 +50,7 @@ defmodule Argos.Data.Project do
 
   defmodule Project do
     @enforce_keys [:id, :title]
-    defstruct [:id, :title, description: %{}, doi: "", start_date: nil, end_date: nil, subject: [], spatial: [], temporal: [], images: [], stakeholders: [], external_links: [] ]
+    defstruct [:id, :title, description: [], doi: "", start_date: nil, end_date: nil, subject: [], spatial: [], temporal: [], images: [], stakeholders: [], external_links: [] ]
     @type t() :: %__MODULE__{
       id: String.t(),
       title: [TranslatedContent.t()],
@@ -142,6 +142,10 @@ defmodule Argos.Data.Project do
     defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}) do
       Logger.error("No connection to #{@base_url}")
       {:error, :econnrefused}
+    end
+    defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :timeout}}) do
+      Logger.error("Tomeout for #{@base_url}")
+      {:error, :timeout}
     end
   end
 
