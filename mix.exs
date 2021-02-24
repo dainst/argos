@@ -17,7 +17,9 @@ defmodule Argos.MixProject do
   def application do
     [
       mod: {Argos.Application, []},
-      extra_applications: [:logger],
+      extra_applications: [
+        :logger
+        ],
       remix: [:remix]
     ]
   end
@@ -28,8 +30,8 @@ defmodule Argos.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:plug_cowboy, "~> 2.0"},
-      {:poison, "~> 3.0"},
+      {:plug_cowboy, "~> 2.4"},
+      {:poison, "~> 4.0"},
       {:httpoison, "~> 1.6.2"},
       {:remix, "~> 0.0.1", only: :dev},
       {:tzdata, "~> 1.0.4"},
