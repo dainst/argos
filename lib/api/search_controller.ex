@@ -102,8 +102,8 @@ defmodule Argos.API.SearchController do
       case es_response do
         %{"hits" => %{"hits" => list}} ->
           list
-          |> Enum.map(fn hit ->
-            hit["_source"]
+          |> Enum.map(fn(hit) ->
+            Map.merge(%{"_id" => hit["_id"]}, hit["_source"])
           end)
         _ ->
           []
