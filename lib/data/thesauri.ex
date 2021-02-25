@@ -18,6 +18,7 @@ defmodule Argos.Data.Thesauri do
 
     alias Argos.Data.TranslatedContent
     import SweetXml
+    require Logger
 
     @doc """
     Retrieves the XML for a given thesauri id.
@@ -83,6 +84,26 @@ defmodule Argos.Data.Thesauri do
           text: xpath(pref_label, ~x(./text(\))s)
         }
       end)
+      |> case do
+        [] ->
+          xml
+          |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skosxl:literalForm)l)
+          |> Enum.map(fn(pref_label) ->
+            %TranslatedContent{
+              lang: xpath(pref_label, ~x(./@xml:lang)s),
+              text: xpath(pref_label, ~x(./text(\))s)
+            }
+      end)
+        val ->
+          val
+      end
+      |> case do
+        [] ->
+          Logger.warning("No labels found for concept #{@base_url}/#{id}.")
+          []
+        val ->
+          val
+      end
     end
   end
 
