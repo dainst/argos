@@ -10,8 +10,8 @@ use Mix.Config
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
 config :argos,
-
   elasticsearch_url: "localhost:9200/argos",
+  elasticsearch_mapping_path: "priv/elasticsearch-mapping.json",
 
   projects_url: "http://projects.dainst.org",
   projects_harvest_interval: 1000 * 60 * 30, # 30 minutes

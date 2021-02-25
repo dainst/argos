@@ -1,11 +1,18 @@
 require Logger
 
-defmodule CLI do
-  def parse_arguments(["--script"]) do
-    {:ok}
+defmodule Argos.Data.ProjectCLI do
+
+  def run() do
+    Argos.Data.Project.Harvester.run_harvest()
   end
 
-  def parse_arguments(["--script", date_string]) do
+  def run(date_string) do
+    date_string
+    |> parse_arguments()
+    |> handle_arguments()
+  end
+
+  def parse_arguments(date_string) do
     case DateTime.from_iso8601(date_string) do
       {:ok, _datetime} = result ->
         result
@@ -19,10 +26,6 @@ defmodule CLI do
     end
   end
 
-  def handle_arguments({:ok}) do
-    Argos.Data.Project.Harvester.run_harvest()
-  end
-
   def handle_arguments({:ok, date, _offset}) do
     Argos.Data.Project.Harvester.run_harvest(date)
   end
@@ -32,7 +35,3 @@ defmodule CLI do
   end
 
 end
-
-System.argv
-|> CLI.parse_arguments
-|> CLI.handle_arguments

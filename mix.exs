@@ -45,10 +45,10 @@ defmodule Argos.MixProject do
   defp aliases do
     [
       "update-mapping": [
-        "run priv/update-mapping.exs --script"
+        "run --eval 'Argos.Release.update_mapping()' -- --script"
       ],
       "seed.projects": [
-        "run lib/data/projects.exs --script"
+        "run --eval 'Argos.Data.ProjectCLI.run()' -- --script"
       ]
     ]
   end
