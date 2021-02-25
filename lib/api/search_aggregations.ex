@@ -59,12 +59,12 @@ defmodule Argos.API.SearchAggregations do
     }
   end
 
-  def transform_aggregations(aggregations) do
+  def reshape_search_result_aggregations(aggregations) do
     aggregations
     |> Enum.map(fn ({name, content}) ->
       values =
         content["buckets"]
-        |> Enum.map(&transform_aggregation_bucket(name, &1))
+        |> Enum.map(&reshape_aggregation_bucket(name, &1))
       %{
         key: name,
         values: values
@@ -72,7 +72,7 @@ defmodule Argos.API.SearchAggregations do
     end)
   end
 
-  defp transform_aggregation_bucket(
+  defp reshape_aggregation_bucket(
     aggregation_name,
     %{
       "doc_count" => count,
@@ -85,9 +85,9 @@ defmodule Argos.API.SearchAggregations do
         }
       }
     }) do
-      values_by_example(aggregation_name, count, key, example)
+      reshape_bucket_values_by_example(aggregation_name, count, key, example)
   end
-  defp transform_aggregation_bucket(
+  defp reshape_aggregation_bucket(
     _name,
     %{"doc_count" => count, "key" => key}
     ) do
@@ -97,7 +97,7 @@ defmodule Argos.API.SearchAggregations do
     }
   end
 
-  defp values_by_example("spatial.resource.id", count, id, %{"spatial" => resource_list}) do
+  defp reshape_bucket_values_by_example("spatial.resource.id", count, id, %{"spatial" => resource_list}) do
     place =
       resource_list
       |> Enum.map(fn (%{"resource" => place}) ->
@@ -110,8 +110,7 @@ defmodule Argos.API.SearchAggregations do
 
     %{key: id, count: count, labels: place["label"]}
   end
-
-  defp values_by_example("subject.resource.id", count, id, %{"subject" => resource_list}) do
+  defp reshape_bucket_values_by_example("subject.resource.id", count, id, %{"subject" => resource_list}) do
     concept =
       resource_list
       |> Enum.map(fn (%{"resource" => concept}) ->
@@ -124,8 +123,7 @@ defmodule Argos.API.SearchAggregations do
 
     %{key: id, count: count, labels: concept["label"]}
   end
-
-  defp values_by_example("temporal.resource.id", count, id, %{"temporal" => resource_list}) do
+  defp reshape_bucket_values_by_example("temporal.resource.id", count, id, %{"temporal" => resource_list}) do
     temporal_concept =
       resource_list
       |> Enum.map(fn (%{"resource" => temporal_concept}) ->
@@ -138,8 +136,7 @@ defmodule Argos.API.SearchAggregations do
 
     %{key: id, count: count, labels: temporal_concept["label"]}
   end
-
-  defp values_by_example("stakeholders.uri", count, uri, %{"stakeholders" => stakeholders}) do
+  defp reshape_bucket_values_by_example("stakeholders.uri", count, uri, %{"stakeholders" => stakeholders}) do
     stakeholder =
       stakeholders
       |> Enum.filter(fn(stakeholder) ->
@@ -149,9 +146,8 @@ defmodule Argos.API.SearchAggregations do
 
     %{key: uri, count: count, labels: stakeholder["label"]}
   end
-
-  defp values_by_example(aggregation_name, _count, _key, example) do
-    Logger.warning("Unknown aggregation name or example while trying to create value:#{aggregation_name}. Example provided:")
+  defp reshape_bucket_values_by_example(aggregation_name, _count, _key, example) do
+    Logger.warning("Unknown aggregation name or example while trying to generate output value: #{aggregation_name}. Example provided:")
     Logger.warning(example)
   end
 end

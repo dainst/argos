@@ -111,7 +111,7 @@ defmodule Argos.API.SearchController do
 
       filters =
         es_response["aggregations"]
-        |> SearchAggregations.transform_aggregations()
+        |> SearchAggregations.reshape_search_result_aggregations()
 
     %{
       results: results,
