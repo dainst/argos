@@ -91,10 +91,7 @@ defmodule Argos.API.SearchAggregations do
     _name,
     %{"doc_count" => count, "key" => key}
     ) do
-    %{
-      key: key,
-      count: count
-    }
+    %{ key: key, count: count, label: []}
   end
 
   defp reshape_bucket_values_by_example("spatial.resource.id", count, id, %{"spatial" => resource_list}) do
@@ -108,7 +105,7 @@ defmodule Argos.API.SearchAggregations do
       end)
       |> List.first()
 
-    %{key: id, count: count, labels: place["label"]}
+    %{key: id, count: count, label: place["label"]}
   end
   defp reshape_bucket_values_by_example("subject.resource.id", count, id, %{"subject" => resource_list}) do
     concept =
@@ -121,7 +118,7 @@ defmodule Argos.API.SearchAggregations do
       end)
       |> List.first()
 
-    %{key: id, count: count, labels: concept["label"]}
+    %{key: id, count: count, label: concept["label"]}
   end
   defp reshape_bucket_values_by_example("temporal.resource.id", count, id, %{"temporal" => resource_list}) do
     temporal_concept =
@@ -134,7 +131,7 @@ defmodule Argos.API.SearchAggregations do
       end)
       |> List.first()
 
-    %{key: id, count: count, labels: temporal_concept["label"]}
+    %{key: id, count: count, label: temporal_concept["label"]}
   end
   defp reshape_bucket_values_by_example("stakeholders.uri", count, uri, %{"stakeholders" => stakeholders}) do
     stakeholder =
@@ -144,7 +141,7 @@ defmodule Argos.API.SearchAggregations do
       end)
       |> List.first()
 
-    %{key: uri, count: count, labels: stakeholder["label"]}
+    %{key: uri, count: count, label: stakeholder["label"]}
   end
   defp reshape_bucket_values_by_example(aggregation_name, _count, _key, example) do
     Logger.warning("Unknown aggregation name or example while trying to generate output value: #{aggregation_name}. Example provided:")
