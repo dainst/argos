@@ -2,18 +2,27 @@
     "properties": {
         "type": {
             "type": "keyword"
-        },
-        "subject": {
-            "type": "flattened"
-        },
-        "spatial": {
-            "type": "flattened" 
-        }, 
-        "temporal": {
-            "type": "flattened"
-        },
-        "stakeholders": {
-            "type": "flattened"
         }
-    }
+    },
+    "dynamic_templates": 
+    [
+        {
+            "resourceId": {
+                "path_match": "*.resource.id",
+                "mapping": {
+                    "type": "keyword",
+                    "store": true
+                }
+            }
+        },
+        {
+            "uri": {
+                "path_match": "*.uri",
+                "mapping": {
+                    "type": "keyword",
+                    "store": true
+                }
+            }
+        }
+    ]
 }
