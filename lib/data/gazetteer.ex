@@ -54,11 +54,19 @@ defmodule Argos.Data.Gazetteer do
     end
 
     defp parse_place_data({:ok, data}) do
+      names =
+        case data["names"] do
+          nil ->
+            []
+          names ->
+            names
+        end
+
       place =
         %Place{
           uri: data["@id"],
           id: data["gazId"],
-          label: parse_names(data["names"]),
+          label: parse_names([data["prefName"]] ++ names),
           geometry: parse_geometries_as_geo_json(data["prefLocation"])
         }
 
@@ -67,11 +75,6 @@ defmodule Argos.Data.Gazetteer do
 
     defp parse_place_data(error) do
       error
-    end
-
-
-    defp parse_names(nil) do
-      []
     end
 
     defp parse_names(names) do
