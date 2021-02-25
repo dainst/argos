@@ -4,6 +4,8 @@ defmodule Argos.API.SearchController do
 
   import Plug.Conn
 
+  alias Argos.API.SearchAggregations
+
   def search(conn) do
     query =
       conn
@@ -71,7 +73,7 @@ defmodule Argos.API.SearchController do
       },
       size: size,
       from: from,
-      aggs: get_default_filters()
+      aggs: SearchAggregations.aggregation_definitions()
     }
   end
 
@@ -109,48 +111,11 @@ defmodule Argos.API.SearchController do
 
       filters =
         es_response["aggregations"]
-        |> Enum.map(fn ({name, content}) ->
-          values =
-            content["buckets"]
-            |> Enum.map(fn (%{"doc_count" => count, "key" => key}) ->
-              %{
-                key: key,
-                count: count
-              }
-            end)
-          %{
-            key: name,
-            values: values
-          }
-        end)
+        |> SearchAggregations.transform_aggregations()
 
     %{
       results: results,
       filters: filters
-    }
-  end
-
-  def get_default_filters() do
-    %{
-      type: %{
-        terms: %{ field: "type" }
-      },
-      "spatial.resource.id": %{
-        terms: %{
-          field: "spatial.resource.id"
-        }
-      },
-      "temporal.resource.id": %{
-        terms: %{
-          field: "temporal.resource.id",
-        }
-      },
-      "concept.resource.id": %{
-        terms: %{ field: "subject.resource.id"}
-      },
-      "stakeholders.uri": %{
-        terms: %{ field: "stakeholders.uri"}
-      }
     }
   end
 end
