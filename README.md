@@ -2,13 +2,12 @@
 
 **TODO: Add description**
 
-## Installation
+## Development
 
+Install dependencies
 ```
 mix deps.get
 ```
-
-## Development
 
 Start dockerized Elasticsearch on http://localhost:9200 using
 ```bash
@@ -36,24 +35,24 @@ If Elasticsearch fails to create files on startup, try chown in data/elasticsear
 
 ## Deployment
 
-### 1. __Locally__, build an updated docker image
+1. __Locally__, build an updated docker image
 
 ```bash
 docker build -t dainst/argos:latest .
 ```
 
-### 2.  __Locally__, push the new docker image to dockerhub:
+2.  __Locally__, push the new docker image to dockerhub:
 ```bash
 docker push dainst/argos:latest
 ```
 
-### 3. __Serverside__, pull the newest image
+3. __Serverside__, pull the newest image
 
 ```bash
 docker pull dainst/argos:latest
 ```
 
-### 4. __Serverside__, if you need the newest [ES mapping](https://github.com/dainst/argos/blob/main/priv/elasticsearch-mapping.json), update the repository
+4. __Serverside__, if you need the newest [ES mapping](https://github.com/dainst/argos/blob/main/priv/elasticsearch-mapping.json), update the repository
 
 ```bash
 sudo git -C /usr/local/src/argos pull
@@ -61,12 +60,12 @@ sudo git -C /usr/local/src/argos pull
 
 The current setup of cloning/pulling the complete repository on the deployment machine, just for the newest ES mapping and the docker-compose.prod.yml, is somewhat overkill. We could switch to just copying those files to a designated place?
 
-### 5. __Serverside__, restart the service
+5. __Serverside__, restart the service
 ```bash
 sudo systemctl restart argos
 ```
 
-### 6. __Serverside__, run release [functions](lib/release.ex) as required by your recent changes
+6. __Serverside__, run release [functions](lib/release.ex) as required by your recent changes
 For example, you can update the ES mapping and reindex all projects by running:
 ```
 docker exec -it argos-app /app/bin/argos eval "Argos.Release.update_mapping()"
