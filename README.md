@@ -63,7 +63,7 @@ sudo systemctl restart argos
 ```
 
 ### 6. __Serverside__, run release [functions](lib/release.ex) as required by your recent changes
-For example, you can update the ES mapping and reindex all projectes by running:
+For example, you can update the ES mapping and reindex all projects by running:
 ```
 docker exec -it argos-app /app/bin/argos eval "Argos.Release.update_mapping()"
 docker exec -it argos-app /app/bin/argos eval "Argos.Release.seed_projects()"
