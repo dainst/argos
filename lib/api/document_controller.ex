@@ -10,8 +10,8 @@ defmodule Argos.API.DocumentController do
       |> handle_result()
 
     case response do
-      {:ok, val} ->
-        send_resp(conn, 200, Poison.encode!(val))
+      {:ok, %{"_source" => doc} = _val} ->
+        send_resp(conn, 200, Poison.encode!(doc))
       {:error, 404} ->
         send_resp(conn, 404, Poison.encode!(%{message: "document not found"}))
     end
