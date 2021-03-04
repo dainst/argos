@@ -20,11 +20,15 @@ Run the cowboy server (harvesting scripts and search endpoint on http://localhos
 mix run --no-halt
 ```
 
-Running individual exs scripts for data import (example)
+Add ES mapping project data
 ```bash
-mix run lib/harvesting/projects.exs --script 2020-01-10
+mix update-mapping
 ```
-The `--script` option is required to prevent mix trying to start the application (again).
+
+Seed project data
+```bash
+mix seed.projects
+```
 
 ### Troubleshooting
 
