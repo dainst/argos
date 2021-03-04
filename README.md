@@ -52,7 +52,7 @@ docker pull dainst/argos:latest
 ### 4. __Serverside__, if you need the newest [ES mapping](https://github.com/dainst/argos/blob/main/priv/elasticsearch-mapping.json), update the repository
 
 ```bash
-sudo git -C /usr/local/src/argos pull <git remote>
+sudo git -C /usr/local/src/argos pull
 ```
 
 The current setup of cloning/pulling the complete repository on the deployment machine, just for the newest ES mapping and the docker-compose.prod.yml, is somewhat overkill. We could switch to just copying those files to a designated place?
