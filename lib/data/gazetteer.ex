@@ -29,7 +29,7 @@ defmodule Argos.Data.Gazetteer do
 
     @impl Argos.Data.AbstractDataProvider
     def get_by_id(id) do
-      "#{@base_url}/doc/#{id}.json"
+      "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true"
       |> HTTPoison.get()
       |> parse_response()
       |> parse_place_data()
@@ -160,7 +160,7 @@ defmodule Argos.Data.Gazetteer do
     # end
 
     # defp search_url do
-    #   "#{@base_url}"  <> "/search.json"
+    #   "#{@base_url}"  <> "/search.json?shortLanguageCodes=true"
     # end
 
     # defp response_unwrap(%HTTPoison.Response{status_code: 200, body: body}) do
