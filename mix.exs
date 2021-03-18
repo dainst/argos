@@ -17,11 +17,7 @@ defmodule Argos.MixProject do
   #
   # Run "mix help deps" for examples and options.
   defp deps do
-    [
-      {:poison, "~> 4.0"},
-      {:httpoison, "~> 1.6.2"},
-      {:remix, "~> 0.0.1", only: :dev}
-    ]
+    []
   end
 
   defp aliases do
