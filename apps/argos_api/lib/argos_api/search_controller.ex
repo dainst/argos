@@ -1,10 +1,10 @@
-defmodule Argos.API.SearchController do
+defmodule ArgosAPI.SearchController do
 
-  @elasticsearch_url Application.get_env(:argos, :elasticsearch_url)
+  @elasticsearch_url Application.get_env(:argos_data, :elasticsearch_url)
 
   import Plug.Conn
 
-  alias Argos.API.SearchAggregations
+  alias ArgosAPI.SearchAggregations
 
   def search(conn) do
     query =

@@ -1,6 +1,6 @@
 use Mix.Config
 
-config :argos,
+config :argos_api,
   elasticsearch_url: "localhost:9200/argos"
 
   # projects_url: "ocalhost:4000",

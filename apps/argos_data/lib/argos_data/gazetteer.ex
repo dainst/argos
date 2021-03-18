@@ -1,8 +1,8 @@
-defmodule Argos.Data.Gazetteer do
+defmodule ArgosData.Gazetteer do
 
   defmodule Place do
     alias Geo
-    alias Argos.Data.TranslatedContent
+    alias ArgosData.TranslatedContent
 
     @enforce_keys [:id, :uri, :label]
     defstruct [:id, :uri, :label, :geometry]
@@ -17,17 +17,17 @@ defmodule Argos.Data.Gazetteer do
   require Logger
 
   defmodule DataProvider do
-    @base_url Application.get_env(:argos, :gazetteer_url)
-    @behaviour Argos.Data.AbstractDataProvider
+    @base_url Application.get_env(:argos_data, :gazetteer_url)
+    @behaviour ArgosData.AbstractDataProvider
 
-    alias Argos.Data.TranslatedContent
+    alias ArgosData.TranslatedContent
 
-    @impl Argos.Data.AbstractDataProvider
+    @impl ArgosData.AbstractDataProvider
     def get_all() do
       []
     end
 
-    @impl Argos.Data.AbstractDataProvider
+    @impl ArgosData.AbstractDataProvider
     def get_by_id(id) do
       "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true"
       |> HTTPoison.get()
@@ -35,7 +35,7 @@ defmodule Argos.Data.Gazetteer do
       |> parse_place_data()
     end
 
-    @impl Argos.Data.AbstractDataProvider
+    @impl ArgosData.AbstractDataProvider
     def get_by_date(%Date{} = _date) do
       []
     end

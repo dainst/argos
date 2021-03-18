@@ -7,6 +7,6 @@
 # General application configuration
 use Mix.Config
 
-config :argos,
+config :argos_api,
   elasticsearch_url: "elasticsearch:9200/argos",
   elasticsearch_mapping_path: "/elasticsearch-mapping.json"

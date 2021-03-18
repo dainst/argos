@@ -14,11 +14,11 @@ defmodule CLI do
   end
 
   def handle_arguments({:ok}) do
-    Argos.Harvesting.Gazetteer.run_harvest(Date.utc_today())
+    ArgosData.Gazetteer.run_harvest(Date.utc_today())
   end
 
   def handle_arguments({:ok, Date{} = date}) do
-    Argos.Harvesting.Gazetteer.run_harvest(date)
+    ArgosData.Gazetteer.run_harvest(date)
   end
 
   def handle_arguments({:ok, gid}) when is_integer(gid) do

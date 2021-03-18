@@ -1,16 +1,16 @@
-defmodule Argos.Release do
+defmodule ArgosData.Release do
   require Logger
-  @elasticsearch_url Application.get_env(:argos, :elasticsearch_url)
-  @elasticsearch_mapping_path Application.get_env(:argos, :elasticsearch_mapping_path)
+  @elasticsearch_url Application.get_env(:argos_data, :elasticsearch_url)
+  @elasticsearch_mapping_path Application.get_env(:argos_data, :elasticsearch_mapping_path)
 
   def seed_projects(date) do
     HTTPoison.start()
-    Argos.Data.ProjectCLI.run(date)
+    ArgosData.ProjectCLI.run(date)
   end
 
   def seed_projects() do
     HTTPoison.start()
-    Argos.Data.ProjectCLI.run()
+    ArgosData.ProjectCLI.run()
   end
 
   def update_mapping() do

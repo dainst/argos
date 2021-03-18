@@ -1,6 +1,6 @@
-defmodule Argos.API.DocumentController do
+defmodule ArgosAPI.DocumentController do
 
-  @elasticsearch_url Application.get_env(:argos, :elasticsearch_url)
+  @elasticsearch_url Application.get_env(:argos_data, :elasticsearch_url)
   import Plug.Conn
 
   def get(conn) do
@@ -24,5 +24,4 @@ defmodule Argos.API.DocumentController do
   defp handle_result({:ok, %HTTPoison.Response{status_code: 404}}) do
     { :error, 404}
   end
-
 end

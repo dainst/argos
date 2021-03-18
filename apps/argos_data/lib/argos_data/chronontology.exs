@@ -1,7 +1,7 @@
 require Logger
 
-alias Argos.Data.Chronontology
-alias Argos.ElasticSearchIndexer
+alias ArgosData.Chronontology
+alias ArgosData.ElasticSearchIndexer
 
 defmodule CLI do
   def parse_arguments(["--script"]) do
@@ -17,19 +17,19 @@ defmodule CLI do
   end
 
   def handle_arguments({:ok}) do
-    Argos.Data.Chronontology,DataProvider.get_all()
+    ArgosData.Chronontology,DataProvider.get_all()
     |> Enum.each(ElasticSearchIndexer.index())
   end
 
   def handle_arguments({:ok, %Date{} = date}) do
     date
-    |> Argos.Data.Chronontology,DataProvider.get_by_date()
+    |> ArgosData.Chronontology,DataProvider.get_by_date()
     |> Enum.each(ElasticSearchIndexer.index())
   end
 
   def handle_arguments({:ok, pid}) do
     pid
-    |> Argos.Data.Chronontology,DataProvider.get_by_id(pid)
+    |> ArgosData.Chronontology,DataProvider.get_by_id(pid)
     |> ElasticSearchIndexer.index()
   end
 
