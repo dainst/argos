@@ -1,7 +1,7 @@
 defmodule ArgosData.Thesauri do
 
   defmodule Concept do
-    alias Argos.Data.TranslatedContent
+    alias ArgosData.TranslatedContent
 
     @enforce_keys [:id, :uri, :label]
     defstruct [:id, :uri, :label]

@@ -5,11 +5,27 @@ defmodule ArgosData.Application do
 
   use Application
 
-  @impl true
+  defp running_script?([head]) do
+    head == "--script"
+  end
+
+  defp running_script?([head | _tail]) do
+    head == "--script"
+  end
+
+  defp running_script?(_) do
+    false
+  end
+
   def start(_type, _args) do
-    children = [
-      ArgosData.Project.Harvester
-    ]
+    children =
+      if running_script?(System.argv) do
+        [] # We do not want to (re)start the harvesters when running exs scripts.
+      else
+        [
+          ArgosData.Project.Harvester
+        ]
+      end
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

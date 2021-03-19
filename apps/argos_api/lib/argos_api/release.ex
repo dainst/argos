@@ -1,4 +1,4 @@
-defmodule ArgosData.Release do
+defmodule ArgosAPI.Release do
   require Logger
   @elasticsearch_url Application.get_env(:argos_api, :elasticsearch_url)
   @elasticsearch_mapping_path Application.get_env(:argos_api, :elasticsearch_mapping_path)

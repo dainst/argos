@@ -23,7 +23,7 @@ defmodule Argos.MixProject do
   defp aliases do
     [
       "update-mapping": [
-        "run --eval 'ArgosData.Release.update_mapping()' -- --script"
+        "run --eval 'ArgosAPI.Release.update_mapping()' -- --script"
       ],
       "seed.projects": [
         "run --eval 'ArgosData.ProjectCLI.run()' -- --script"

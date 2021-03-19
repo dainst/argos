@@ -58,7 +58,7 @@ defmodule ArgosData.Project do
       doi: String.t(),
       start_date: Date.t(),
       end_date: Date.t(),
-      subject: [Argos.Data.Thesauri.Concept.t()],
+      subject: [Thesauri.Concept.t()],
       spatial: [Place.t()],
       temporal: [TemporalConcept.t()],
       stakeholders: [Stakeholder.t()],
