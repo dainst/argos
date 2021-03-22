@@ -7,6 +7,18 @@ defmodule Argos.MixProject do
       version: "0.1.0",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      releases: [
+        api: [
+          applications: [
+            argos_api: :permanent
+          ]
+        ],
+        data: [
+          applications: [
+            argos_data: :permanent
+          ]
+        ]
+      ],
       aliases: aliases()
     ]
   end

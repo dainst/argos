@@ -38,18 +38,21 @@ If Elasticsearch fails to create files on startup, try chown in data/elasticsear
 1. __Locally__, build an updated docker image
 
 ```bash
-docker build -t dainst/argos:latest .
+docker build -f DockerfileAPI -t dainst/argos_api:latest .
+docker build -f DockerfileData -t dainst/argos_data:latest .
 ```
 
 2.  __Locally__, push the new docker image to dockerhub:
 ```bash
-docker push dainst/argos:latest
+docker push dainst/argos_api:latest
+docker push dainst/argos_data:latest
 ```
 
 3. __Serverside__, pull the newest image
 
 ```bash
-docker pull dainst/argos:latest
+docker pull dainst/argos_api:latest
+docker pull dainst/argos_data:latest
 ```
 
 4. __Serverside__, if you need the newest [ES mapping](https://github.com/dainst/argos/blob/main/priv/elasticsearch-mapping.json), update the repository
@@ -61,6 +64,8 @@ sudo git -C /usr/local/src/argos pull
 The current setup of cloning/pulling the complete repository on the deployment machine, just for the newest ES mapping and the docker-compose.prod.yml, is somewhat overkill. We could switch to just copying those files to a designated place?
 
 5. __Serverside__, restart the service
+
+TODO: Update for umbrella project.
 ```bash
 sudo systemctl restart argos
 ```
@@ -68,6 +73,6 @@ sudo systemctl restart argos
 6. __Serverside__, run release [functions](lib/release.ex) as required by your recent changes
 For example, you can update the ES mapping and reindex all projects by running:
 ```
-docker exec -it argos-app /app/bin/argos eval "Argos.Release.update_mapping()"
-docker exec -it argos-app /app/bin/argos eval "Argos.Release.seed_projects()"
+docker exec -it argos-api /app/bin/api eval "ArgosAPI.Release.update_mapping()"
+docker exec -it argos-data /app/bin/data eval "ArgosData.Release.seed_projects()"
 ```

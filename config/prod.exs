@@ -5,7 +5,7 @@
 # is restricted to this project.
 
 # General application configuration
-use Mix.Config
+import Config
 
 config :argos_api,
   elasticsearch_url: "elasticsearch:9200/argos",
