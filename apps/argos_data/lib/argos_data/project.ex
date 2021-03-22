@@ -144,7 +144,7 @@ defmodule ArgosData.Project do
       {:error, :econnrefused}
     end
     defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :timeout}}) do
-      Logger.error("Tomeout for #{@base_url}")
+      Logger.error("Timeout for #{@base_url}")
       {:error, :timeout}
     end
   end
