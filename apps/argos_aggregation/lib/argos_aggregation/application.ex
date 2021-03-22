@@ -1,4 +1,4 @@
-defmodule ArgosData.Application do
+defmodule ArgosAggregation.Application do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   @moduledoc false
@@ -23,13 +23,13 @@ defmodule ArgosData.Application do
         [] # We do not want to (re)start the harvesters when running exs scripts.
       else
         [
-          ArgosData.Project.Harvester
+          ArgosAggregation.Project.Harvester
         ]
       end
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: ArgosData.Supervisor]
+    opts = [strategy: :one_for_one, name: ArgosAggregation.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

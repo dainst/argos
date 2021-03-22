@@ -1,9 +1,9 @@
-defmodule ArgosData.MixProject do
+defmodule ArgosAggregation.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :argos_data,
+      app: :argos_aggregation,
       version: "0.1.0",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
@@ -19,7 +19,7 @@ defmodule ArgosData.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {ArgosData.Application, []}
+      mod: {ArgosAggregation.Application, []}
     ]
   end
 

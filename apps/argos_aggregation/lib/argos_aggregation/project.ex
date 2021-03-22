@@ -1,9 +1,9 @@
 
 
-defmodule ArgosData.Project do
+defmodule ArgosAggregation.Project do
 
   require Logger
-  alias ArgosData.{
+  alias ArgosAggregation.{
     Thesauri, Gazetteer, Chronontology, TranslatedContent
   }
 
@@ -67,18 +67,18 @@ defmodule ArgosData.Project do
   end
 
   defmodule DataProvider do
-    @base_url Application.get_env(:argos_data, :projects_url)
-    @behaviour ArgosData.AbstractDataProvider
+    @base_url Application.get_env(:argos_aggregation, :projects_url)
+    @behaviour ArgosAggregation.AbstractDataProvider
 
-    alias ArgosData.Project.ProjectParser
+    alias ArgosAggregation.Project.ProjectParser
 
-    @impl ArgosData.AbstractDataProvider
+    @impl ArgosAggregation.AbstractDataProvider
     def get_all() do
       "#{@base_url}/api/projects"
       |> get_project_list()
     end
 
-    @impl ArgosData.AbstractDataProvider
+    @impl ArgosAggregation.AbstractDataProvider
     def get_by_date(%Date{} = date) do
       query =
         URI.encode_query(%{
@@ -113,7 +113,7 @@ defmodule ArgosData.Project do
       end
     end
 
-    @impl ArgosData.AbstractDataProvider
+    @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       result =
         "#{@base_url}/api/projects/#{id}"
@@ -289,9 +289,9 @@ defmodule ArgosData.Project do
 
   defmodule Harvester do
     use GenServer
-    alias ArgosData.ElasticSearchIndexer
+    alias ArgosAggregation.ElasticSearchIndexer
 
-    @interval Application.get_env(:argos_data, :projects_harvest_interval)
+    @interval Application.get_env(:argos_aggregation, :projects_harvest_interval)
     # TODO Noch nicht refactored!
     defp get_timezone() do
       "Etc/UTC"

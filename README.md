@@ -39,20 +39,20 @@ If Elasticsearch fails to create files on startup, try chown in data/elasticsear
 
 ```bash
 docker build -f DockerfileAPI -t dainst/argos_api:latest .
-docker build -f DockerfileData -t dainst/argos_data:latest .
+docker build -f DockerfileAggregation -t dainst/argos_aggregation:latest .
 ```
 
 2.  __Locally__, push the new docker image to dockerhub:
 ```bash
 docker push dainst/argos_api:latest
-docker push dainst/argos_data:latest
+docker push dainst/argos_aggregation:latest
 ```
 
 3. __Serverside__, pull the newest image
 
 ```bash
 docker pull dainst/argos_api:latest
-docker pull dainst/argos_data:latest
+docker pull dainst/argos_aggregation:latest
 ```
 
 4. __Serverside__, if you need the newest [ES mapping](https://github.com/dainst/argos/blob/main/priv/elasticsearch-mapping.json), update the repository
@@ -74,5 +74,5 @@ sudo systemctl restart argos
 For example, you can update the ES mapping and reindex all projects by running:
 ```
 docker exec -it argos-api /app/bin/api eval "ArgosAPI.Release.update_mapping()"
-docker exec -it argos-data /app/bin/data eval "ArgosData.Release.seed_projects()"
+docker exec -it argos-aggregation /app/bin/aggregation eval "ArgosAggregation.Release.seed_projects()"
 ```

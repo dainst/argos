@@ -1,6 +1,6 @@
-defmodule ArgosData.ElasticSearchIndexer do
+defmodule ArgosAggregation.ElasticSearchIndexer do
   require Logger
-  alias ArgosData.{
+  alias ArgosAggregation.{
     Chronontology, Gazetteer, Thesauri, Project
   }
 

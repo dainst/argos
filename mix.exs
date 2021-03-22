@@ -13,9 +13,9 @@ defmodule Argos.MixProject do
             argos_api: :permanent
           ]
         ],
-        data: [
+        aggregation: [
           applications: [
-            argos_data: :permanent
+            argos_aggregation: :permanent
           ]
         ]
       ],
@@ -38,7 +38,7 @@ defmodule Argos.MixProject do
         "run --eval 'ArgosAPI.Release.update_mapping()' -- --script"
       ],
       "seed.projects": [
-        "run --eval 'ArgosData.ProjectCLI.run()' -- --script"
+        "run --eval 'ArgosAggregation.ProjectCLI.run()' -- --script"
       ]
     ]
   end

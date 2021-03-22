@@ -20,6 +20,6 @@ services:
     volumes: 
       - "./priv/elasticsearch-mapping.json:/elasticsearch-mapping.json"
   
-  data:
-    image: "dainst/argos_data:latest"
-    container_name: "argos-data"
+  aggregation:
+    image: "dainst/argos_aggregation:latest"
+    container_name: "argos-aggregation"
