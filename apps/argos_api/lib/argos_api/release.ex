@@ -1,26 +1,15 @@
 defmodule ArgosAPI.Release do
   require Logger
-  @elasticsearch_url Application.get_env(:argos_api, :elasticsearch_url)
-  @elasticsearch_mapping_path Application.get_env(:argos_api, :elasticsearch_mapping_path)
 
   def update_mapping() do
     HTTPoison.start()
-    mapping = File.read!(@elasticsearch_mapping_path)
-
-    clear_index()
-
-    "#{@elasticsearch_url}/_mapping"
-    |> HTTPoison.put(mapping, [{"Content-Type", "application/json"}])
+    ArgosAPI.Application.update_mapping()
     |> IO.inspect
   end
 
   def clear_index() do
     HTTPoison.start()
-
-    "#{@elasticsearch_url}"
-    |> HTTPoison.delete()
-
-    "#{@elasticsearch_url}"
-    |> HTTPoison.put()
+    ArgosAPI.Application.delete_index()
+    |> IO.inspect
   end
 end
