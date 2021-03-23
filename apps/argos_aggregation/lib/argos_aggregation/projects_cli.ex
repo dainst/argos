@@ -14,9 +14,9 @@ defmodule ArgosAggregation.ProjectCLI do
 
   def parse_arguments(date_string) do
     case DateTime.from_iso8601(date_string) do
-      {:ok, _datetime} = result ->
-        result
-      {:error, :invalid_format} ->
+      {:ok, datetime, _offset} ->
+        {:ok, datetime}
+      {:error, _} ->
         case Date.from_iso8601(date_string) do
           {:ok, _date} ->
             DateTime.from_iso8601("#{date_string}T00:00:00Z")
