@@ -1,6 +1,6 @@
 defmodule Argos.API.DocumentController do
 
-  @elasticsearch_url Application.get_env(:argos, :elasticsearch_url)
+  @elasticsearch_url Application.get_env(:argos, :elasticsearch_url) <> Application.get_env(:argos, :index_path)
   import Plug.Conn
 
   def get(conn) do
