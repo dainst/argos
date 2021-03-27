@@ -11,7 +11,7 @@ config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
 config :argos,
   elasticsearch_url: "localhost:9200",
-  index_path: "/argos",
+  index_name: "argos",
   elasticsearch_mapping_path: "priv/elasticsearch-mapping.json",
 
   projects_url: "http://projects.dainst.org",
