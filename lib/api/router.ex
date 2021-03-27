@@ -28,7 +28,7 @@ defmodule Argos.API.Router do
   end
 
   match _ do
-    send_resp(conn, 400, Poison.encode!(%{Version: ""}))
+    send_resp(conn, 404, Poison.encode!(%{message: "Requested page not found!"}))
   end
 
   def json_response(conn, _opts) do
