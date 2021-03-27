@@ -9,8 +9,9 @@ defmodule Argos.API.InfoController do
       |> HTTPoison.get([{"Content-Type", "application/json"}])
       |> handle_result()
 
+    argos_vsn = List.to_string(Application.spec(:argos , :vsn))
     case response do
-      {:ok, body}->send_resp(conn, 400, Poison.encode!(%{name: body["name"], version: body["version"]}))
+      {:ok, body}->send_resp(conn, 200, Poison.encode!(%{elastic_search: %{name: body["name"], version: body["version"]}, version: argos_vsn}))
     end
   end
 
