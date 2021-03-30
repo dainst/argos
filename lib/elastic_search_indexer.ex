@@ -6,7 +6,7 @@ defmodule Argos.ElasticSearchIndexer do
 
   @headers [{"Content-Type", "application/json"}]
 
-  @base_url Application.get_env(:argos, :elasticsearch_url) <> "/" <> Application.get_env(:argos, :index_name)
+  @base_url "#{Application.get_env(:argos, :elasticsearch_url)}/#{Application.get_env(:argos, :index_name)}"
 
   def index(%Thesauri.Concept{} = concept) do
     payload =

@@ -1,6 +1,6 @@
 defmodule Argos.API.SearchController do
 
-  @elasticsearch_url Application.get_env(:argos, :elasticsearch_url) <> "/" <> Application.get_env(:argos, :index_name)
+  @elasticsearch_url "#{Application.get_env(:argos, :elasticsearch_url)}/#{Application.get_env(:argos, :index_name)}"
 
   import Plug.Conn
 
