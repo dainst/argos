@@ -8,5 +8,6 @@
 use Mix.Config
 
 config :argos,
-  elasticsearch_url: "elasticsearch:9200/argos",
+  elasticsearch_url: "elasticsearch:9200",
+  index_name: "argos",
   elasticsearch_mapping_path: "/elasticsearch-mapping.json"

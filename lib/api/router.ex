@@ -23,6 +23,10 @@ defmodule Argos.API.Router do
     Argos.API.SearchController.search(conn)
   end
 
+  get "" do
+    Argos.API.InfoController.get(conn)
+  end
+
   match _ do
     send_resp(conn, 404, Poison.encode!(%{message: "Requested page not found!"}))
   end

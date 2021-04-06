@@ -1,6 +1,6 @@
 defmodule Argos.Release do
   require Logger
-  @elasticsearch_url Application.get_env(:argos, :elasticsearch_url)
+  @elasticsearch_url "#{Application.get_env(:argos, :elasticsearch_url)}/#{Application.get_env(:argos, :index_name)}"
   @elasticsearch_mapping_path Application.get_env(:argos, :elasticsearch_mapping_path)
 
   def seed_projects(date) do
