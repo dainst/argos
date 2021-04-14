@@ -1,7 +1,7 @@
-defmodule Argos.Data.Chronontology do
+defmodule ArgosAggregation.Chronontology do
 
   defmodule TemporalConcept do
-    alias Argos.Data.TranslatedContent
+    alias ArgosAggregation.TranslatedContent
 
     @enforce_keys [:id, :uri, :label, :begin, :end]
     defstruct [:id, :uri, :label, :begin, :end]
@@ -15,24 +15,24 @@ defmodule Argos.Data.Chronontology do
   end
 
   defmodule DataProvider do
-    @behaviour Argos.Data.AbstractDataProvider
-    @base_url Application.get_env(:argos, :chronontology_url)
+    @behaviour ArgosAggregation.AbstractDataProvider
+    @base_url Application.get_env(:argos_aggregation, :chronontology_url)
 
     require Logger
 
-    @impl Argos.Data.AbstractDataProvider
+    @impl ArgosAggregation.AbstractDataProvider
     def get_all() do
       []
     end
 
-    @impl Argos.Data.AbstractDataProvider
+    @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       HTTPoison.get("#{@base_url}/data/period/#{id}")
       |> parse_response()
       |> parse_period_data()
     end
 
-    @impl Argos.Data.AbstractDataProvider
+    @impl ArgosAggregation.AbstractDataProvider
     def get_by_date(%Date{} = _date) do
       []
     end

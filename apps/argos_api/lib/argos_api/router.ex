@@ -1,13 +1,13 @@
-defmodule Argos.API.Router do
+defmodule ArgosAPI.Router do
   @moduledoc """
-  Documentation for `Argos.API.Router` .
+  Documentation for `ArgosAPI.Router` .
   """
   import Plug.Conn
 
   use Plug.Router
 
   if Mix.env == :dev do
-    use Plug.Debugger, otp_app: :argos
+    use Plug.Debugger, otp_app: :argos_api
   end
 
   plug CORSPlug
@@ -17,11 +17,11 @@ defmodule Argos.API.Router do
   plug :dispatch
 
   get "/doc/:id" do
-    Argos.API.DocumentController.get(conn)
+    ArgosAPI.DocumentController.get(conn)
   end
 
   get "/search" do
-    Argos.API.SearchController.search(conn)
+    ArgosAPI.SearchController.search(conn)
   end
 
   get "" do

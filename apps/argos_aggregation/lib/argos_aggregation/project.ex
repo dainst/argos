@@ -1,9 +1,9 @@
 
 
-defmodule Argos.Data.Project do
+defmodule ArgosAggregation.Project do
 
   require Logger
-  alias Argos.Data.{
+  alias ArgosAggregation.{
     Thesauri, Gazetteer, Chronontology, TranslatedContent
   }
 
@@ -58,7 +58,7 @@ defmodule Argos.Data.Project do
       doi: String.t(),
       start_date: Date.t(),
       end_date: Date.t(),
-      subject: [Argos.Data.Thesauri.Concept.t()],
+      subject: [Thesauri.Concept.t()],
       spatial: [Place.t()],
       temporal: [TemporalConcept.t()],
       stakeholders: [Stakeholder.t()],
@@ -67,18 +67,18 @@ defmodule Argos.Data.Project do
   end
 
   defmodule DataProvider do
-    @base_url Application.get_env(:argos, :projects_url)
-    @behaviour Argos.Data.AbstractDataProvider
+    @base_url Application.get_env(:argos_aggregation, :projects_url)
+    @behaviour ArgosAggregation.AbstractDataProvider
 
-    alias Argos.Data.Project.ProjectParser
+    alias ArgosAggregation.Project.ProjectParser
 
-    @impl Argos.Data.AbstractDataProvider
+    @impl ArgosAggregation.AbstractDataProvider
     def get_all() do
       "#{@base_url}/api/projects"
       |> get_project_list()
     end
 
-    @impl Argos.Data.AbstractDataProvider
+    @impl ArgosAggregation.AbstractDataProvider
     def get_by_date(%Date{} = date) do
       query =
         URI.encode_query(%{
@@ -113,7 +113,7 @@ defmodule Argos.Data.Project do
       end
     end
 
-    @impl Argos.Data.AbstractDataProvider
+    @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       result =
         "#{@base_url}/api/projects/#{id}"
@@ -144,7 +144,7 @@ defmodule Argos.Data.Project do
       {:error, :econnrefused}
     end
     defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :timeout}}) do
-      Logger.error("Tomeout for #{@base_url}")
+      Logger.error("Timeout for #{@base_url}")
       {:error, :timeout}
     end
   end
@@ -289,9 +289,9 @@ defmodule Argos.Data.Project do
 
   defmodule Harvester do
     use GenServer
-    alias Argos.ElasticSearchIndexer
+    alias ArgosAggregation.ElasticSearchIndexer
 
-    @interval Application.get_env(:argos, :projects_harvest_interval)
+    @interval Application.get_env(:argos_aggregation, :projects_harvest_interval)
     # TODO Noch nicht refactored!
     defp get_timezone() do
       "Etc/UTC"

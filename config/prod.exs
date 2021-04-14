@@ -5,9 +5,9 @@
 # is restricted to this project.
 
 # General application configuration
-use Mix.Config
+import Config
 
-config :argos,
+config :argos_api,
   elasticsearch_url: "elasticsearch:9200",
-  index_name: "argos",
+  index_name: "argos"
   elasticsearch_mapping_path: "/elasticsearch-mapping.json"

@@ -1,13 +1,12 @@
-defmodule Argos.ElasticSearchIndexer do
+defmodule ArgosAggregation.ElasticSearchIndexer do
   require Logger
-  alias Argos.Data.{
+  alias ArgosAggregation.{
     Chronontology, Gazetteer, Thesauri, Project
   }
 
   @headers [{"Content-Type", "application/json"}]
 
-  @base_url "#{Application.get_env(:argos, :elasticsearch_url)}/#{Application.get_env(:argos, :index_name)}"
-
+  @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
   def index(%Thesauri.Concept{} = concept) do
     payload =
       %{

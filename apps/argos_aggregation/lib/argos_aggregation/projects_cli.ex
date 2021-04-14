@@ -1,9 +1,9 @@
 require Logger
 
-defmodule Argos.Data.ProjectCLI do
+defmodule ArgosAggregation.ProjectCLI do
 
   def run() do
-    Argos.Data.Project.Harvester.run_harvest()
+    ArgosAggregation.Project.Harvester.run_harvest()
   end
 
   def run(date_string) do
@@ -14,9 +14,9 @@ defmodule Argos.Data.ProjectCLI do
 
   def parse_arguments(date_string) do
     case DateTime.from_iso8601(date_string) do
-      {:ok, _datetime} = result ->
-        result
-      {:error, :invalid_format} ->
+      {:ok, datetime, _offset} ->
+        {:ok, datetime}
+      {:error, _} ->
         case Date.from_iso8601(date_string) do
           {:ok, _date} ->
             DateTime.from_iso8601("#{date_string}T00:00:00Z")
@@ -27,7 +27,7 @@ defmodule Argos.Data.ProjectCLI do
   end
 
   def handle_arguments({:ok, date, _offset}) do
-    Argos.Data.Project.Harvester.run_harvest(date)
+    ArgosAggregation.Project.Harvester.run_harvest(date)
   end
 
   def handle_arguments({:error, reason}) do

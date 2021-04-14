@@ -12,10 +12,14 @@ services:
     ports:
       - "9200:9200"
   
-  app:
-    image: "dainst/argos:latest"
-    container_name: "argos-app"
+  api:
+    image: "dainst/argos_api:latest"
+    container_name: "argos-api"
     ports: 
       - "80:4001"
     volumes: 
       - "./priv/elasticsearch-mapping.json:/elasticsearch-mapping.json"
+  
+  aggregation:
+    image: "dainst/argos_aggregation:latest"
+    container_name: "argos-aggregation"

@@ -1,8 +1,8 @@
-use Mix.Config
+# This file is responsible for configuring your application
+# and its dependencies with the aid of the Mix.Config module.
+#
+# This configuration file is loaded before any dependency and
+# is restricted to this project.
 
-config :argos,
-       elasticsearch_url: "localhost:9200",
-       index_name: "argos"
-
-  # projects_url: "ocalhost:4000",
-  # projects_harvest_interval: 1000 * 60 * 5 # 5 minutes
+# General application configuration
+import Config

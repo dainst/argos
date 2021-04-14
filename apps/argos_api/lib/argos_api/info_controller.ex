@@ -1,6 +1,6 @@
-defmodule Argos.API.InfoController do
+defmodule ArgosAPI.InfoController do
 
-  @elasticsearch_url Application.get_env(:argos, :elasticsearch_url)
+  @elasticsearch_url Application.get_env(:argos_api, :elasticsearch_url)
   import Plug.Conn
 
   def get(conn) do
@@ -9,7 +9,7 @@ defmodule Argos.API.InfoController do
       |> HTTPoison.get([{"Content-Type", "application/json"}])
       |> handle_result()
 
-    argos_vsn = List.to_string(Application.spec(:argos , :vsn))
+    argos_vsn = List.to_string(Application.spec(:argos_api , :vsn))
     case response do
       {:ok, body}->send_resp(conn, 200, Poison.encode!(%{elastic_search: %{name: body["name"], version: body["version"]}, version: argos_vsn}))
     end
