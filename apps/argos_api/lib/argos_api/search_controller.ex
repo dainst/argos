@@ -19,6 +19,7 @@ defmodule ArgosAPI.SearchController do
     case result do
       {:ok, val} ->
         send_resp(conn, 200, Poison.encode!(val))
+      {:error, val} -> send_resp(conn, 400, Poison.encode!(val))
     end
   end
 
@@ -82,6 +83,13 @@ defmodule ArgosAPI.SearchController do
       |> Poison.decode()
       |> transform_elasticsearch_response()
     {:ok, data}
+  end
+
+  defp handle_result({:ok, %HTTPoison.Response{status_code: 400, body: body}}) do
+    {:ok, error} =
+      body
+      |> Poison.decode()
+    {:error, error}
   end
 
   defp parse_filters([]) do
