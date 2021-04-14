@@ -25,7 +25,7 @@ defmodule ArgosAPI.Router do
   end
 
   get "" do
-    Argos.API.InfoController.get(conn)
+    ArgosAPI.InfoController.get(conn)
   end
 
   match _ do
