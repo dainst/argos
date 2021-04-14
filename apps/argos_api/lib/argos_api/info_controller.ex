@@ -16,7 +16,7 @@ defmodule ArgosAPI.InfoController do
   end
 
   defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
-    info = Poison.decode(body)
+    Poison.decode(body)
   end
 
 end
