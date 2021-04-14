@@ -68,11 +68,14 @@ defmodule ArgosAPI.Application do
         end
 
       {:ok, %HTTPoison.Response{status_code: 200}} ->
-        Logger.info("Found existing index at #{@elasticsearch_url}.")
+        Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
     end
   end
 
   def start(_type, _args) do
+
+    initialize_index()
+
     children =
       if running_script?(System.argv) do
         [] # We do not want to (re)start the harvesters when running exs scripts.
@@ -86,10 +89,10 @@ defmodule ArgosAPI.Application do
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ArgosAPI.Supervisor]
 
-    initialize_index()
+    if children != [] do
+      Logger.info("Starting server...")
+    end
 
-    Logger.info("Starting Cowboy server")
     Supervisor.start_link(children, opts)
-
   end
 end
