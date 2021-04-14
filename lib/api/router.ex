@@ -10,6 +10,7 @@ defmodule Argos.API.Router do
     use Plug.Debugger, otp_app: :argos
   end
 
+  plug CORSPlug
   plug :json_response
   plug :match
   plug :fetch_query_params
