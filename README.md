@@ -14,7 +14,7 @@ Start dockerized Elasticsearch on http://localhost:9200 using
 docker-compose up
 ```
 
-Run the cowboy server (harvesting scripts and search endpoint on http://localhost:4001 ) using
+Run application stack (harvesting scripts and search endpoint on http://localhost:4001 ) using
 ```bash
 mix run --no-halt
 ```
