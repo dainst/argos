@@ -5,7 +5,7 @@ defmodule ArgosAPI.Application do
 
   use Application
 
-  @elasticsearch_url Application.get_env(:argos_api, :elasticsearch_url)
+  @elasticsearch_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
   @elasticsearch_mapping_path Application.get_env(:argos_api, :elasticsearch_mapping_path)
 
   require Logger
