@@ -331,5 +331,10 @@ defmodule ArgosAggregation.Project do
       DataProvider.get_by_date(datetime)
       |> Enum.each(&ElasticSearchIndexer.index/1)
     end
+
+    def reload(id) do
+      DataProvider.get_by_id(id)
+      |> ElasticSearchIndexer.index
+    end
   end
 end
