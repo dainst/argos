@@ -1,22 +1,29 @@
 defmodule ArgosAggregation.UpdateController do
 
-
-
-
   defmodule Observer do
-    alias ArgosAggregation.UpdateController.Manager
+    use Agent
+    #alias ArgosAggregation.UpdateController.Manager
 
-    def updated_resource(resource, id)  do
-      result = case resource do
-        "gazetteer" -> Manager.process_updates("spatial", id)
-        "chronontology" -> Manager.process_updates("temporal", id)
-        "thesuarus" -> Manager.process_updates("subject", id)
-        _ -> {:error, "no matching resource"}
-      end
-      result
+    def start_link(initial_value = %{"spatial" => [], "temporal" => [], "subject" => []}) do
+      Agent.start_link(fn -> initial_value end, name: __MODULE__)
     end
 
 
+    def updated_resource(resource, id)  do
+      Agent.update(__MODULE__, fn(id_maps) ->
+        case resource do
+          "gazetteer" -> Map.update!(id_maps, "spatial", fn cur -> [id | cur ] end)
+          "chronontology" -> Map.update!(id_maps, "temporal", fn cur -> [id | cur ] end)
+          "thesuarus" -> Map.update!(id_maps, "subject", fn cur -> [id | cur ] end)
+          _ -> {:error, "no matching resource"}
+        end
+      end
+      )
+    end
+
+    def get_resource_ids() do
+      Agent.get(__MODULE__, fn map -> map end)
+    end
 
   end
 
@@ -27,24 +34,27 @@ defmodule ArgosAggregation.UpdateController do
 
     @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
 
-    def process_updates(filter, id) do
-       find_relations(filter, id)
-       |> handle_result
+    def process_updates(updated_ids) do
+      Enum.each(updated_ids, fn({key, val}) ->
+        find_relations(key, val)
+        |> handle_result
+      end )
     end
-
-    defp find_relations(filter, id) do
-      query = get_query(filter, id)
+    
+    defp find_relations(_filter, [] = _ids) do {:ok, nil} end
+    defp find_relations(filter, ids) do
+      query = get_query(filter, ids)
       "#{@base_url}/_search"
       |> HTTPoison.post(query, @headers)
-
     end
 
-    defp get_query(filter, id) do
+    defp get_query(filter, ids) do
+      s_id = Enum.join(ids, ",")
       Poison.encode!(
         %{
           query: %{
             query_string: %{
-              query: "#{id}",
+              query: s_id,
                 fields: ["#{filter}.resource.id"]
               }
             }
@@ -52,6 +62,7 @@ defmodule ArgosAggregation.UpdateController do
         )
     end
 
+    defp handle_result({:ok, nil}) do {:ok, :ok} end
     defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
       data =
         body
