@@ -19,6 +19,9 @@ erl_crash.dump
 # Also ignore archive artifacts (built via "mix archive.build").
 *.ez
 
+# Also ignore elastic state files
+*.st
 
 # Temporary files for e.g. tests
 /tmp
+data/elasticsearch/nodes/0/indices/kUGeeR-sQ4yp2yX-_ICJpA/0/_state/retention-leases-4.st
