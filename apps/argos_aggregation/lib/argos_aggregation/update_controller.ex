@@ -4,8 +4,8 @@ defmodule ArgosAggregation.UpdateController do
     use Agent
     #alias ArgosAggregation.UpdateController.Manager
 
-    def start_link(initial_value = %{"spatial" => [], "temporal" => [], "subject" => []}) do
-      Agent.start_link(fn -> initial_value end, name: __MODULE__)
+    def start_link(_val) do
+      Agent.start_link(fn -> %{"spatial" => [], "temporal" => [], "subject" => []} end, name: __MODULE__)
     end
 
 
@@ -40,7 +40,7 @@ defmodule ArgosAggregation.UpdateController do
         |> handle_result
       end )
     end
-    
+
     defp find_relations(_filter, [] = _ids) do {:ok, nil} end
     defp find_relations(filter, ids) do
       query = get_query(filter, ids)
