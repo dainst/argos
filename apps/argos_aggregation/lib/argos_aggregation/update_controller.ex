@@ -11,15 +11,29 @@ defmodule ArgosAggregation.UpdateController do
       Agent.start_link(fn -> init_val end, name: :update_observer)
     end
 
-
     def updated_resource(resource, id)  do
+      key = get_resource_key(resource) # loading the key outside the Agent preventing unnecessary delays
       # updates the state of the agent
-      Agent.update(:update_observer, fn(id_map) ->
-        get_resource_key(resource)
-        |> update_vals(id_map, id)
-      end
-      )
+      Agent.update(:update_observer, fn(id_map) -> update_vals(key, id_map, id) end)
     end
+
+    def del_resource_ids(resource, ids) do
+      key = get_resource_key(resource) # see above
+      Agent.update(:update_observer, fn id_map -> delete_vals(key, id_map, ids) end)
+    end
+
+
+    def get_resource_ids() do
+      # returns everything the whole map
+      Agent.get(:update_observer, fn map -> map end)
+    end
+
+
+    def get_resources_ids(resource) do
+      key = get_resource_key(resource)
+      Agent.get(:update_observer, fn map -> map[key] end)
+    end
+
 
     defp get_resource_key(res) do
       case res do
@@ -37,20 +51,6 @@ defmodule ArgosAggregation.UpdateController do
     # delete vals erases all given values from the set under the specific key
     defp delete_vals({:ok, key}, map, old_ids), do: Map.update!(map, key, fn cur -> MapSet.difference(cur, old_ids)  end)
     defp delete_vals({:error, reason}, _map, _new_id), do: Logger.error(reason)
-
-
-    def get_resource_ids() do
-      Agent.get(:update_observer, fn map -> map end)
-    end
-
-    def del_resource_ids(resource, ids) do
-      ### benutzte IDS wieder löschen
-      Agent.update(:update_observer, fn id_map ->
-        get_resource_key(resource)
-        |> delete_vals(id_map, ids)
-      end)
-    end
-
   end
 
   defmodule Manager do
