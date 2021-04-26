@@ -1,7 +1,7 @@
 defmodule ArgosAggregation.ElasticSearchIndexer do
   require Logger
   alias ArgosAggregation.{
-    Chronontology, Gazetteer, Thesauri, Project
+    Chronontology, Gazetteer, Thesauri, Project, UpdateController.Observer
   }
 
   @headers [{"Content-Type", "application/json"}]
@@ -18,7 +18,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     upsert(payload)
     |> parse_response!()
-    |> check_update("subject", concept.id)
+    |> check_update("thesaurus", concept.id)
   end
 
   def index(%Gazetteer.Place{} = place) do
@@ -32,7 +32,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     upsert(payload)
     |> parse_response!()
-    |> check_update("spatial", place.id)
+    |> check_update("gazetteer", place.id)
   end
 
   def index(%Chronontology.TemporalConcept{} = temporal_concept) do
@@ -46,7 +46,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     upsert(payload)
     |> parse_response!()
-    |> check_update("temporal", temporal_concept.id)
+    |> check_update("chronontology", temporal_concept.id)
   end
 
   def index(%Project.Project{} = project) do
@@ -82,10 +82,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   defp parse_response(result), do: result
 
   defp check_update(%{"result" => "updated"}, kind, id) do
-    Agent.update(:update_observer, fn state ->
-      ids = [id | state[kind]]
-      %{state | kind => ids}
-    end)
+    Observer.updated_resource(:update_observer, kind, id)
   end
 
 end

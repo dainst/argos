@@ -1,29 +1,54 @@
 defmodule ArgosAggregation.UpdateController do
+  require Logger
 
   defmodule Observer do
     use Agent
     #alias ArgosAggregation.UpdateController.Manager
 
+
     def start_link(opts) do
-      {init_val, opts} = Keyword.pop(opts, :init_val, %{"spatial" => [], "temporal" => [], "subject" => []})
-      Agent.start_link(fn -> init_val end, opts)
+      {init_val, opts} = Keyword.pop(opts, :init_val, %{spatial: MapSet.new(), temporal: MapSet.new(), subject: MapSet.new()})
+      Agent.start_link(fn -> init_val end, name: :update_observer)
     end
 
 
-    def updated_resource(name, resource, id)  do
-      Agent.update(name, fn(id_maps) ->
-        case resource do
-          "gazetteer" -> Map.update!(id_maps, "spatial", fn cur -> [id | cur ] end)
-          "chronontology" -> Map.update!(id_maps, "temporal", fn cur -> [id | cur ] end)
-          "thesuarus" -> Map.update!(id_maps, "subject", fn cur -> [id | cur ] end)
-          _ -> {:error, "no matching resource"}
-        end
+    def updated_resource(resource, id)  do
+      # updates the state of the agent
+      Agent.update(:update_observer, fn(id_map) ->
+        get_resource_key(resource)
+        |> update_vals(id_map, id)
       end
       )
     end
 
-    def get_resource_ids(name) do
-      Agent.get(name, fn map -> map end)
+    defp get_resource_key(res) do
+      case res do
+        "gazetteer" -> {:ok, :spatial}
+        "chronontology" -> {:ok, :temporal}
+        "thesuarus" -> {:ok, :subject}
+        _ -> {:error, "no matching resource"}
+      end
+    end
+
+     # update vals adds a new id to the set under the specific key
+    defp update_vals({:ok, key}, map, new_id), do: Map.update!(map, key, fn cur -> cur.put(new_id) end)
+    defp update_vals({:error, reason}, _map, _new_id), do: Logger.error(reason)
+
+    # delete vals erases all given values from the set under the specific key
+    defp delete_vals({:ok, key}, map, old_ids), do: Map.update!(map, key, fn cur -> MapSet.difference(cur, old_ids)  end)
+    defp delete_vals({:error, reason}, _map, _new_id), do: Logger.error(reason)
+
+
+    def get_resource_ids() do
+      Agent.get(:update_observer, fn map -> map end)
+    end
+
+    def del_resource_ids(resource, ids) do
+      ### benutzte IDS wieder löschen
+      Agent.update(:update_observer, fn id_map ->
+        get_resource_key(resource)
+        |> delete_vals(id_map, ids)
+      end)
     end
 
   end
