@@ -18,6 +18,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     upsert(payload)
     |> parse_response!()
+    |> check_update("subject", concept.id)
   end
 
   def index(%Gazetteer.Place{} = place) do
@@ -31,6 +32,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     upsert(payload)
     |> parse_response!()
+    |> check_update("spatial", place.id)
   end
 
   def index(%Chronontology.TemporalConcept{} = temporal_concept) do
@@ -44,6 +46,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     upsert(payload)
     |> parse_response!()
+    |> check_update("temporal", temporal_concept.id)
   end
 
   def index(%Project.Project{} = project) do
@@ -73,10 +76,16 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
   defp parse_response!(%HTTPoison.Response{body: body}) do
     result = Poison.decode!(body)
-    if Map.has_key?(result, "error") do
-      raise result["error"]
-    end
-    result
+    parse_response!(result)
+  end
+  defp parse_response!(%{"error" => error}), do: raise error
+  defp parse_response(result), do: result
+
+  defp check_update(%{"result" => "updated"}, kind, id) do
+    Agent.update(:update_observer, fn state ->
+      ids = [id | state[kind]]
+      %{state | kind => ids}
+    end)
   end
 
 end

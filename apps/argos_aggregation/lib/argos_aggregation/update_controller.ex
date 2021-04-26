@@ -4,13 +4,14 @@ defmodule ArgosAggregation.UpdateController do
     use Agent
     #alias ArgosAggregation.UpdateController.Manager
 
-    def start_link(_val) do
-      Agent.start_link(fn -> %{"spatial" => [], "temporal" => [], "subject" => []} end, name: __MODULE__)
+    def start_link(opts) do
+      {init_val, opts} = Keyword.pop(opts, :init_val, %{"spatial" => [], "temporal" => [], "subject" => []})
+      Agent.start_link(fn -> init_val end, opts)
     end
 
 
-    def updated_resource(resource, id)  do
-      Agent.update(__MODULE__, fn(id_maps) ->
+    def updated_resource(name, resource, id)  do
+      Agent.update(name, fn(id_maps) ->
         case resource do
           "gazetteer" -> Map.update!(id_maps, "spatial", fn cur -> [id | cur ] end)
           "chronontology" -> Map.update!(id_maps, "temporal", fn cur -> [id | cur ] end)
@@ -21,8 +22,8 @@ defmodule ArgosAggregation.UpdateController do
       )
     end
 
-    def get_resource_ids() do
-      Agent.get(__MODULE__, fn map -> map end)
+    def get_resource_ids(name) do
+      Agent.get(name, fn map -> map end)
     end
 
   end
@@ -41,11 +42,12 @@ defmodule ArgosAggregation.UpdateController do
       end )
     end
 
-    defp find_relations(_filter, [] = _ids) do {:ok, nil} end
+    defp find_relations(_filter, [] = _ids) do {:error, nil} end
     defp find_relations(filter, ids) do
       query = get_query(filter, ids)
       "#{@base_url}/_search"
       |> HTTPoison.post(query, @headers)
+      |> IO.inspect
     end
 
     defp get_query(filter, ids) do

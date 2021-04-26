@@ -42,7 +42,7 @@ defmodule ArgosAggregation.Application do
       else
         [
           ArgosAggregation.Project.Harvester,
-          ArgosAggregation.UpdateController.Observer
+          {ArgosAggregation.UpdateController.Observer, name: :update_observer}
         ]
       end
 
