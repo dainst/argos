@@ -51,7 +51,7 @@ defmodule ArgosAggregation.UpdateController do
     end
 
     defp get_query(filter, ids) do
-      s_id = Enum.join(ids, ",")
+      s_id = Enum.join(ids, " OR ")
       Poison.encode!(
         %{
           query: %{

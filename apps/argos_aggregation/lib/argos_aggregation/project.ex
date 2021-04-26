@@ -337,4 +337,5 @@ defmodule ArgosAggregation.Project do
       |> ElasticSearchIndexer.index
     end
   end
+
 end
