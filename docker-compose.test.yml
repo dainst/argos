@@ -15,12 +15,12 @@ services:
     container_name: "argos-api"
     volumes: 
       - "/opt/argos/elasticsearch-mapping.json:/elasticsearch-mapping.json"
-    deploy:
-      labels:
-        - "traefik.docker.network=web"
-        - "traefik.enable=true"
-        - "traefik.frontend.rule=Host:api.test.idai.world"
-        - "traefik.port=4001"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.api.rule=Host(`api.test.idai.world`)        
+      - traefik.http.services.api.loadbalancer.server.port=4001
+      - traefik.http.routers.api.tls=true
+      - traefik.http.routers.api.tls.certresolver=myresolver
   
   aggregation:
     image: "dainst/argos_aggregation:latest"
@@ -28,13 +28,6 @@ services:
   
   traefik:
     image: "traefik:v2.4"
-    container_name: "argos-traefik"
-    command:
-      #- "--log.level=DEBUG"
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
     ports:
       - "80:80"
       - "443:443"
@@ -42,5 +35,3 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/opt/traefik/acme.json:/acme.json"
       - "/opt/traefik/traefik.toml:/etc/traefik/traefik.toml"
-
-  

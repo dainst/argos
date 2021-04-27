@@ -1,29 +1,18 @@
-debug = false
-
-logLevel = "ERROR"
-defaultEntryPoints = ["https","http"]
+[providers.docker]
 
 [entryPoints]
-  [entryPoints.http]
-  address = ":80"
-    [entryPoints.http.redirect]
-    entryPoint = "https"
-  [entryPoints.https]
-  address = ":443"
-  [entryPoints.https.tls]
+  [entryPoints.web]
+    address = ":80"
+    [entryPoints.web.http.redirections]
+      [entryPoints.web.http.redirections.entryPoint]
+        to = "websecure"
+  [entryPoints.websecure]
+    address = ":443"
 
-[retry]
-
-[docker]
-endpoint = "unix:///var/run/docker.sock"
-watch = true
-exposedByDefault = false
-swarmMode = true
-network = "web"
-
-[acme]
-email = "dev@dainst.org"
-storage = "acme.json"
-entryPoint = "https"
-onHostRule = true
-[acme.tlsChallenge]
+[certificatesResolvers.myresolver.acme]
+  email = "dev@dainst.org"
+  storage = "acme.json"
+  [certificatesResolvers.myresolver.acme.httpChallenge]
+    # used during the challenge
+    entryPoint = "web"
+  [certificatesResolvers.myresolver.acme.tlsChallenge]
