@@ -1,39 +1,67 @@
 defmodule ArgosAggregation.UpdateController do
+  @moduledoc """
+  This module provides two submodules for handling the updated process of the denormalized documents in the elastic-search index
+  """
   require Logger
 
   defmodule Observer do
+    @moduledoc """
+    The observer is an `Agent` that provides the possibility for harvesters and other modules
+    in the `ArgosAggregation` project to store and read ids of recently changed documents
+    """
     use Agent
-    #alias ArgosAggregation.UpdateController.Manager
 
-
+   @doc """
+   start_link starts the agent.
+   Usally this method is envoked by the `Application.start/2` method
+   The default init value of the agent is a Map of MapSets, therefore every key links to a unique set of ids
+   """
     def start_link(opts) do
       {init_val, opts} = Keyword.pop(opts, :init_val, %{spatial: MapSet.new(), temporal: MapSet.new(), subject: MapSet.new()})
       Agent.start_link(fn -> init_val end, name: :update_observer)
     end
 
-    def updated_resource(resource, id)  do
+    @doc """
+    Adds another Id of the given resource to the currently stored set of ids
+    !important: Ids are stored as MapSet to prevent duplicates. Adding the same id twice will have no effect.
+
+    Returns always `:ok`
+    """
+    def add_resource_id(resource, id)  do
       key = get_resource_key(resource) # loading the key outside the Agent preventing unnecessary delays
       # updates the state of the agent
       Agent.update(:update_observer, fn(id_map) -> update_vals(key, id_map, id) end)
     end
 
+    @doc """
+    Deletes the given ids of the specified resource
+    resource should be a string and one of the following `"gazetteer"`, `"chronontology"`, `"thesuarus"`
+    """
     def del_resource_ids(resource, ids) do
       key = get_resource_key(resource) # see above
       Agent.update(:update_observer, fn id_map -> delete_vals(key, id_map, ids) end)
     end
 
+    @doc """
+      Returns the current state of the Observer i.e. a Map with MapSets
 
+      Returns `%{spatial: MapSet, temporal: MapSet, subject: MapSet}`
+    """
     def get_resource_ids() do
-      # returns everything the whole map
       Agent.get(:update_observer, fn map -> map end)
     end
 
-
+    @doc """
+      Returns the resource ids for the specified resource as a key, value tuple
+      keys: are e.g. :spatial, :temporal, :subject etc
+      values are stored as a MapSet
+      Returns `{:key, MapSet}`
+    """
     def get_resources_ids(resource) do
       key = get_resource_key(resource)
-      Agent.get(:update_observer, fn map -> map[key] end)
+      ids = Agent.get(:update_observer, fn map -> map[key] end)
+      {key, ids}
     end
-
 
     defp get_resource_key(res) do
       case res do
@@ -54,16 +82,26 @@ defmodule ArgosAggregation.UpdateController do
   end
 
   defmodule Manager do
+    @moduledoc """
+    The Manager-Module operates on the data stored in the observer. One can use it to find the parent-documents containg the subdocuments with the ids of the recently updated docs
+    """
+
     alias ArgosAggregation.Project
 
     @headers [{"Content-Type", "application/json"}]
 
     @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
 
+    @doc """
+    Starts the update process for the given ids.
+    One can start the function with a tuple of key and ids as Enumerable or a map of key and ids as Enumerables
+    """
+    def process_updates({key, ids}) do
+      find_relations(key, ids) |> handle_result
+    end
     def process_updates(updated_ids) do
-      Enum.each(updated_ids, fn({key, val}) ->
-        find_relations(key, val)
-        |> handle_result
+      Enum.each(updated_ids, fn(tup) ->
+        process_updates(tup)
       end )
     end
 
@@ -72,7 +110,6 @@ defmodule ArgosAggregation.UpdateController do
       query = get_query(filter, ids)
       "#{@base_url}/_search"
       |> HTTPoison.post(query, @headers)
-      |> IO.inspect
     end
 
     defp get_query(filter, ids) do
