@@ -19,7 +19,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     upsert(payload)
     |> parse_response!()
-    |> check_update("thesaurus", concept)
+    |> check_update(concept)
   end
 
   def index(%Gazetteer.Place{} = place) do
@@ -33,7 +33,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     upsert(payload)
     |> parse_response!()
-    |> check_update("gazetteer", place)
+    |> check_update(place)
   end
 
   def index(%Chronontology.TemporalConcept{} = temporal_concept) do
@@ -47,7 +47,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     upsert(payload)
     |> parse_response!()
-    |> check_update("chronontology", temporal_concept)
+    |> check_update(temporal_concept)
   end
 
   def index(%Project.Project{} = project) do
@@ -61,7 +61,21 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       |> parse_response!()
   end
 
-  defp upsert(%{doc: %{type: type, id: id}} = data) do
+  def upsert(%{doc: %{type: type, id: id}} = data) do
+    Logger.info("Indexing #{type}-#{id}.")
+
+    data_json =
+      data
+      |> Poison.encode!
+
+    "#{@base_url}/_update/#{type}-#{id}"
+    |> HTTPoison.post!(
+      data_json,
+      @headers
+    )
+  end
+
+  def upsert(%{"doc" => %{"type" => type, "id" => id}} = data) do
     Logger.info("Indexing #{type}-#{id}.")
 
     data_json =
@@ -94,20 +108,23 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   end
 
   defmodule Updater do
+    alias ArgosAggregation.ElasticSearchIndexer, as: Indexer
+
     @headers [{"Content-Type", "application/json"}]
 
     @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
 
-    def handle_update(%Thesauri.Concept{} = concept) do
-      find_relations(:subject, concept.id)
+    def handle_update(resource) do
+      find_relations(resource)
       |> handle_result
-      |> Enum.each(&change_subdocument(&1, concept))
+      |> Enum.each(&change_subdocument(&1, resource))
+      |> Indexer.upsert
     end
 
-    defp find_relations(:spatial = key, id), do: find_all_subdocuments(key, id)
-    defp find_relations(:temporal = key, id), do: find_all_subdocuments(key, id)
-    defp find_relations(:subject = key, id), do: find_all_subdocuments(key, id)
-    defp find_relations(_filter, _ids), do: {:error, "unsupported type"}
+    defp find_relations(%Gazetteer.Place{} = place), do: find_all_subdocuments(:spatial, place.id)
+    defp find_relations(%Chronontology.TemporalConcept{} = temporal), do: find_all_subdocuments(:temporal, temporal.id)
+    defp find_relations(%Thesauri.Concept{} = concept), do: find_all_subdocuments(:subject, concept.id)
+    defp find_relations(_unknown_obj), do: {:error, "unsupported type"}
 
     defp find_all_subdocuments(concept_key, id) do
       query = get_query(concept_key, id)
@@ -130,7 +147,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     def handle_result({:error, msg}), do: Logger.error(msg)
     def handle_result({:ok, nil}) do {:ok, :ok} end
-    def handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}, concept) do
+    def handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
       {:ok, %{"hits" => %{"hits" => hits }}} =
         body
         |> Poison.decode()
@@ -138,13 +155,13 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     end
 
     defp change_subdocument(%{"_source" => parent }, %Gazetteer.Place{} = place) do
-      put_in(parent, ["spatial", Access.all(), ])
+      put_in(parent, ["spatial", Access.all(), "resource", Access.filter(&(&1["id"] == place.id))], place )
     end
-    defp change_subdocument(%{"_source" => parent}, %Chronontology.TemporalConcept{} = temporal_concept) do
-
+    defp change_subdocument(%{"_source" => parent}, %Chronontology.TemporalConcept{} = temporal) do
+      put_in(parent, ["temporal", Access.all(), "resource", Access.filter(&(&1["id"] == temporal.id))], temporal )
     end
-    defp change_subdocument(%{"_source" => parent}, %Thesauri.Concept{} = concept) do
-
+    defp change_subdocument(%{"_source" => parent}, %Thesauri.Concept{} = subject) do
+      put_in(parent, ["subject", Access.all(), "resource", Access.filter(&(&1["id"] == subject.id))], subject )
     end
 
   end
