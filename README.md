@@ -42,24 +42,23 @@ docker build -f DockerfileAPI -t dainst/argos_api:latest .
 docker build -f DockerfileAggregation -t dainst/argos_aggregation:latest .
 ```
 
-2.  __Locally__, push the new docker image to dockerhub:
+2.  __Locally__, push the new docker image(s) to dockerhub:
 ```bash
 docker push dainst/argos_api:latest
 docker push dainst/argos_aggregation:latest
 ```
 
-3. __Serverside__, pull the newest image
+3. (optional) __Locally__, if change occurred, copy config files to server:
+- docker-compose.{prod|test}.yml
+- traefik.toml 
+- priv/elasticsearch-mapping.json
+See VM documentation for the appropriate locations.
+
+4. __Serverside__, pull the latest image(s)
 ```bash
 docker pull dainst/argos_api:latest
 docker pull dainst/argos_aggregation:latest
 ```
-
-4. __Serverside__, if you need the newest [ES mapping](https://github.com/dainst/argos/blob/main/priv/elasticsearch-mapping.json), update the repository
-```bash
-sudo git -C /usr/local/src/argos pull
-```
-
-The current setup of cloning/pulling the complete repository on the deployment machine, just for the newest ES mapping and the docker-compose.prod.yml, is somewhat overkill. We could switch to just copying those files to a designated place?
 
 5. __Serverside__, restart the service
 ```bash
