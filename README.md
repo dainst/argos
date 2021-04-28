@@ -66,8 +66,7 @@ docker pull dainst/argos_aggregation:latest
 sudo systemctl restart argos
 ```
 
-6. __Serverside__, run release [functions](lib/release.ex) as required by your recent changes
-For example, you can update the ES mapping and reindex all projects by running:
+6. __Serverside__, run release [functions](lib/release.ex) as required by your recent changes. For example, you can update the ES mapping and reindex all projects by running:
 ```
 docker exec -it argos-api /app/bin/api eval "ArgosAPI.Release.update_mapping()"
 docker exec -it argos-aggregation /app/bin/aggregation eval "ArgosAggregation.Release.seed_projects()"
