@@ -9,12 +9,16 @@ services:
       - "cluster.routing.allocation.disk.watermark.low=2gb"
       - "cluster.routing.allocation.disk.watermark.high=1gb"
       - "cluster.routing.allocation.disk.watermark.flood_stage=500mb"
+    volumes: 
+      - "/opt/argos/elasticsearch/data:/usr/share/elasticsearch/data"
+    labels:
+      - traefik.enable=false
   
   api:
     image: "dainst/argos_api:latest"
     container_name: "argos-api"
     volumes: 
-      - "/opt/argos/elasticsearch-mapping.json:/elasticsearch-mapping.json"
+      - "/opt/argos/elasticsearch/elasticsearch-mapping.json:/elasticsearch-mapping.json"
     labels:
       - traefik.enable=true
       - traefik.http.routers.api.rule=Host(`api.test.idai.world`)        
@@ -25,7 +29,9 @@ services:
   aggregation:
     image: "dainst/argos_aggregation:latest"
     container_name: "argos-aggregation"
-  
+    labels:
+      - traefik.enable=false
+
   traefik:
     image: "traefik:v2.4"
     ports:

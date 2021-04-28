@@ -9,17 +9,35 @@ services:
       - "cluster.routing.allocation.disk.watermark.low=2gb"
       - "cluster.routing.allocation.disk.watermark.high=1gb"
       - "cluster.routing.allocation.disk.watermark.flood_stage=500mb"
-    ports:
-      - "9200:9200"
+    volumes: 
+      - "/opt/argos/elasticsearch/data:/usr/share/elasticsearch/data"
+    labels:
+      - traefik.enable=false
   
   api:
     image: "dainst/argos_api:latest"
     container_name: "argos-api"
-    ports: 
-      - "80:4001"
     volumes: 
-      - "./priv/elasticsearch-mapping.json:/elasticsearch-mapping.json"
+      - "/opt/argos/elasticsearch/elasticsearch-mapping.json:/elasticsearch-mapping.json"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.api.rule=Host(`api.idai.world`)        
+      - traefik.http.services.api.loadbalancer.server.port=4001
+      - traefik.http.routers.api.tls=true
+      - traefik.http.routers.api.tls.certresolver=myresolver
   
   aggregation:
     image: "dainst/argos_aggregation:latest"
     container_name: "argos-aggregation"
+    labels:
+      - traefik.enable=false
+
+  traefik:
+    image: "traefik:v2.4"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/opt/traefik/acme.json:/acme.json"
+      - "/opt/traefik/traefik.toml:/etc/traefik/traefik.toml"
