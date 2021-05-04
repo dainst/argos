@@ -4,10 +4,8 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     Chronontology, Gazetteer, Thesauri, Project, UpdateController.Observer
   }
   alias ArgosAggregation.ElasticSearchIndexer.Updater
+  alias ArgosAggregation.ElasticSearchIndexer.ElasticSearchClient
 
-  @headers [{"Content-Type", "application/json"}]
-
-  @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
   def index(%Thesauri.Concept{} = concept) do
     payload =
       %{
@@ -56,37 +54,14 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         doc: Map.put(project, :type, :project),
         doc_as_upsert: true
       }
-
-      upsert(payload)
+      IO.inspect("Indexing project")
+      ElasticSearchClient.upsert(payload)
       |> parse_response!()
   end
 
-  def upsert(%{doc: %{type: type, id: id}} = data) do
-    Logger.info("Indexing #{type}-#{id}.")
-
-    data_json =
-      data
-      |> Poison.encode!
-
-    "#{@base_url}/_update/#{type}-#{id}"
-    |> HTTPoison.post!(
-      data_json,
-      @headers
-    )
-  end
-
-  def upsert(%{"doc" => %{"type" => type, "id" => id}} = data) do
-    Logger.info("Indexing #{type}-#{id}.")
-
-    data_json =
-      data
-      |> Poison.encode!
-
-    "#{@base_url}/_update/#{type}-#{id}"
-    |> HTTPoison.post!(
-      data_json,
-      @headers
-    )
+  def upsert(payload) do
+    c = Application.get_env(:argos_aggregation, :elastic_client)
+    c.upsert(payload)
   end
 
   defp parse_response!(%HTTPoison.Response{body: body}) do
@@ -94,31 +69,82 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     parse_response!(result)
   end
   defp parse_response!(%{"error" => error}), do: raise error
-  defp parse_response(result), do: result
+  defp parse_response!(result), do: result
 
   #defp check_update(%{"result" => "updated"}, kind, id) do
   #  Observer.updated_resource(:update_observer, kind, id)
   #end
 
   defp check_update(%{"result" => "updated"}, concept) do
+    IO.puts("update")
     Updater.handle_update(concept)
   end
   defp check_update(_result, _obj) do
     {:ok, nil}
   end
 
-  defmodule Updater do
-    alias ArgosAggregation.ElasticSearchIndexer, as: Indexer
-
+  defmodule ElasticSearchClient do
     @headers [{"Content-Type", "application/json"}]
 
     @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
 
+    def upsert(%{doc: %{type: type, id: id}} = data) do
+      Logger.info("Indexing #{type}-#{id}.")
+
+      data_json =
+        data
+        |> Poison.encode!
+      Logger.info(data_json)
+      "#{@base_url}/_update/#{type}-#{id}"
+      |> HTTPoison.post!(
+        data_json,
+        @headers
+      )
+    end
+    def upsert(%{"doc" => %{"type" => type, "id" => id}} = data) do
+      Logger.info("Indexing #{type}-#{id}.")
+
+      data_json =
+        data
+        |> Poison.encode!
+
+      "#{@base_url}/_update/#{type}-#{id}"
+      |> HTTPoison.post!(
+        data_json,
+        @headers
+      )
+    end
+
+    def search_for_subdocument(doc_type, doc_id) do
+      query = Poison.encode!(
+          %{
+            query: %{
+              query_string: %{
+                query: "#{doc_id}",
+                  fields: ["#{doc_type}.resource.id"]
+                }
+              }
+            }
+          )
+      IO.inspect(query)
+      "#{@base_url}/_search"
+      |> HTTPoison.post(query, @headers)
+    end
+  end
+
+
+  defmodule Updater do
+
     def handle_update(resource) do
       find_relations(resource)
       |> handle_result
-      |> Enum.each(&change_subdocument(&1, resource))
-      |> Indexer.upsert
+      |> change_all_subdocuments(resource)
+      |> upsert
+    end
+    def upsert({:ok, nil}), do: {:ok, nil}
+    def upsert(payload) do
+      c = Application.get_env(:argos_aggregation, :elastic_client)
+      c.upsert(payload)
     end
 
     defp find_relations(%Gazetteer.Place{} = place), do: find_all_subdocuments(:spatial, place.id)
@@ -127,31 +153,23 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     defp find_relations(_unknown_obj), do: {:error, "unsupported type"}
 
     defp find_all_subdocuments(concept_key, id) do
-      query = get_query(concept_key, id)
-      "#{@base_url}/_search"
-      |> HTTPoison.post(query, @headers)
-    end
-
-    defp get_query(concept_key, id) do
-      Poison.encode!(
-        %{
-          query: %{
-            query_string: %{
-              query: id,
-                fields: ["#{concept_key}.resource.id"]
-              }
-            }
-          }
-        )
+      c = Application.get_env(:argos_aggregation, :elastic_client)
+      c.search_for_subdocument(concept_key, id)
     end
 
     def handle_result({:error, msg}), do: Logger.error(msg)
     def handle_result({:ok, nil}) do {:ok, :ok} end
     def handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
+      IO.inspect(body)
       {:ok, %{"hits" => %{"hits" => hits }}} =
         body
         |> Poison.decode()
       {:ok, hits}
+    end
+
+    defp change_all_subdocuments({:ok, []}, _), do: {:ok, nil}
+    defp change_all_subdocuments({:ok, docs}, resource) do
+      Enum.map(docs, &change_subdocument(&1, resource))
     end
 
     defp change_subdocument(%{"_source" => parent }, %Gazetteer.Place{} = place) do

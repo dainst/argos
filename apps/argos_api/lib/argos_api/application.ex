@@ -23,6 +23,7 @@ defmodule ArgosAPI.Application do
   end
 
   def update_mapping() do
+    Logger.info("update mapping")
     delete_index()
     put_index()
     put_mapping()
@@ -69,6 +70,9 @@ defmodule ArgosAPI.Application do
 
       {:ok, %HTTPoison.Response{status_code: 200}} ->
         Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
+      {:error, %HTTPoison.Error{id: nil, reason: :nxdomain}} ->
+        Logger.error("nxdomain error")
+        raise "nxdomain"
     end
   end
 
