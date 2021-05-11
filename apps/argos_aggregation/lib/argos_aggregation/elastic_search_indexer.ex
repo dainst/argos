@@ -54,7 +54,6 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         doc: Map.put(project, :type, :project),
         doc_as_upsert: true
       }
-      IO.inspect("Indexing project")
       ElasticSearchClient.upsert(payload)
       |> parse_response!()
   end
@@ -76,7 +75,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   #end
 
   defp check_update(%{"result" => "updated"}, concept) do
-    IO.puts("update")
+    Logger.info("Apply Update")
     Updater.handle_update(concept)
   end
   defp check_update(_result, _obj) do
@@ -94,7 +93,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       data_json =
         data
         |> Poison.encode!
-      Logger.info(data_json)
+
       "#{@base_url}/_update/#{type}-#{id}"
       |> HTTPoison.post!(
         data_json,
@@ -126,7 +125,6 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
               }
             }
           )
-      IO.inspect(query)
       "#{@base_url}/_search"
       |> HTTPoison.post(query, @headers)
     end
@@ -160,7 +158,6 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     def handle_result({:error, msg}), do: Logger.error(msg)
     def handle_result({:ok, nil}) do {:ok, :ok} end
     def handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
-      IO.inspect(body)
       {:ok, %{"hits" => %{"hits" => hits }}} =
         body
         |> Poison.decode()

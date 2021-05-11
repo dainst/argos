@@ -173,7 +173,6 @@ defmodule ArgosAggregation.Project do
         val == :unknown
       end)
     end
-
     defp get_linked_resource(%{"linked_system" => "gazetteer", "res_id" => rid } = resource) do
       Gazetteer.DataProvider.get_by_id(rid)
       |> handle_response(resource)
