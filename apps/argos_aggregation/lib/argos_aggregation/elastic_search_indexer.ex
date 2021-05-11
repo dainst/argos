@@ -9,9 +9,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   def index(%Thesauri.Concept{} = concept) do
     payload =
       %{
-        doc:
-          concept
-          |> Map.put(:type, :concept),
+        doc: Map.put(concept, :type, :concept),
         doc_as_upsert: true
       }
 
@@ -23,9 +21,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   def index(%Gazetteer.Place{} = place) do
     payload =
       %{
-        doc:
-          place
-          |> Map.put(:type, :place),
+        doc: Map.put(place, :type, :place),
         doc_as_upsert: true
       }
 
@@ -37,9 +33,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   def index(%Chronontology.TemporalConcept{} = temporal_concept) do
     payload =
       %{
-        doc:
-          temporal_concept
-          |> Map.put(:type, :temporal_concept),
+        doc: Map.put(temporal_concept, :type, :temporal_concept),
         doc_as_upsert: true
       }
 
@@ -54,6 +48,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         doc: Map.put(project, :type, :project),
         doc_as_upsert: true
       }
+
       ElasticSearchClient.upsert(payload)
       |> parse_response!()
   end
@@ -125,8 +120,9 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
               }
             }
           )
-      "#{@base_url}/_search"
+      res = "#{@base_url}/_search"
       |> HTTPoison.post(query, @headers)
+      res
     end
   end
 
@@ -137,12 +133,18 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       find_relations(resource)
       |> handle_result
       |> change_all_subdocuments(resource)
-      |> upsert
+      |> index
     end
-    def upsert({:ok, nil}), do: {:ok, nil}
-    def upsert(payload) do
+    def index({:ok, nil}), do: {:ok, nil}
+    def index([]), do: {:ok, "all_done"}
+    def index([updated_doc|remain_docs]) do
       c = Application.get_env(:argos_aggregation, :elastic_client)
+      payload = %{
+        "doc" => updated_doc,
+        "doc_as_upsert" => true
+      }
       c.upsert(payload)
+      index(remain_docs)
     end
 
     defp find_relations(%Gazetteer.Place{} = place), do: find_all_subdocuments(:spatial, place.id)
@@ -170,13 +172,13 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     end
 
     defp change_subdocument(%{"_source" => parent }, %Gazetteer.Place{} = place) do
-      put_in(parent, ["spatial", Access.all(), "resource", Access.filter(&(&1["id"] == place.id))], place )
+      put_in(parent, ["spatial", Access.filter(&(&1["resource"]["id"] == place.id)), "resource"], place )
     end
     defp change_subdocument(%{"_source" => parent}, %Chronontology.TemporalConcept{} = temporal) do
-      put_in(parent, ["temporal", Access.all(), "resource", Access.filter(&(&1["id"] == temporal.id))], temporal )
+      put_in(parent, ["temporal", Access.filter(&(&1["resource"]["id"] == temporal.id)), "resource"], temporal )
     end
     defp change_subdocument(%{"_source" => parent}, %Thesauri.Concept{} = subject) do
-      put_in(parent, ["subject", Access.all(), "resource", Access.filter(&(&1["id"] == subject.id))], subject )
+      put_in(parent, ["subject", Access.filter(&(&1["resource"]["id"] == subject.id)), "resource"], subject )
     end
 
   end

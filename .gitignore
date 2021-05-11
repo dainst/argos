@@ -28,3 +28,8 @@ erl_crash.dump
 data/elasticsearch/nodes/0/indices/kUGeeR-sQ4yp2yX-_ICJpA/0/_state/retention-leases-4.st
 apps/argos_api/.elixir_ls/build/_test/.mix/cached_dot_formatter
 apps/argos_aggregation/.elixir_ls/build/_test/.mix/cached_dot_formatter
+.vscode/launch.json
+apps/argos_aggregation/.elixir_ls/temp_beams/Elixir.ArgosAggregation.ElasticSearchIndexerTest.beam
+apps/argos_aggregation/.elixir_ls/temp_beams/Elixir.ArgosAggregation.ElasticSearchIndexerTest.TestClient.beam
+apps/argos_aggregation/.elixir_ls/temp_beams/Elixir.ArgosAggregationTest.beam
+apps/argos_aggregation/test/test.es

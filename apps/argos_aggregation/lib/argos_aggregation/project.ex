@@ -6,6 +6,9 @@ defmodule ArgosAggregation.Project do
   alias ArgosAggregation.{
     Thesauri, Gazetteer, Chronontology, TranslatedContent
   }
+  alias ArgosAggregation.Gazetteer.Place
+  alias ArgosAggregation.Chronontology.TemporalConcept
+  alias ArgosAggregation.Thesauri.Concept
 
   defmodule Stakeholder do
     @enforce_keys [:label]
@@ -16,6 +19,15 @@ defmodule ArgosAggregation.Project do
       uri: String.t(),
       type: String.t(),
     }
+
+    def create_stakeholder(data) do
+      %Stakeholder{
+        label: TranslatedContent.create_tc_list(data["label"]),
+        role: data["role"],
+        uri: data["uri"],
+        type: data["type"]
+      }
+    end
   end
 
   defmodule Person do
@@ -36,6 +48,13 @@ defmodule ArgosAggregation.Project do
       label: [TranslatedContent.t()],
       uri: String.t()
     }
+
+    def create_image(data) do
+      %Image{
+        label: TranslatedContent.create_tc_list(data["label"]),
+        uri: data["uri"]
+      }
+    end
   end
 
   defmodule ExternalLink do
@@ -64,6 +83,59 @@ defmodule ArgosAggregation.Project do
       stakeholders: [Stakeholder.t()],
       images: [Image.t()]
     }
+
+    @doc """
+    factory function for creating a proper %Project{} from a plain map e.g. from a db request
+    """
+    def create_project(data) do
+
+      %Project{
+        id: data["id"],
+        title: TranslatedContent.create_tc_list(data["title"]),
+        description: TranslatedContent.create_tc_list(data["description"]),
+        doi: data["doi"],
+        start_date: data["start_date"],
+        end_date: data["end_date"],
+        subject: create_concept_list(data["subject"]),
+        spatial:  create_spatial_list(data["spatial"]),
+        temporal: create_temporal_list(data["temporal"]),
+        stakeholders: create_stakeholder_list(data["stakeholders"]),
+        images: create_image_list(data["images"])
+      }
+
+    end
+    defp create_concept_list(nil), do: []
+    defp create_concept_list([]), do: []
+    defp create_concept_list([_|_] = data) do
+      for c <- data, do: %{ resource: Concept.create_concept(c["resource"]), label: TranslatedContent.create_tc_list(c["label"])}
+    end
+
+    defp create_spatial_list(nil), do: []
+    defp create_spatial_list([]), do: []
+    defp create_spatial_list([_|_] = data) do
+      for sp <- data, do: %{ resource: Place.create_place(sp["resource"]), label: TranslatedContent.create_tc_list(sp["label"]) }
+    end
+
+    defp create_temporal_list(nil), do: []
+    defp create_temporal_list([]), do: []
+    defp create_temporal_list([_|_] = data) do
+      for t <- data, do: %{ resource: TemporalConcept.create_temporal(t["resource"]), label: TranslatedContent.create_tc_list(t["label"]) }
+    end
+
+    defp create_stakeholder_list(nil), do: []
+    defp create_stakeholder_list([]), do: []
+    defp create_stakeholder_list([_|_] = data) do
+      for st <- data, do: Stakeholder.create_stakeholder(st)
+    end
+
+    defp create_image_list(nil), do: []
+    defp create_image_list([]), do: []
+    defp create_image_list(data) do
+      for i <- data, do: Image.create_image(i)
+    end
+
+
+
   end
 
   defmodule DataProvider do

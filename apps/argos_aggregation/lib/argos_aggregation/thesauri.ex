@@ -10,6 +10,14 @@ defmodule ArgosAggregation.Thesauri do
       uri: String.t(),
       label: list(TranslatedContent.t()),
     }
+
+    def create_concept(%{} = data) do
+      %Concept{
+        id: data["id"],
+        uri: data["uri"],
+        label: TranslatedContent.create_tc_list(data["label"])
+      }
+    end
   end
 
   defmodule DataProvider do

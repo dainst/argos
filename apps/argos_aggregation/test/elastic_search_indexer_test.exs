@@ -7,6 +7,7 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
   alias ArgosAggregation.Gazetteer.Place
   alias ArgosAggregation.Project.Project
   alias ArgosAggregation.TranslatedContent
+  alias ArgosAggregation.ElasticSearchIndexer
   alias ArgosAggregation.ElasticSearchIndexerTest.TestClient
   alias Geo.Point
 
@@ -28,10 +29,10 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
         lang: "it"
       }],
       geometry: Geo.JSON.encode!(
-        %Point{ coordinates: {41, 42} }
+        %Point{ coordinates: {"41", "42"} }
         )
     }
-    ArgosAggregation.ElasticSearchIndexer.index(p)
+    ElasticSearchIndexer.index(p)
 
     Logger.info("create dummy project")
     pro = %Project{
@@ -44,11 +45,14 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
         }
       ]
     }
-    ArgosAggregation.ElasticSearchIndexer.index(pro)
+    ElasticSearchIndexer.index(pro)
+    :timer.sleep(1000)
+    # crucial for the test to run properly
+    # since there is a delay in indexing
 
     on_exit(fn ->
       Logger.info("delete test index")
-      #TestClient.delete_test_index()
+      TestClient.delete_test_index()
     end)
     :ok
   end
@@ -62,10 +66,10 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
         lang: "de"
       } ],
       geometry: Geo.JSON.encode!(
-        %Point{ coordinates: {41, 42} }
+        %Point{ coordinates: {"41", "42"} }
         )
     }
-    res = ArgosAggregation.ElasticSearchIndexer.index(p)
+    res = ElasticSearchIndexer.index(p)
     assert res == {:ok, nil}
   end
 
@@ -81,10 +85,10 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
         lang: "it"
       }],
       geometry: Geo.JSON.encode!(
-        %Point{ coordinates: {41, 42} }
+        %Point{ coordinates: {"41", "42"} }
         )
     }
-    res = ArgosAggregation.ElasticSearchIndexer.index(p)
+    res = ElasticSearchIndexer.index(p)
     assert res == {:ok, nil}
   end
 
@@ -103,17 +107,28 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
         lang: "mz"
       }],
       geometry: Geo.JSON.encode!(
-        %Point{ coordinates: {41, 42} }
+        %Point{ coordinates: {"41", "42"} }
         )
     }
-    res = ArgosAggregation.ElasticSearchIndexer.index(p)
-    assert res == {:ok, %HTTPoison.Response{status_code: 200}}
+    res = ElasticSearchIndexer.index(p)
+    assert res == {:ok, "all_done"}
+    :timer.sleep(1000)
+    pro_recieved = TestClient.find_project("1")
+
+    pro_expected = %Project{
+      id: "1",
+      title: [ %TranslatedContent{ text: "Test Project", lang: "de" } ],
+      spatial: [
+        %{
+          resource: p,
+          label: []
+        }
+      ]
+    }
+
+    assert pro_expected == pro_recieved
   end
 
-  setup do
-    TestClient.check_created() |> IO.inspect()
-    :ok
-  end
 
 
   @moduledoc """
@@ -151,14 +166,26 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
       ElasticSearchClient.upsert(payload)
     end
 
-    def check_created() do
-      query = Poison.encode!( %{ query: %{ match_all: %{} } } )
+    def find_project(pid) do
+      query = Poison.encode!(
+        %{
+          query: %{
+            query_string: %{
+              query: "type:project AND id:#{pid}" }
+            }
+        } )
       "#{@base_url}#{@index_name}/_search"
       |> HTTPoison.post(query, [{"Content-Type", "application/json"}])
+      |> parse_body
     end
 
-    def create_project(proj) do
 
+    defp parse_body({:ok, %HTTPoison.Response{body: body}}) do
+      %{"hits" => %{"hits" => [pro|_]}} = Poison.decode!(body)
+      proj = pro["_source"]
+      #pro_map = for {key, val} <- proj, into: %{}, do: {String.to_atom(key), val}
+      #struct(Project, pro_map)
+      Project.create_project(proj)
     end
 
     def search_for_subdocument(type, id) do
