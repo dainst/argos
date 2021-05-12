@@ -162,9 +162,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     def handle_result({:error, msg}), do: Logger.error(msg)
     def handle_result({:ok, nil}) do {:ok, :ok} end
     def handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
-      {:ok, %{"hits" => %{"hits" => hits }}} =
-        body
-        |> Poison.decode()
+      {:ok, %{"hits" => %{"hits" => hits }}} = Poison.decode(body)
       {:ok, hits}
     end
 
