@@ -69,13 +69,25 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   #  Observer.updated_resource(:update_observer, kind, id)
   #end
 
+  @doc """
+  checks the result of the last action
+  returns {:ok, "created"} or {:ok, "noop"} in those case
+  in case of an update {:ok, "subdocs_updated"} or {:ok, "no_subdocuments"}
+  """
   defp check_update(%{"result" => "updated"}, concept) do
     Logger.info("Apply Update")
     Updater.handle_update(concept)
   end
-  defp check_update(_result, _obj) do
-    {:ok, nil}
+  defp check_update(%{"result" => "created"}, _obj) do
+    {:ok, "created"}
   end
+  defp check_update(%{"result" => "noop"}, _obj) do
+    {:ok, "noop"}
+  end
+  defp check_update(_res, _obj) do
+    {:error, "error in create/update process"}
+  end
+
 
   defmodule ElasticSearchClient do
     @headers [{"Content-Type", "application/json"}]
@@ -135,8 +147,8 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       |> change_all_subdocuments(resource)
       |> index
     end
-    def index({:ok, nil}), do: {:ok, nil}
-    def index([]), do: {:ok, "all_done"}
+    def index({:ok, msg}), do: {:ok, msg}
+    def index([]), do: {:ok, "subdocs_updated"}
     def index([updated_doc|remain_docs]) do
       c = Application.get_env(:argos_aggregation, :elastic_client)
       payload = %{
@@ -166,7 +178,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       {:ok, hits}
     end
 
-    defp change_all_subdocuments({:ok, []}, _), do: {:ok, nil}
+    defp change_all_subdocuments({:ok, []}, _), do: {:ok, "no_subdocuments"}
     defp change_all_subdocuments({:ok, docs}, resource) do
       Enum.map(docs, &change_subdocument(&1, resource))
     end

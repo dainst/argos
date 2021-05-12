@@ -5,11 +5,31 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
   doctest ArgosAggregation.ElasticSearchIndexer
 
   alias ArgosAggregation.Gazetteer.Place
+  alias ArgosAggregation.Chronontology.TemporalConcept
   alias ArgosAggregation.Project.Project
   alias ArgosAggregation.TranslatedContent
   alias ArgosAggregation.ElasticSearchIndexer
   alias ArgosAggregation.ElasticSearchIndexerTest.TestClient
   alias Geo.Point
+
+  def create_dummy_project(%{id: id, spatial: s}) do
+    pro = %Project{
+      id: id,
+      title: [ %TranslatedContent{ text: "Test Project #{id}", lang: "de" } ],
+      spatial: [ %{ resource: s, label: [] }]
+    }
+    ElasticSearchIndexer.index(pro)
+  end
+
+  def create_dummy_project(%{id: id, temporal: t}) do
+    Logger.info("create dummy project")
+    pro = %Project{
+      id: id,
+      title: [ %TranslatedContent{ text: "Test Project 2", lang: "de" } ],
+      temporal: [ %{ resource: t, label: [] } ]
+    }
+    ElasticSearchIndexer.index(pro)
+  end
 
   setup_all %{} do
     Logger.info("starting tests")
@@ -17,38 +37,31 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
     TestClient.create_test_index()
     TestClient.put_mapping()
 
-    Logger.info("create dummy gazetteer")
     p = %Place{
       id: "2",
       uri: "gazetteer/place/to/be/2",
-      label: [  %TranslatedContent{
-        text: "Rom",
-        lang: "de"
-      } , %TranslatedContent{
-        text: "Roma",
-        lang: "it"
-      }],
+      label: [
+        %TranslatedContent{ text: "Rom", lang: "de" },
+        %TranslatedContent{ text: "Roma", lang: "it" }],
       geometry: Geo.JSON.encode!(
         %Point{ coordinates: {"41", "42"} }
         )
     }
     ElasticSearchIndexer.index(p)
+    create_dummy_project(%{id: "1", spatial: p})
 
-    Logger.info("create dummy project")
-    pro = %Project{
-      id: "1",
-      title: [ %TranslatedContent{ text: "Test Project", lang: "de" } ],
-      spatial: [
-        %{
-          resource: p,
-          label: []
-        }
-      ]
+    t = %TemporalConcept{
+      id: "1748",
+      uri: "chronontology/time/to/be/1748",
+      label: [
+        %TranslatedContent{ text: "Pompeji", lang: "de" },
+        %TranslatedContent{ text: "Pompei", lang: "it" }],
+      beginning: 1748,
+      ending: 1961
     }
-    ElasticSearchIndexer.index(pro)
-    :timer.sleep(1000)
-    # crucial for the test to run properly
-    # since there is a delay in indexing
+    ElasticSearchIndexer.index(t)
+    create_dummy_project(%{id: "2", temporal: t})
+
 
     on_exit(fn ->
       Logger.info("delete test index")
@@ -70,62 +83,120 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
         )
     }
     res = ElasticSearchIndexer.index(p)
-    assert res == {:ok, nil}
+    assert res == {:ok, "created"}
   end
 
   test "update gazzetteer with no known subdocuments" do
     p = %Place{
-      id: "1",
-      uri: "gazetteer/place/to/be/1",
-      label: [ %TranslatedContent{
-        text: "Berlin",
-        lang: "de"
-      } , %TranslatedContent{
-        text: "Berlino",
-        lang: "it"
-      }],
+      id: "3",
+      uri: "gazetteer/place/to/be/3",
+      label: [
+        %TranslatedContent{ text: "Paris", lang: "de"} ],
       geometry: Geo.JSON.encode!(
         %Point{ coordinates: {"41", "42"} }
         )
     }
     res = ElasticSearchIndexer.index(p)
-    assert res == {:ok, nil}
+    assert res == {:ok, "created"}
+
+    p = %Place{
+      id: "3",
+      uri: "gazetteer/place/to/be/3",
+      label: [
+        %TranslatedContent{ text: "Paris", lang: "de" },
+        %TranslatedContent{ text: "Parigi", lang: "it" } ],
+      geometry: Geo.JSON.encode!(
+        %Point{ coordinates: {"41", "42"} }
+        )
+    }
+    res = ElasticSearchIndexer.index(p)
+    assert res == {:ok, "no_subdocuments"}
   end
 
   test "update gazzetteer with a known subdocuments" do
     p = %Place{
       id: "2",
       uri: "gazetteer/place/to/be/2",
-      label: [  %TranslatedContent{
-        text: "Rom",
-        lang: "de"
-      } , %TranslatedContent{
-        text: "Roma",
-        lang: "it"
-      }, %TranslatedContent{
-        text: "Romsky",
-        lang: "mz"
-      }],
+      label: [
+        %TranslatedContent{ text: "Rom", lang: "de" },
+        %TranslatedContent{ text: "Roma", lang: "it" },
+        %TranslatedContent{ text: "Romsky", lang: "mz" }],
       geometry: Geo.JSON.encode!(
         %Point{ coordinates: {"41", "42"} }
         )
     }
     res = ElasticSearchIndexer.index(p)
-    assert res == {:ok, "all_done"}
-    :timer.sleep(1000)
-    pro_recieved = TestClient.find_project("1")
+    assert res == {:ok, "subdocs_updated"}
 
+    pro_recieved = TestClient.find_project("1")
     pro_expected = %Project{
       id: "1",
-      title: [ %TranslatedContent{ text: "Test Project", lang: "de" } ],
-      spatial: [
-        %{
-          resource: p,
-          label: []
-        }
-      ]
+      title: [ %TranslatedContent{ text: "Test Project 1", lang: "de" } ],
+      spatial: [ %{ resource: p, label: [] } ]
     }
+    assert pro_expected == pro_recieved
+  end
 
+  test "add temporal" do
+    t = %TemporalConcept{
+      id: "1792",
+      uri: "chronontology/time/to/be/1792",
+      label: [
+        %TranslatedContent{ text: "Amerika", lang: "de" },
+        %TranslatedContent{ text: "Americano", lang: "it" } ],
+      beginning: 1792,
+      ending: 2016
+    }
+    res = ElasticSearchIndexer.index(t)
+    assert res == {:ok, "created"}
+  end
+
+  test "update temporal no subdocs" do
+    t = %TemporalConcept{
+      id: "100",
+      uri: "chronontology/time/to/be/100",
+      label: [
+        %TranslatedContent{ text: "1. Jh", lang: "de" },
+        %TranslatedContent{ text: "1st Cent.", lang: "en" } ],
+      beginning: 1,
+      ending: 99
+    }
+    res = ElasticSearchIndexer.index(t)
+    assert res == {:ok, "created"}
+
+    t = %TemporalConcept{
+      id: "100",
+      uri: "chronontology/time/to/be/100",
+      label: [
+        %TranslatedContent{ text: "1. Jh", lang: "de" },
+        %TranslatedContent{ text: "1st Cent.", lang: "en" } ],
+      beginning: 1,
+      ending: 100
+    }
+    res = ElasticSearchIndexer.index(t)
+    assert res == {:ok, "no_subdocuments"}
+  end
+
+  test "update temporal with one subdocument" do
+    t = %TemporalConcept{
+      id: "1748",
+      uri: "chronontology/time/to/be/1748",
+      label: [
+        %TranslatedContent{ text: "Pompeji", lang: "de" },
+        %TranslatedContent{ text: "Pompei", lang: "it" },
+        %TranslatedContent{ text: "Pompeii", lang: "en" } ],
+      beginning: 1748,
+      ending: 1961
+    }
+    res = ElasticSearchIndexer.index(t)
+    assert res == {:ok, "subdocs_updated"}
+
+    pro_recieved = TestClient.find_project("2")
+    pro_expected = %Project{
+      id: "2",
+      title: [ %TranslatedContent{ text: "Test Project 2", lang: "de" } ],
+      temporal: [ %{ resource: t, label: [] } ]
+    }
     assert pro_expected == pro_recieved
   end
 
@@ -150,6 +221,21 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
       put_mapping()
     end
 
+    def add_settings() do
+      q = Poison.encode!(%{
+        index: %{
+          refresh_interval: "1ms"
+        }
+      })
+      "#{@base_url}#{@index_name}/_settings"
+      |> HTTPoison.put!(q)
+    end
+
+    def refresh_index() do
+      "#{@base_url}#{@index_name}/_refresh"
+      |> HTTPoison.post!("")
+    end
+
     def delete_test_index() do
       "#{@base_url}#{@index_name}"
       |> HTTPoison.delete!
@@ -167,6 +253,8 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
     end
 
     def find_project(pid) do
+      refresh_index() # crucial for the test to work since updates might not be visible for search
+
       query = Poison.encode!(
         %{
           query: %{
@@ -183,12 +271,12 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
     defp parse_body({:ok, %HTTPoison.Response{body: body}}) do
       %{"hits" => %{"hits" => [pro|_]}} = Poison.decode!(body)
       proj = pro["_source"]
-      #pro_map = for {key, val} <- proj, into: %{}, do: {String.to_atom(key), val}
-      #struct(Project, pro_map)
       Project.create_project(proj)
     end
 
     def search_for_subdocument(type, id) do
+      refresh_index() # crucial for test to work since update might not be visible for search
+      
       ElasticSearchClient.search_for_subdocument(type, id)
     end
   end
