@@ -49,7 +49,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         doc_as_upsert: true
       }
 
-      ElasticSearchClient.upsert(payload)
+      call_elastic_client(payload)
       |> parse_response!()
   end
 
