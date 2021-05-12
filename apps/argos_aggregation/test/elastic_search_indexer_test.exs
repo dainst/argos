@@ -88,6 +88,10 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
     :ok
   end
 
+  @doc """
+  project tests
+  """
+
   test "create project" do
     pro = %Project{
       id: 0,
