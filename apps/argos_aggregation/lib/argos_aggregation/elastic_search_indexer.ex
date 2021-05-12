@@ -13,7 +13,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         doc_as_upsert: true
       }
 
-    upsert(payload)
+    call_elastic_client(payload)
     |> parse_response!()
     |> check_update(concept)
   end
@@ -25,7 +25,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         doc_as_upsert: true
       }
 
-    upsert(payload)
+    call_elastic_client(payload)
     |> parse_response!()
     |> check_update(place)
   end
@@ -37,7 +37,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         doc_as_upsert: true
       }
 
-    upsert(payload)
+    call_elastic_client(payload)
     |> parse_response!()
     |> check_update(temporal_concept)
   end
@@ -53,7 +53,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       |> parse_response!()
   end
 
-  def upsert(payload) do
+  def call_elastic_client(payload) do
     c = Application.get_env(:argos_aggregation, :elastic_client)
     c.upsert(payload)
   end
