@@ -6,6 +6,7 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
 
   alias ArgosAggregation.Gazetteer.Place
   alias ArgosAggregation.Chronontology.TemporalConcept
+  alias ArgosAggregation.Thesauri.Concept
   alias ArgosAggregation.Project.Project
   alias ArgosAggregation.TranslatedContent
   alias ArgosAggregation.ElasticSearchIndexer
@@ -20,13 +21,19 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
     }
     ElasticSearchIndexer.index(pro)
   end
-
   def create_dummy_project(%{id: id, temporal: t}) do
-    Logger.info("create dummy project")
     pro = %Project{
       id: id,
-      title: [ %TranslatedContent{ text: "Test Project 2", lang: "de" } ],
+      title: [ %TranslatedContent{ text: "Test Project #{id}", lang: "de" } ],
       temporal: [ %{ resource: t, label: [] } ]
+    }
+    ElasticSearchIndexer.index(pro)
+  end
+  def create_dummy_project(%{id: id, subject: c}) do
+    pro = %Project{
+      id: id,
+      title: [ %TranslatedContent{ text: "Test Project #{id}", lang: "de" } ],
+      subject: [ %{ resource: c, label: [] } ]
     }
     ElasticSearchIndexer.index(pro)
   end
@@ -62,6 +69,14 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
     ElasticSearchIndexer.index(t)
     create_dummy_project(%{id: "2", temporal: t})
 
+    c = %Concept{
+      id: "_125",
+      uri: "thesaurus/know/how/_125",
+      label: [
+        %TranslatedContent{ text: "Bauornamente", lang: "de" } ]
+    }
+    res = ElasticSearchIndexer.index(c)
+    create_dummy_project(%{id: "3", subject: c})
 
     on_exit(fn ->
       Logger.info("delete test index")
@@ -69,6 +84,10 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
     end)
     :ok
   end
+
+  @doc """
+  gazetteer tests
+  """
 
   test "add gazzetteer" do
     p = %Place{
@@ -137,6 +156,10 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
     assert pro_expected == pro_recieved
   end
 
+  @doc """
+  chronontology tests
+  """
+
   test "add temporal" do
     t = %TemporalConcept{
       id: "1792",
@@ -196,6 +219,65 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
       id: "2",
       title: [ %TranslatedContent{ text: "Test Project 2", lang: "de" } ],
       temporal: [ %{ resource: t, label: [] } ]
+    }
+    assert pro_expected == pro_recieved
+  end
+
+  @doc """
+  thesaurus tests
+  """
+
+  test "add concept" do
+    c = %Concept{
+      id: "_123",
+      uri: "thesaurus/know/how/_123",
+      label: [
+        %TranslatedContent{ text: "Keramik", lang: "de" },
+        %TranslatedContent{ text: "Ceramic", lang: "en" } ],
+    }
+    res = ElasticSearchIndexer.index(c)
+    assert res == {:ok, "created"}
+  end
+
+  test "update concept no subdocs" do
+    c = %Concept{
+      id: "_124",
+      uri: "thesaurus/know/how/_124",
+      label: [
+        %TranslatedContent{ text: "Tafelgeschirr", lang: "de" },
+        %TranslatedContent{ text: "Tableware", lang: "en" } ],
+    }
+    res = ElasticSearchIndexer.index(c)
+    assert res == {:ok, "created"}
+
+    c = %Concept{
+      id: "_124",
+      uri: "thesaurus/know/how/_124",
+      label: [
+        %TranslatedContent{ text: "Tafelgeschirr", lang: "de" },
+        %TranslatedContent{ text: "Tableware", lang: "en" },
+        %TranslatedContent{ text: "Stoviglie", lang: "it" }, ],
+    }
+    res = ElasticSearchIndexer.index(c)
+    assert res == {:ok, "no_subdocuments"}
+  end
+
+  test "update comcept with one subdocument" do
+    c = %Concept{
+      id: "_125",
+      uri: "thesaurus/know/how/_125",
+      label: [
+        %TranslatedContent{ text: "Bauornamente", lang: "de" },
+        %TranslatedContent{ text: "ornamenti di edifici", lang: "it" } ],
+    }
+    res = ElasticSearchIndexer.index(c)
+    assert res == {:ok, "subdocs_updated"}
+
+    pro_recieved = TestClient.find_project("3")
+    pro_expected = %Project{
+      id: "3",
+      title: [ %TranslatedContent{ text: "Test Project 3", lang: "de" } ],
+      subject: [ %{ resource: c, label: [] } ]
     }
     assert pro_expected == pro_recieved
   end
@@ -276,7 +358,7 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
 
     def search_for_subdocument(type, id) do
       refresh_index() # crucial for test to work since update might not be visible for search
-      
+
       ElasticSearchClient.search_for_subdocument(type, id)
     end
   end
