@@ -1,4 +1,7 @@
 defmodule ArgosAggregation.ElasticSearchIndexerTest do
+  @moduledoc """
+  Integration test for the indexing and updating of projects and update of subdocuments
+  """
   use ExUnit.Case
 
   require Logger
@@ -83,6 +86,40 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
       TestClient.delete_test_index()
     end)
     :ok
+  end
+
+  test "create project" do
+    pro = %Project{
+      id: 0,
+      title: [ %TranslatedContent{ text: "Test Project 0", lang: "de" } ],
+    }
+    res = ElasticSearchIndexer.index(pro)
+    assert %{"result" => "created", "_id" => "project-0"} = res
+  end
+
+  test "update project" do
+    pro = %Project{
+      id: 4,
+      title: [ %TranslatedContent{ text: "Test Project 4", lang: "de" } ],
+    }
+    res = ElasticSearchIndexer.index(pro)
+    assert %{"result" => "created", "_id" => "project-4"} = res
+
+    TestClient.refresh_index()
+    pro = TestClient.find_project(4)
+    assert pro.title == [ %TranslatedContent{ text: "Test Project 4", lang: "de" } ]
+
+    pro = %Project{
+      id: 4,
+      title: [ %TranslatedContent{ text: "Better Title for the Project", lang: "en" } ],
+    }
+    res = ElasticSearchIndexer.index(pro)
+    assert %{"result" => "updated", "_id" => "project-4"} = res
+
+    TestClient.refresh_index()
+    pro = TestClient.find_project(4)
+    assert pro.title == [ %TranslatedContent{ text: "Better Title for the Project", lang: "en" } ]
+
   end
 
   @doc """
