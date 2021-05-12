@@ -17,28 +17,28 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
   alias Geo.Point
 
   def create_dummy_project(%{id: id, spatial: s}) do
-    pro = %Project{
+    %Project{
       id: id,
       title: [ %TranslatedContent{ text: "Test Project #{id}", lang: "de" } ],
       spatial: [ %{ resource: s, label: [] }]
     }
-    ElasticSearchIndexer.index(pro)
+    |> ElasticSearchIndexer.index
   end
   def create_dummy_project(%{id: id, temporal: t}) do
-    pro = %Project{
+    %Project{
       id: id,
       title: [ %TranslatedContent{ text: "Test Project #{id}", lang: "de" } ],
       temporal: [ %{ resource: t, label: [] } ]
     }
-    ElasticSearchIndexer.index(pro)
+    |> ElasticSearchIndexer.index
   end
   def create_dummy_project(%{id: id, subject: c}) do
-    pro = %Project{
+    %Project{
       id: id,
       title: [ %TranslatedContent{ text: "Test Project #{id}", lang: "de" } ],
       subject: [ %{ resource: c, label: [] } ]
     }
-    ElasticSearchIndexer.index(pro)
+    |> ElasticSearchIndexer.index
   end
 
   setup_all %{} do
@@ -110,7 +110,7 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
     assert %{"result" => "created", "_id" => "project-4"} = res
 
     TestClient.refresh_index()
-    pro = TestClient.find_project(4)
+    pro = TestClient.find_project(pro.id)
     assert pro.title == [ %TranslatedContent{ text: "Test Project 4", lang: "de" } ]
 
     pro = %Project{
@@ -121,7 +121,7 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
     assert %{"result" => "updated", "_id" => "project-4"} = res
 
     TestClient.refresh_index()
-    pro = TestClient.find_project(4)
+    pro = TestClient.find_project(pro.id)
     assert pro.title == [ %TranslatedContent{ text: "Better Title for the Project", lang: "en" } ]
 
   end
