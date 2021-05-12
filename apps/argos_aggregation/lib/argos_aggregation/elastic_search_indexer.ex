@@ -1,7 +1,7 @@
 defmodule ArgosAggregation.ElasticSearchIndexer do
   require Logger
   alias ArgosAggregation.{
-    Chronontology, Gazetteer, Thesauri, Project, UpdateController.Observer
+    Chronontology, Gazetteer, Thesauri, Project
   }
   alias ArgosAggregation.ElasticSearchIndexer.Updater
   alias ArgosAggregation.ElasticSearchIndexer.ElasticSearchClient
@@ -65,9 +65,6 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   defp parse_response!(%{"error" => error}), do: raise error
   defp parse_response!(result), do: result
 
-  #defp check_update(%{"result" => "updated"}, kind, id) do
-  #  Observer.updated_resource(:update_observer, kind, id)
-  #end
 
   @doc """
   checks the result of the last action

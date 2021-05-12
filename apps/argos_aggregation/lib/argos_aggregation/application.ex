@@ -42,7 +42,6 @@ defmodule ArgosAggregation.Application do
       else
         [
           ArgosAggregation.Project.Harvester,
-          ArgosAggregation.UpdateController.Observer
         ]
       end
 
