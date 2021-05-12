@@ -7,50 +7,43 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   alias ArgosAggregation.ElasticSearchIndexer.ElasticSearchClient
 
   def index(%Thesauri.Concept{} = concept) do
-    payload =
-      %{
+
+    %{
         doc: Map.put(concept, :type, :concept),
         doc_as_upsert: true
       }
-
-    call_elastic_client(payload)
-    |> parse_response!()
-    |> check_update(concept)
+    |> call_elastic_client
+    |> parse_response!
+    |> update_subdocs(concept)
   end
 
   def index(%Gazetteer.Place{} = place) do
-    payload =
-      %{
+    %{
         doc: Map.put(place, :type, :place),
         doc_as_upsert: true
       }
-
-    call_elastic_client(payload)
-    |> parse_response!()
-    |> check_update(place)
+    |> call_elastic_client
+    |> parse_response!
+    |> update_subdocs(place)
   end
 
   def index(%Chronontology.TemporalConcept{} = temporal_concept) do
-    payload =
-      %{
+    %{
         doc: Map.put(temporal_concept, :type, :temporal_concept),
         doc_as_upsert: true
-      }
-
-    call_elastic_client(payload)
-    |> parse_response!()
-    |> check_update(temporal_concept)
+    }
+    |> call_elastic_client
+    |> parse_response!
+    |> update_subdocs(temporal_concept)
   end
 
   def index(%Project.Project{} = project) do
-    payload =
       %{
         doc: Map.put(project, :type, :project),
         doc_as_upsert: true
       }
-
-      call_elastic_client(payload)
-      |> parse_response!()
+      |> call_elastic_client
+      |> parse_response!
   end
 
   def call_elastic_client(payload) do
@@ -71,17 +64,17 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   returns {:ok, "created"} or {:ok, "noop"} in those case
   in case of an update {:ok, "subdocs_updated"} or {:ok, "no_subdocuments"}
   """
-  defp check_update(%{"result" => "updated"}, concept) do
+  defp update_subdocs(%{"result" => "updated"}, concept) do
     Logger.info("Apply Update")
     Updater.handle_update(concept)
   end
-  defp check_update(%{"result" => "created"}, _obj) do
+  defp update_subdocs(%{"result" => "created"}, _obj) do
     {:ok, "created"}
   end
-  defp check_update(%{"result" => "noop"}, _obj) do
+  defp update_subdocs(%{"result" => "noop"}, _obj) do
     {:ok, "noop"}
   end
-  defp check_update(_res, _obj) do
+  defp update_subdocs(_res, _obj) do
     {:error, "error in create/update process"}
   end
 
@@ -148,11 +141,11 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     def index([]), do: {:ok, "subdocs_updated"}
     def index([updated_doc|remain_docs]) do
       c = Application.get_env(:argos_aggregation, :elastic_client)
-      payload = %{
+      %{
         "doc" => updated_doc,
         "doc_as_upsert" => true
       }
-      c.upsert(payload)
+      |> c.upsert
       index(remain_docs)
     end
 
