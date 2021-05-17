@@ -116,7 +116,7 @@ defmodule ArgosAggregation.Bibliography do
       case result do
         {:ok, %{"records" => records}} ->
           records
-          |> Stream.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
+          |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
           |> Enum.map(&Task.await(&1))
         {:ok, %{"resultCount" => 0}} ->
           []
