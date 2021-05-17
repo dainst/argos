@@ -11,3 +11,5 @@ config :argos_api,
   elasticsearch_url: "elasticsearch:9200",
   index_name: "argos",
   elasticsearch_mapping_path: "/elasticsearch-mapping.json"
+
+config :argos_aggregation, :elastic_client, ArgosAggregation.ElasticSearchIndexer.ElasticSearchClient

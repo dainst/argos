@@ -3,15 +3,25 @@ defmodule ArgosAggregation.Chronontology do
   defmodule TemporalConcept do
     alias ArgosAggregation.TranslatedContent
 
-    @enforce_keys [:id, :uri, :label, :begin, :end]
-    defstruct [:id, :uri, :label, :begin, :end]
+    @enforce_keys [:id, :uri, :label, :beginning, :ending]
+    defstruct [:id, :uri, :label, :beginning, :ending]
     @type t() :: %__MODULE__{
       id: String.t(),
       uri: String.t(),
       label: TranslatedContent.t(),
-      begin: integer(),
-      end: integer()
+      beginning: integer(),
+      ending: integer()
     }
+
+    def create_temporal(data) do
+      %TemporalConcept{
+        id: data["id"],
+        uri: data["uri"],
+        label: for t <- data["label"] do %TranslatedContent{text: t["text"], lang: t["lang"]} end,
+        beginning: data["beginning"],
+        ending: data["ending"],
+      }
+    end
   end
 
   defmodule DataProvider do
@@ -54,9 +64,9 @@ defmodule ArgosAggregation.Chronontology do
       # TODO: Es gibt potenziell mehrere timespan, wie damit umgehen?
       beginning =
         case data["resource"]["hasTimespan"] do
-          [%{"begin" => %{"at" => at}}] ->
+          [%{"beginning" => %{"at" => at}}] ->
             at
-          [%{"begin" => %{"notBefore" => notBefore}}] ->
+          [%{"beginning" => %{"notBefore" => notBefore}}] ->
             notBefore
           _ ->
             Logger.warning("Found no begin date for period #{data["resource"]["id"]}")
@@ -65,9 +75,9 @@ defmodule ArgosAggregation.Chronontology do
 
       ending =
         case data["resource"]["hasTimespan"] do
-          [%{"end" => %{"at" => at}}] ->
+          [%{"ending" => %{"at" => at}}] ->
             at
-          [%{"end" => %{"notAfter" => notAfter}}] ->
+          [%{"ending" => %{"notAfter" => notAfter}}] ->
             notAfter
           _ ->
             Logger.warning("Found no end date for period #{data["resource"]["id"]}")
@@ -78,8 +88,8 @@ defmodule ArgosAggregation.Chronontology do
         id: data["resource"]["id"],
         uri: "#{@base_url}/period/#{data["resource"]["id"]}",
         label: create_translated_content_list( data["resource"]["names"]),
-        begin: beginning,
-        end: ending
+        beginning: beginning,
+        ending: ending
       }}
     end
 

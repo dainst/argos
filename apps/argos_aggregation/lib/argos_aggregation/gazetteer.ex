@@ -12,6 +12,17 @@ defmodule ArgosAggregation.Gazetteer do
       label: [TranslatedContent.t()],
       geometry: [Geo.geometry()]
     }
+
+    def create_place(data) do
+      %Place{
+        id: data["id"],
+        uri: data["uri"],
+        label: TranslatedContent.create_tc_list(data["label"]),
+        geometry: Geo.JSON.encode!(
+          %Geo.Point{ coordinates: List.to_tuple(data["geometry"]["coordinates"]) }
+        )
+      }
+    end
   end
 
   require Logger

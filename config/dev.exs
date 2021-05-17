@@ -13,3 +13,4 @@ config :logger, :console,
 
 config :argos_aggregation,
   bibliography_url: "http://zenon.dev.dainst.org"
+  elastic_client: ArgosAggregation.ElasticSearchIndexer.ElasticSearchClient
