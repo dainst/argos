@@ -126,7 +126,7 @@ defmodule ArgosAggregation.Bibliography do
         {:ok, %{"records" => records}} ->
           records
           |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
-          |> Enum.map(&Task.await(&1))
+          |> Enum.map(&Task.await(&1, 1000 * 60))
         {:ok, %{"resultCount" => 0}} ->
           []
         {:error, reason} ->

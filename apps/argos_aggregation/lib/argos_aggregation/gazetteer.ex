@@ -41,7 +41,7 @@ defmodule ArgosAggregation.Gazetteer do
     @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true"
-      |> HTTPoison.get([], [follow_redirect: true ])
+      |> HTTPoison.get([], [follow_redirect: true, recv_timeout: 1000 * 15 ])
       |> parse_response()
       |> parse_place_data()
     end
