@@ -64,11 +64,9 @@ defmodule ArgosAggregation.Bibliography do
         |> get_record_list()
 
       case result do
-        {:ok, %{"records" => records}} ->
-          records
-          |> List.first()
+        {:ok, %{"records" => [record]}} ->
+          record
           |> BibliographyParser.parse_record()
-          |> IO.inspect
         {:error, reason} ->
           {:error, reason}
       end
