@@ -1,7 +1,7 @@
 defmodule ArgosAggregation.ElasticSearchIndexer do
   require Logger
   alias ArgosAggregation.{
-    Chronontology, Gazetteer, Thesauri, Project
+    Chronontology, Gazetteer, Thesauri, Project, Bibliography
   }
 
   @headers [{"Content-Type", "application/json"}]
@@ -53,8 +53,20 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         doc_as_upsert: true
       }
 
-      upsert(payload)
-      |> parse_response!()
+    upsert(payload)
+    |> parse_response!()
+  end
+
+  def index(%Bibliography.BibliographicRecord{} = record) do
+    payload =
+      %{
+        doc: Map.put(record, :type, :bibliography),
+        doc_as_upsert: true
+      }
+
+    payload
+    |> upsert()
+    |> parse_response!()
   end
 
   defp upsert(%{doc: %{type: type, id: id}} = data) do

@@ -39,6 +39,9 @@ defmodule Argos.MixProject do
       ],
       "seed.projects": [
         "run --eval 'ArgosAggregation.ProjectCLI.run()' -- --script"
+      ],
+      "seed.bibliography": [
+        "run --eval 'ArgosAggregation.BibliographyCLI.run()' -- --script"
       ]
     ]
   end

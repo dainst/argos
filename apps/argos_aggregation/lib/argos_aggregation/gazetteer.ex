@@ -30,7 +30,7 @@ defmodule ArgosAggregation.Gazetteer do
     @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true"
-      |> HTTPoison.get()
+      |> HTTPoison.get([], [follow_redirect: true ])
       |> parse_response()
       |> parse_place_data()
     end
@@ -79,6 +79,7 @@ defmodule ArgosAggregation.Gazetteer do
 
     defp parse_names(names) do
       names
+      |> Enum.filter(fn (name) -> name != nil end)
       |> Enum.map(fn (entry) ->
         case entry do
           %{"language" => lang, "title" => title} ->
@@ -92,7 +93,6 @@ defmodule ArgosAggregation.Gazetteer do
               text: title
             }
         end
-
       end)
     end
 

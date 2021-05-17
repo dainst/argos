@@ -18,6 +18,9 @@ config :argos_aggregation,
   projects_url: "http://projects.dainst.org",
   projects_harvest_interval: 1000 * 60 * 30, # 30 minutes
 
+  bibliography_url: "https://zenon.dainst.org",
+  bibliography_harvest_interval: 1000 * 60 * 30, # 30 minutes
+
   chronontology_url: "https://chronontology.dainst.org",
   gazetteer_url: "https://gazetteer.dainst.org",
   thesauri_url: "http://thesauri.dainst.org"

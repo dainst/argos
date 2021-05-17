@@ -2,6 +2,9 @@
     "properties": {
         "type": {
             "type": "keyword"
+        },
+        "full_record": {
+            "type": "flattened"
         }
     },
     "dynamic_templates": 

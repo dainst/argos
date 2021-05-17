@@ -35,13 +35,19 @@ defmodule ArgosAggregation.Application do
     end
   end
 
+  def get_http_agent() do
+    {:ok, vsn} = :application.get_key(:argos_aggregation, :vsn)
+    "Argos-Aggregation/#{List.to_string(vsn)}"
+  end
+
   def start(_type, _args) do
     children =
       if running_script?(System.argv) do
         [] # We do not want to (re)start the harvesters when running exs scripts.
       else
         [
-          ArgosAggregation.Project.Harvester
+          ArgosAggregation.Project.Harvester,
+          ArgosAggregation.Bibliography.Harvester
         ]
       end
 
