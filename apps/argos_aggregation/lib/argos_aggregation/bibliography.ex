@@ -45,13 +45,6 @@ defmodule ArgosAggregation.Bibliography do
 
     alias ArgosAggregation.Bibliography.BibliographyParser
 
-    def get_all_test() do
-      get_all()
-      |> Enum.map(fn (record) ->
-        :ok
-      end)
-    end
-
     @impl ArgosAggregation.AbstractDataProvider
     def get_all() do
       get_batches("prettyPrint=false")
@@ -70,15 +63,6 @@ defmodule ArgosAggregation.Bibliography do
         {:error, reason} ->
           {:error, reason}
       end
-    end
-
-    def get_by_date_test() do
-      DateTime.utc_now()
-      |> DateTime.add(-60 * 60 * 24 * 5)
-      |> get_by_date()
-      |> Enum.map(fn (record) ->
-        :ok
-      end)
     end
 
     @impl ArgosAggregation.AbstractDataProvider
