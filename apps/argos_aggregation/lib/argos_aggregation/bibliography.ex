@@ -136,7 +136,6 @@ defmodule ArgosAggregation.Bibliography do
 
     def get_record_list(query) do
       "#{@base_url}/api/v1/search?#{query}"
-      |> IO.inspect
       |> HTTPoison.get([{"User-Agent", ArgosAggregation.Application.get_http_agent()}])
       |> parse_response()
     end
@@ -315,7 +314,6 @@ defmodule ArgosAggregation.Bibliography do
     def run_harvest() do
       DataProvider.get_all()
       |> Enum.map(&ElasticSearchIndexer.index(&1))
-      |> Enum.each(&Task.await/1)
     end
 
     def run_harvest(%DateTime{} = datetime) do
