@@ -41,7 +41,7 @@ defmodule ArgosAggregation.Application do
         [] # We do not want to (re)start the harvesters when running exs scripts.
       else
         [
-          ArgosAggregation.Project.Harvester
+          ArgosAggregation.Project.Harvester,
         ]
       end
 

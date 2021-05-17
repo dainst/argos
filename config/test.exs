@@ -6,3 +6,8 @@
 
 # General application configuration
 import Config
+
+config :argos_aggregation, :elastic_client, ArgosAggregation.ElasticSearchIndexerTest.TestClient
+
+config :argos_api,
+  index_name: "argos_testing"

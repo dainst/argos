@@ -10,3 +10,5 @@ import Config
 config :logger, :console,
   format: "[$level] $message [$metadata]\n",
   metadata: [:application, :module]
+
+config :argos_aggregation, :elastic_client, ArgosAggregation.ElasticSearchIndexer.ElasticSearchClient
