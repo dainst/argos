@@ -20,8 +20,17 @@ defmodule ArgosAggregation.Bibliography do
       id: String.t(),
       title: [TranslatedContent.t()],
       description: [TranslatedContent.t()],
-      subject: [Thesauri.Concept.t()],
-      spatial: [Place.t()],
+      subject: [
+        %{
+          label: [TranslatedContent.t()],
+          resource: Thesauri.Concept.t(),
+        }
+      ],
+      spatial: [
+        %{
+          label: [TranslatedContent.t()],
+          resource: Place.t()}
+      ],
       persons: [Author.t()],
       institutions: [Author.t()],
       full_record: Map.t()
@@ -238,7 +247,10 @@ defmodule ArgosAggregation.Bibliography do
       "https://gazetteer.dainst.org/place/" <> gaz_id = data["uri"]
       case Gazetteer.DataProvider.get_by_id(gaz_id) do
         {:ok, place} ->
-          place
+          %{
+            label: "Subject",
+            resource: place
+          }
         error ->
           Logger.error("Received error for #{data["uri"]}:")
           Logger.error(error)
@@ -254,7 +266,10 @@ defmodule ArgosAggregation.Bibliography do
       "http://thesauri.dainst.org/" <> ths_id = data["uri"]
       case Thesauri.DataProvider.get_by_id(ths_id) do
         {:ok, concept} ->
-          concept
+          %{
+            label: "Subject",
+            resource: concept
+          }
         error ->
           error
       end
