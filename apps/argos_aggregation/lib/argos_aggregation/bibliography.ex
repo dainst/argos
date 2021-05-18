@@ -175,7 +175,7 @@ defmodule ArgosAggregation.Bibliography do
       concepts =
         record["DAILinks"]["thesauri"]
         |> Enum.map(&Task.async( fn -> parse_concept(&1) end))
-        |> Enum.map(&Task.await/1)
+        |> Enum.map(&Task.await(&1, 1000 * 30))
         |> Enum.filter(fn val ->
           case val do
             {:error, _msg} ->
