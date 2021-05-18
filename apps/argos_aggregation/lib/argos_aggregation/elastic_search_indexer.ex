@@ -94,7 +94,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
 
     def upsert(%{doc: %{type: type, id: id}} = data) do
-      Logger.info("Indexing #{type}-#{id}.")
+      Logger.debug("Indexing #{type}-#{id}.")
 
       data_json =
         data
@@ -107,7 +107,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       )
     end
     def upsert(%{"doc" => %{"type" => type, "id" => id}} = data) do
-      Logger.info("Indexing #{type}-#{id}.")
+      Logger.debug("Indexing #{type}-#{id}.")
 
       data_json =
         data
