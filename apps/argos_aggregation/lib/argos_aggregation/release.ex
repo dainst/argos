@@ -8,4 +8,14 @@ defmodule ArgosAggregation.Release do
     HTTPoison.start()
     ArgosAggregation.ProjectCLI.run()
   end
+
+  def seed_bibliography(date) do
+    HTTPoison.start()
+    ArgosAggregation.BibliographyCLI.run(date)
+  end
+
+  def seed_bibliography() do
+    HTTPoison.start()
+    ArgosAggregation.BibliographyCLI.run()
+  end
 end
