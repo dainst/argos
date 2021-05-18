@@ -38,6 +38,9 @@ defmodule Argos.MixProject do
       "update-mapping": [
         "run --eval 'ArgosAPI.Release.update_mapping()' -- --script"
       ],
+      "seed": [
+        "seed.projects", "seed.bibliography"
+      ],
       "seed.projects": [
         "run --eval 'ArgosAggregation.ProjectCLI.run()' -- --script"
       ],
