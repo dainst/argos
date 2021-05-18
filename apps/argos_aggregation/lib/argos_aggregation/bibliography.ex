@@ -109,7 +109,8 @@ defmodule ArgosAggregation.Bibliography do
           records
           |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
           |> Enum.map(&Task.await(&1, 1000 * 60))
-        {:ok, %{"resultCount" => 0}} ->
+        {:ok, %{"resultCount" => _number}} ->
+          # either empty search result (resultCount == 0) or search's last page + 1 (resultCount == n, but no record key)
           []
         {:error, reason} ->
           {:error, reason}
