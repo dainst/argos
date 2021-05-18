@@ -1,7 +1,7 @@
 defmodule ArgosAggregation.Bibliography do
 
   alias ArgosAggregation.{
-    Thesauri, Gazetteer, TranslatedContent
+    Thesauri, Gazetteer, TranslatedContent, NaturalLanguageDetector
   }
 
   defmodule Author do
@@ -189,14 +189,25 @@ defmodule ArgosAggregation.Bibliography do
         id: record["id"],
         title: %TranslatedContent{
           text: record["title"],
-          lang: ""
+          lang: NaturalLanguageDetector.get_language_key(record["title"])
         },
+        description: parse_descriptions(record),
         persons: parse_persons(record),
         institutions: parse_institutions(record),
         spatial: places,
         subject: concepts,
         full_record: record
       }
+    end
+
+    defp parse_descriptions(record) do
+      record["summary"]
+      |> Enum.map(fn(summary) ->
+        %TranslatedContent{
+          text: summary,
+          lang: NaturalLanguageDetector.get_language_key(summary)
+        }
+      end)
     end
 
     defp parse_persons(record) do
