@@ -144,6 +144,12 @@ defmodule ArgosAggregation.Gazetteer do
       |> get_batches
     end
 
+    def get_by_date(%DateTime{} = datetime) do
+        datetime
+        |> DateTime.to_date #gazetteer does not support time queries
+        |> get_by_date
+    end
+
     defp get_date_query(date), do: "(lastChangeDate:>=#{date})"
 
     def get_batches(base_query) do

@@ -30,6 +30,15 @@ defmodule ArgosAggregation.GazetteerTest do
     assert %Place{} = data
   end
 
+  test "run gazzetteer data provider get_by_datetime" do
+    [data|_] =
+      DataProvider.get_by_date(~U[2021-01-01 19:59:03Z])
+      |> Enum.to_list()
+    assert %Place{} = data
+  end
+
+
+
   test "run gazetteer data provider get_by_id" do
     data = DataProvider.get_by_id("2048575")
     assert {:ok, %Place{}} = data
