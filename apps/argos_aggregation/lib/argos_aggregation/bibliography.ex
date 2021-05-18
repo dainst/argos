@@ -165,7 +165,7 @@ defmodule ArgosAggregation.Bibliography do
           |> Enum.map(&Task.await(&1, 1000 * 30))
           |> Enum.filter(fn val ->
             case val do
-              {:error, msg} ->
+              {:error, _msg} ->
                 false
               _place ->
                 true
@@ -178,7 +178,7 @@ defmodule ArgosAggregation.Bibliography do
         |> Enum.map(&Task.await/1)
         |> Enum.filter(fn val ->
           case val do
-            {:error, msg} ->
+            {:error, _msg} ->
               false
             _concept ->
               true
