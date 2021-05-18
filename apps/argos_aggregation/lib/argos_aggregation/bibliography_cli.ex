@@ -14,13 +14,13 @@ defmodule ArgosAggregation.BibliographyCLI do
 
   def parse_arguments(date_string) do
     case DateTime.from_iso8601(date_string) do
-      {:ok, datetime, _offset} ->
-        {:ok, datetime}
+      {:ok, _datetime, _offset} = result ->
+        result
       {:error, _} ->
         case Date.from_iso8601(date_string) do
           {:ok, _date} ->
             DateTime.from_iso8601("#{date_string}T00:00:00Z")
-          error ->
+          {:error, _ } = error ->
             error
         end
     end
