@@ -47,13 +47,19 @@ defmodule ArgosAggregation.Bibliography do
 
     @impl ArgosAggregation.AbstractDataProvider
     def get_all() do
-      get_batches("prettyPrint=false")
+      %{
+        "prettyPrint" => false
+      }
+      |> get_batches()
     end
 
     @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       result =
-        "lookfor=id:#{id}&prettyPrint=false"
+        %{
+          "prettyPrint" => false,
+          "lookfor" => "id:#{id}"
+        }
         |> get_record_list()
 
       case result do
@@ -73,35 +79,47 @@ defmodule ArgosAggregation.Bibliography do
         |> DateTime.to_string()
         |> String.replace(" ", "T")
 
-      get_batches("prettyPrint=false&daterange[]=last_indexed&last_indexedfrom=#{encoded_date}&last_indexedto=*")
+      %{
+        "prettyPrint" => false,
+        "daterange[]" => "last_indexed",
+        "last_indexedfrom" => encoded_date,
+        "last_indexedto" => "*"
+      }
+      |> get_batches
     end
 
-    def get_batches(base_query) do
+    def get_batches(query_params) do
       Stream.resource(
         fn () ->
-          1
+          query_params
+          |> Map.put("page", 1)
+          |> Map.put("limit", 100)
         end,
-        fn (page) ->
-          case process_batch_query(base_query, page, 100) do
+        fn (params) ->
+          case process_batch_query(params) do
             {:error, reason} ->
               Logger.error("Error while processing batch. #{reason}")
-              {:halt, page}
+              {:halt, params}
             [] ->
-              {:halt, page}
+              {:halt, params}
             record_list ->
-              Logger.info("Indexed #{page} pages.")
-              {record_list, page + 1}
+              Logger.info("Indexing page #{params["page"]}.")
+              {
+                record_list,
+                params
+                |> Map.update!("page", fn (old) -> old + 1 end)
+              }
           end
         end,
-        fn (page) ->
-          Logger.info("Finished after #{page} pages.")
+        fn (params) ->
+          Logger.info("Finished after #{params["page"]} pages.")
         end
       )
     end
 
-    defp process_batch_query(base_query, page, limit) do
+    defp process_batch_query(params) do
       result =
-        "#{base_query}&page=#{page}&limit=#{limit}"
+        params
         |> get_record_list()
 
       case result do
@@ -117,9 +135,11 @@ defmodule ArgosAggregation.Bibliography do
       end
     end
 
-    def get_record_list(query) do
-      "#{@base_url}/api/v1/search?#{query}"
-      |> HTTPoison.get([{"User-Agent", ArgosAggregation.Application.get_http_agent()}])
+    def get_record_list(params) do
+      "#{@base_url}/api/v1/search"
+      |> HTTPoison.get(
+        [{"User-Agent", ArgosAggregation.Application.get_http_agent()}],
+        params: params)
       |> parse_response()
     end
 
@@ -296,7 +316,7 @@ defmodule ArgosAggregation.Bibliography do
     end
     def run_harvest() do
       DataProvider.get_all()
-      |> Enum.map(&ElasticSearchIndexer.index(&1))
+      |> Enum.each(&ElasticSearchIndexer.index(&1))
     end
 
     def run_harvest(%DateTime{} = datetime) do
