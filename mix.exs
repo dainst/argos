@@ -33,6 +33,7 @@ defmodule Argos.MixProject do
   end
 
   defp aliases do
+    seed_days_ago = 7
     [
       "update-mapping": [
         "run --eval 'ArgosAPI.Release.update_mapping()' -- --script"
@@ -41,7 +42,9 @@ defmodule Argos.MixProject do
         "run --eval 'ArgosAggregation.ProjectCLI.run()' -- --script"
       ],
       "seed.bibliography": [
-        "run --eval 'ArgosAggregation.BibliographyCLI.run()' -- --script"
+        "run --eval 'ArgosAggregation.BibliographyCLI.run(
+          DateTime.utc_now() |> DateTime.add(-60 * 60 * 24 * #{seed_days_ago}) |> DateTime.to_iso8601()
+        )' -- --script"
       ]
     ]
   end
