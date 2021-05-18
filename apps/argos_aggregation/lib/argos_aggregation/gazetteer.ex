@@ -202,59 +202,12 @@ defmodule ArgosAggregation.Gazetteer do
       |> parse_response
     end
 
-      # def search(query) do
-      #   HTTPoison.get!(search_url(), [], [{:params,  %{q: query}}])
-      #   |> response_unwrap
-      # end
-
-      # defp search_url do
-      #   "#{@base_url}"  <> "/search.json?shortLanguageCodes=true"
-      # end
-
-
     defp parse_response({:ok, %HTTPoison.Response{status_code: 200, body: body}}), do: Poison.decode(body)
     defp parse_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
       {:error, "Received unhandled status code #{code} for #{req.url}."}
     end
     defp parse_response({:error, error}), do: {:error, error.reason()}
 
-
-
-    # defp convert_shape([] = shape) do shape end
-    # defp convert_shape([a,_] = shape) when is_number(a) do
-    #   List.to_tuple(shape)
-    # end
-    # defp convert_shape([h|_] = shape) when is_list(h) do
-    #   Enum.map(shape, &convert_shape/1)
-    # end
-
-    # def search!(query, limit, scroll) do
-    #   params =  if is_boolean(scroll) do
-    #     %{q: query, limit: limit, scroll: scroll}
-    #   else
-    #     %{q: query, limit: limit, scrollId: scroll}
-    #   end
-
-    #   HTTPoison.get!(search_url(), [], [{:params, params}])
-    #   |> response_unwrap
-    # end
-
-    # def search(query) do
-    #   HTTPoison.get!(search_url(), [], [{:params,  %{q: query}}])
-    #   |> response_unwrap
-    # end
-
-    # defp search_url do
-    #   "#{@base_url}"  <> "/search.json?shortLanguageCodes=true"
-    # end
-
-    # defp response_unwrap(%HTTPoison.Response{status_code: 200, body: body}) do
-    #   Poison.decode!(body)
-    # end
-
-    # defp response_unwrap(    do
-    #   raise "Gazetteer fetch returned unexpected '#{code}' on GET '#{url}'"
-    # end
   end
 
   defmodule Harvester do
@@ -262,7 +215,6 @@ defmodule ArgosAggregation.Gazetteer do
     alias ArgosAggregation.ElasticSearchIndexer
 
     @interval Application.get_env(:argos_aggregation, :projects_harvest_interval)
-    # TODO Noch nicht refactored!
     defp get_timezone() do
       "Etc/UTC"
     end
@@ -306,73 +258,5 @@ defmodule ArgosAggregation.Gazetteer do
       DataProvider.get_by_date(datetime)
       |> Enum.each(&ElasticSearchIndexer.index/1)
     end
-  #
-
-  #   @doc """
-  #   Loads data from gazetteer and saves it into the database
-  #   """
-  #   def harvest!(%Date{} = lastModified) do
-  #     query = build_query_string(lastModified)
-  #     total = harvest_batch!(query, @batch_size)
-  #     total
-  #   end
-
-  #   defp build_query_string(%Date{} = date) do
-  #     date_s = Date.to_iso8601(date)
-  #     "(lastChangeDate:>=#{date_s})"
-  #   end
-
-  #   defp build_query_string(%{placeid: pid}) do
-  #     "#{pid}"
-  #   end
-
-
-  #   defp harvest_batch!(query, batch_size) do
-  #     total = case DataProvider.query!(query, batch_size, true) do
-
-  #       # in case there is a scroll id start scrolling
-  #       %{"scrollId" => scrollId} = response ->
-  #         save_resources!(response)
-  #         harvest_batch!(query, batch_size, scrollId)
-  #         response["total"]
-
-  #       # in every other case, try to save the response and return the total
-  #       response ->
-  #         save_resources!(response)
-  #         response["total"]
-  #     end
-
-  #     total
-  #   end
-
-  #   defp harvest_batch!(query, batch_size, scroll_id) do
-  #     case DataProvider.search!(query, batch_size, scroll_id) do
-  #       %{"scrollId" => scrollId, "result" => results} = response  when results != [] ->
-  #         save_resources!(response)
-  #         harvest_batch!(query, batch_size, scrollId)
-  #       response -> save_resources!(response)
-  #     end
-  #   end
-
-  #   defp save_resources!(%{"result" => results}) when results != [] do
-  #     Enum.map(results, &save_resource!(&1))
-  #   end
-
-  #   defp save_resources!(%{"result" => []}) do
-  #     Logger.info("End of scroll/No result")
-  #   end
-
-  #   defp save_resources!(_) do
-  #     raise "Unexpected response without field 'result'"
-  #   end
-
-  #   defp save_resource!( %{"gazId" => id} = result) do
-  #     id = "gazetteer-#{id}"
-  #     ElasticsearchClient.save!(result, id)
-  #   end
-
-  #   defp save_resource!(_) do
-  #     raise "Unable to save malformed resource."
-  #   end
   end
 end

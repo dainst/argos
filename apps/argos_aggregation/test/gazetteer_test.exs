@@ -35,10 +35,10 @@ defmodule ArgosAggregation.GazetteerTest do
     assert {:ok, %Place{}} = data
   end
 
-  # test "harvest gazetteer by date" do
-  #   TestClient.
-  #   Harvester.run_harvest(~D[2021-01-01])
-  # end
-
-
+  test "run gazetteer data provider get_all" do
+    [data|_] =
+      DataProvider.get_all()
+      |> Enum.take(10)
+    assert %Place{} = data
+  end
 end
