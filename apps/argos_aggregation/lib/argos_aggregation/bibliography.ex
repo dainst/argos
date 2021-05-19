@@ -340,13 +340,13 @@ defmodule ArgosAggregation.Bibliography do
     end
     def run_harvest() do
       DataProvider.get_all()
-      |> Enum.map(&Task.async(ElasticSearchIndexer.index(&1)))
+      |> Enum.map(&Task.async(fn -> ElasticSearchIndexer.index(&1) end))
       |> Enum.map(&Task.await/1)
     end
 
     def run_harvest(%DateTime{} = datetime) do
       DataProvider.get_by_date(datetime)
-      |> Enum.map(&Task.async(ElasticSearchIndexer.index(&1)))
+      |> Enum.map(&Task.async(fn -> ElasticSearchIndexer.index(&1) end))
       |> Enum.map(&Task.await/1)
     end
   end
