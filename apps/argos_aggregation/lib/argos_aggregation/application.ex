@@ -35,9 +35,9 @@ defmodule ArgosAggregation.Application do
     end
   end
 
-  def get_http_agent() do
+  def get_http_user_agent_header() do
     {:ok, vsn} = :application.get_key(:argos_aggregation, :vsn)
-    "Argos-Aggregation/#{List.to_string(vsn)}"
+    {"User-Agent", "Argos-Aggregation/#{List.to_string(vsn)}"}
   end
 
   def start(_type, _args) do
@@ -50,6 +50,8 @@ defmodule ArgosAggregation.Application do
           ArgosAggregation.Bibliography.Harvester
         ]
       end
+
+    children = children ++ [{Finch, name: ArgosFinch},]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

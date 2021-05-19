@@ -31,7 +31,8 @@ defmodule ArgosAggregation.MixProject do
       {:remix, "~> 0.0.1", only: :dev},
       {:tzdata, "~> 1.0.4"},
       {:geo, "~> 3.3.7"},
-      {:sweet_xml, "~> 0.6.6"}
+      {:sweet_xml, "~> 0.6.6"},
+      {:finch, "~> 0.7"}
       # {:sibling_app_in_umbrella, in_umbrella: true}
     ]
   end

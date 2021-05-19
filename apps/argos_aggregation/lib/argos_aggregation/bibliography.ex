@@ -136,19 +136,24 @@ defmodule ArgosAggregation.Bibliography do
     end
 
     def get_record_list(params) do
-      "#{@base_url}/api/v1/search"
-      |> HTTPoison.get(
-        [{"User-Agent", ArgosAggregation.Application.get_http_agent()}],
-        params: params)
-      |> parse_response()
+      request =
+        Finch.build(
+        :get,
+        "#{@base_url}/api/v1/search?#{URI.encode_query(params)}",
+        [ArgosAggregation.Application.get_http_user_agent_header()]
+      )
+
+      request
+      |> Finch.request(ArgosFinch)
+      |> parse_response(request)
     end
 
-    defp parse_response({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
+    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}, _request) do
       { :ok, Poison.decode!(body) }
     end
 
-    defp parse_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
-      { :error, "Received status code #{code} for #{req.url}." }
+    defp parse_response({:ok, %Finch.Response{status: code}}, request) do
+      { :error, "Received status code #{code} for #{[request.host,request.path]}." }
     end
 
     defp parse_response({:error, error}) do
