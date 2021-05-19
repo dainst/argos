@@ -156,7 +156,15 @@ defmodule ArgosAggregation.Bibliography do
       { :error, "Received status code #{code} for #{[request.host,request.path]}." }
     end
 
-    defp parse_response({:error, error}) do
+    defp parse_response({:error, %Mint.TransportError{reason: :closed}}, request) do
+      Logger.warning("TransportError: closed, retrying for #{[request.host,request.path]}")
+
+      request
+      |> Finch.request(ArgosFinch)
+      |> parse_response(request)
+    end
+
+    defp parse_response({:error, error}, _request) do
       { :error, error.reason() }
     end
   end
@@ -332,12 +340,14 @@ defmodule ArgosAggregation.Bibliography do
     end
     def run_harvest() do
       DataProvider.get_all()
-      |> Enum.each(&ElasticSearchIndexer.index(&1))
+      |> Enum.map(&Task.async(ElasticSearchIndexer.index(&1)))
+      |> Enum.map(&Task.await/1)
     end
 
     def run_harvest(%DateTime{} = datetime) do
       DataProvider.get_by_date(datetime)
-      |> Enum.each(&ElasticSearchIndexer.index/1)
+      |> Enum.map(&Task.async(ElasticSearchIndexer.index(&1)))
+      |> Enum.map(&Task.await/1)
     end
   end
 end
