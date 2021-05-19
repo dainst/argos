@@ -4,7 +4,7 @@ defmodule ArgosAggregation.Chronontology do
     alias ArgosAggregation.TranslatedContent
 
     @enforce_keys [:id, :uri, :label, :beginning, :ending]
-    defstruct [:id, :uri, :label, :beginning, :ending]
+    defstruct [:id, :uri, :label, :beginning, :ending, :project]
     @type t() :: %__MODULE__{
       id: String.t(),
       uri: String.t(),

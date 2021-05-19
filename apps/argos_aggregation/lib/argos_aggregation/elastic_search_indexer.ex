@@ -44,6 +44,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       }
       |> call_elastic_client
       |> parse_response!
+      |> update_subdocs(project)
   end
 
   def call_elastic_client(payload) do
@@ -152,6 +153,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     defp find_relations(%Gazetteer.Place{} = place), do: find_all_subdocuments(:spatial, place.id)
     defp find_relations(%Chronontology.TemporalConcept{} = temporal), do: find_all_subdocuments(:temporal, temporal.id)
     defp find_relations(%Thesauri.Concept{} = concept), do: find_all_subdocuments(:subject, concept.id)
+    defp find_relations(%Project.Project{} = project), do: find_all_subdocuments(:project, project.id)
     defp find_relations(_unknown_obj), do: {:error, "unsupported type"}
 
     defp find_all_subdocuments(concept_key, id) do
@@ -179,6 +181,9 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     end
     defp change_subdocument(%{"_source" => parent}, %Thesauri.Concept{} = subject) do
       put_in(parent, ["subject", Access.filter(&(&1["resource"]["id"] == subject.id)), "resource"], subject )
+    end
+    defp change_subdocument(%{"_source" => parent}, %Project.Project{} = project) do
+      put_in(parent, ["project", Access.filter(&(&1["resource"]["id"] == project.id)), "resource"], project )
     end
 
   end

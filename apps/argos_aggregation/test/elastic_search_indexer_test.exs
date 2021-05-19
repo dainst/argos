@@ -98,7 +98,7 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
       title: [ %TranslatedContent{ text: "Test Project 0", lang: "de" } ],
     }
     res = ElasticSearchIndexer.index(pro)
-    assert %{"result" => "created", "_id" => "project-0"} = res
+    assert {:ok, "created"} = res
   end
 
   test "update project" do
@@ -107,7 +107,7 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
       title: [ %TranslatedContent{ text: "Test Project 4", lang: "de" } ],
     }
     res = ElasticSearchIndexer.index(pro)
-    assert %{"result" => "created", "_id" => "project-4"} = res
+    assert {:ok, "created"} = res
 
     TestClient.refresh_index()
     pro = TestClient.find_project(pro.id)
@@ -118,11 +118,42 @@ defmodule ArgosAggregation.ElasticSearchIndexerTest do
       title: [ %TranslatedContent{ text: "Better Title for the Project", lang: "en" } ],
     }
     res = ElasticSearchIndexer.index(pro)
-    assert %{"result" => "updated", "_id" => "project-4"} = res
+    assert {:ok, "no_subdocuments"} = res
 
     TestClient.refresh_index()
     pro = TestClient.find_project(pro.id)
     assert pro.title == [ %TranslatedContent{ text: "Better Title for the Project", lang: "en" } ]
+
+  end
+
+  test "Update Project with known subproject" do
+    pro = %Project{
+      id: 5,
+      title: [ %TranslatedContent{ text: "Test Project 5", lang: "de" } ],
+    }
+    ElasticSearchIndexer.index(pro)
+    t = %TemporalConcept{
+      id: "2012",
+      uri: "chronontology/time/to/be/2012",
+      label: [
+        %TranslatedContent{ text: "Weltuntergang", lang: "de" }
+      ],
+      beginning: 2012,
+      ending: 2013,
+      project: [ %{ resource: pro, label: [] } ]
+    }
+    res = ElasticSearchIndexer.index(t)
+    assert res == {:ok, "created"}
+    TestClient.refresh_index()
+
+    pro = %Project{
+      id: 5,
+      title: [
+        %TranslatedContent{ text: "Test Project 5", lang: "de" },
+        %TranslatedContent{ text: "Doomsday - Project", lang: "en" } ],
+    }
+    res = ElasticSearchIndexer.index(pro)
+    assert res == {:ok, "subdocs_updated"}
 
   end
 
