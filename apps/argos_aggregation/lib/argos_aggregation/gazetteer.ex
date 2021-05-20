@@ -20,9 +20,11 @@ defmodule ArgosAggregation.Gazetteer do
         label:
           data["label"]
           |> Enum.map(&TranslatedContent.from_map/1),
-        geometry: Geo.JSON.encode!(
-          %Geo.Point{ coordinates: List.to_tuple(data["geometry"]["coordinates"]) }
-        )
+        geometry:
+          data["geometry"]
+          |> Enum.map(fn (data) ->
+            Geo.JSON.encode!(data)
+          end)
       }
     end
   end
