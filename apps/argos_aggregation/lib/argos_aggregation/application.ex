@@ -42,14 +42,14 @@ defmodule ArgosAggregation.Application do
   end
 
   def start(_type, _args) do
-    children =
+    active_harvesters =
       if running_script?(System.argv) do
         [] # We do not want to (re)start the harvesters when running exs scripts.
       else
         @active_harvesters
       end
 
-    children = [{Finch, name: ArgosFinch}] ++ children
+    children = [{Finch, name: ArgosFinch}] ++ active_harvesters
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
