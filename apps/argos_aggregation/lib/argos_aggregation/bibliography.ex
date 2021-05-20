@@ -21,22 +21,23 @@ defmodule ArgosAggregation.Bibliography do
   end
 
   defmodule BibliographicRecord do
-    @enforce_keys [:id, :title, :persons, :institutions, :full_record]
-    defstruct [:id, :title, :description, :subject, :spatial, :persons, :institutions, :full_record]
+    @enforce_keys [:id, :title, :persons, :full_record]
+    defstruct [:id, :title, description: [], subject: [], spatial: [], persons: [], institutions: [], full_record: %{}]
     @type t() :: %__MODULE__{
       id: String.t(),
-      title: [TranslatedContent.t()],
+      title: TranslatedContent.t(),
       description: [TranslatedContent.t()],
       subject: [
         %{
-          label: [TranslatedContent.t()],
+          label: String.t(),
           resource: Thesauri.Concept.t(),
         }
       ],
       spatial: [
         %{
-          label: [TranslatedContent.t()],
-          resource: Place.t()}
+          label: String.t(),
+          resource: Place.t()
+        }
       ],
       persons: [Author.t()],
       institutions: [Author.t()],
@@ -49,18 +50,26 @@ defmodule ArgosAggregation.Bibliography do
     def from_map(%{} = data) do
       %BibliographicRecord{
         id: data["id"],
-        title:
-          data["title"]
-          |> Enum.map(&TranslatedContent.from_map/1),
+        title: TranslatedContent.from_map(data["title"]),
         description:
           data["description"]
           |> Enum.map(&TranslatedContent.from_map/1),
         subject:
           data["subject"]
-          |> Enum.map(&Thesauri.Concept.from_map/1),
+          |> Enum.map(fn(subject) ->
+            %{
+              label: subject["label"],
+              resource: Thesauri.Concept.from_map(subject["resource"])
+            }
+          end),
         spatial:
           data["spatial"]
-          |> Enum.map(&Gazetteer.Place.from_map/1),
+          |> Enum.map(fn(spatial) ->
+            %{
+              label: spatial["label"],
+              resource: Gazetteer.Place.from_map(spatial["resource"])
+            }
+          end),
         persons:
           data["persons"]
           |> Enum.map(&Author.from_map/1),
