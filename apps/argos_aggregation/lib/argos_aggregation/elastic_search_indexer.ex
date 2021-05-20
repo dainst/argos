@@ -14,18 +14,18 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     {:place, Gazetteer.Place.__struct__}
   ]
 
-  def index(argos_struct) do
+  def index(data_struct) do
     {type, _struct} =
       @type_to_struct_mapping
       |> Enum.filter(fn ({_atom, struct}) ->
         # Kein Plan wieso noch einmal struct.__struct__ nötig ist, obwohl es oben bereits mit __struct__ definiert ist.
-        struct.__struct__ == argos_struct.__struct__
+        struct.__struct__ == data_struct.__struct__
       end)
       |> List.first()
 
     res =
       %{
-        doc: Map.put(argos_struct, :type, type),
+        doc: Map.put(data_struct, :type, type),
         doc_as_upsert: true
       }
       |> upsert()
@@ -33,9 +33,10 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     res_reference_update =
       res
-      |> check_update(argos_struct)
+      |> upsert_change?()
+      |> update_referencing_data(data_struct)
 
-    %{upsert_response: res, reference_update_response: res_reference_update}
+    %{upsert_response: res, referencing_docs_update_response: res_reference_update}
   end
 
   def upsert(%{doc: %{type: type, id: id}} = data) do
@@ -62,18 +63,18 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     hits
   end
 
+  defp upsert_change?(%{"result" => result}) do
+    case result do
+      "updated" -> true
+      "created" -> true
+      _ -> false
+    end
+  end
 
-  @doc """
-  checks the result of the last action
-  returns {:ok, "created"} or {:ok, "noop"} in those case
-  in case of an update {:ok, "subdocs_updated"} or {:ok, "no_subdocuments"}
-  """
-  defp check_update(%{"result" => "updated"} = _status, updated_content) do
-    Logger.debug("Apply Update")
-
+  defp update_referencing_data(true, updated_content) do
     case search_referencing_docs(updated_content) do
       :reference_search_not_implemented ->
-        #Logger.debug("Reference search not implemented for #{updated_content.__struct__}.")
+        #Logger.debug("Reference search not implemented for #{updated_content.__struct__}. Nothing else gets updated.")
         []
       res ->
         res
@@ -84,14 +85,9 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         |> Enum.map(&index/1)
     end
   end
-  defp check_update(%{"result" => "created"}, _obj) do
+
+  defp update_referencing_data(false, _updated_content) do
     []
-  end
-  defp check_update(%{"result" => "noop"} , _obj) do
-    []
-  end
-  defp check_update(_res, _obj) do
-    {:error, "error in create/update process"}
   end
 
   defp search_referencing_docs(%Gazetteer.Place{} = place) do
@@ -122,7 +118,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   end
 
   defp update_reference(%{"_source" => parent }, %Gazetteer.Place{} = place) do
-    put_in(parent, ["spatial", Access.filter(&(&1["resource"]["id"] == place.id)), "resource"], Poison.encode!(place) |> Poison.decode!() )
+    put_in(parent, ["spatial", Access.filter(&(&1["resource"]["id"] == place.id)), "resource"], Poison.encode!(place) |> Poison.decode!() ) # TODO/Hacky: Poison action necessary to get an all string keyed dictionary.
   end
   defp update_reference(%{"_source" => parent}, %Chronontology.TemporalConcept{} = temporal) do
     put_in(parent, ["temporal", Access.filter(&(&1["resource"]["id"] == temporal.id)), "resource"], Poison.encode!(temporal) |> Poison.decode())

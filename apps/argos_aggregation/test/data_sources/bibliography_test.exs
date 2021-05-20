@@ -95,7 +95,7 @@ defmodule ArgosAggregation.BibliographyTest do
     assert("updated" == ths_indexing_2.upsert_response["result"])
 
     %{upsert_response: %{"_version" => biblio_new_version, "_id" => biblio_new_id}} =
-      ths_indexing_2.reference_update_response
+      ths_indexing_2.referencing_docs_update_response
       |> List.first()
 
     %{"_version" => biblio_old_version, "_id" => biblio_old_id} = biblio_indexing.upsert_response
@@ -133,7 +133,7 @@ defmodule ArgosAggregation.BibliographyTest do
     assert("updated" == gaz_indexing_2.upsert_response["result"])
 
     %{upsert_response: %{"_version" => biblio_new_version, "_id" => biblio_new_id}} =
-      gaz_indexing_2.reference_update_response
+      gaz_indexing_2.referencing_docs_update_response
       |> List.first()
 
     %{"_version" => biblio_old_version, "_id" => biblio_old_id} = biblio_indexing.upsert_response
