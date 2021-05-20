@@ -6,9 +6,6 @@ defmodule ArgosAggregation.Project do
   alias ArgosAggregation.{
     Thesauri, Gazetteer, Chronontology, TranslatedContent
   }
-  alias ArgosAggregation.Gazetteer.Place
-  alias ArgosAggregation.Chronontology.TemporalConcept
-  alias ArgosAggregation.Thesauri.Concept
 
   defmodule Stakeholder do
     @enforce_keys [:label]
@@ -101,8 +98,8 @@ defmodule ArgosAggregation.Project do
       start_date: Date.t(),
       end_date: Date.t(),
       subject: [Thesauri.Concept.t()],
-      spatial: [Place.t()],
-      temporal: [TemporalConcept.t()],
+      spatial: [Gazetteer.Place.t()],
+      temporal: [Chronontology.TemporalConcept.t()],
       stakeholders: [Stakeholder.t()],
       images: [Image.t()]
     }
@@ -130,7 +127,7 @@ defmodule ArgosAggregation.Project do
           |> Enum.map(&Gazetteer.Place.from_map/1),
         temporal:
           data["temporal"]
-          |> Enum.map(&Thesauri.Concept.from_map/1),
+          |> Enum.map(&Chronontology.TemporalConcept.from_map/1),
         stakeholders:
           data["stakeholders"]
           |> Enum.map(&Stakeholder.from_map/1),
