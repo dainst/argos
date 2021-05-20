@@ -49,7 +49,7 @@ defmodule ArgosAggregation.Application do
         @active_harvesters
       end
 
-    children = children ++ [{Finch, name: ArgosFinch},]
+    children = [{Finch, name: ArgosFinch}] ++ children
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
