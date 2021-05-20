@@ -114,6 +114,8 @@ defmodule ArgosAggregation.Bibliography do
         {:ok, %{"records" => [record]}} ->
           record
           |> BibliographyParser.parse_record()
+        {:ok, %{"resultCount" => 0}} ->
+          {:error, "record #{id} not found."}
         {:error, reason} ->
           {:error, reason}
       end
