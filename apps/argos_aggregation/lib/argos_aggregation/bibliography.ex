@@ -11,6 +11,13 @@ defmodule ArgosAggregation.Bibliography do
       label: TranslatedContent.t(),
       uri: String.t()
     }
+
+    def from_map(%{} = data) do
+      %Author{
+        label: data["label"],
+        uri: data["uri"]
+      }
+    end
   end
 
   defmodule BibliographicRecord do
@@ -35,6 +42,35 @@ defmodule ArgosAggregation.Bibliography do
       institutions: [Author.t()],
       full_record: Map.t()
     }
+
+    @doc """
+    factory function for creating a proper %BibliographicRecord{} from a plain map
+    """
+    def from_map(%{} = data) do
+      %BibliographicRecord{
+        id: data["id"],
+        title:
+          data["title"]
+          |> Enum.map(&TranslatedContent.from_map/1),
+        description:
+          data["description"]
+          |> Enum.map(&TranslatedContent.from_map/1),
+        subject:
+          data["subject"]
+          |> Enum.map(&Thesauri.Concept.from_map/1),
+        spatial:
+          data["spatial"]
+          |> Enum.map(&Gazetteer.Place.from_map/1),
+        persons:
+          data["persons"]
+          |> Enum.map(&Author.from_map/1),
+        institutions:
+          data["institutions"]
+          |> Enum.map(&Author.from_map/1),
+        full_record:
+          data["full_record"]
+      }
+    end
   end
 
   require Logger
@@ -274,7 +310,7 @@ defmodule ArgosAggregation.Bibliography do
       case Gazetteer.DataProvider.get_by_id(gaz_id) do
         {:ok, place} ->
           %{
-            label: "Subject",
+            label: "subject heading",
             resource: place
           }
         error ->
@@ -293,7 +329,7 @@ defmodule ArgosAggregation.Bibliography do
       case Thesauri.DataProvider.get_by_id(ths_id) do
         {:ok, concept} ->
           %{
-            label: "Subject",
+            label: "subject heading",
             resource: concept
           }
         error ->

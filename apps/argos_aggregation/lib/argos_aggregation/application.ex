@@ -5,7 +5,8 @@ defmodule ArgosAggregation.Application do
 
   use Application
 
-  @elasticsearch_url Application.get_env(:argos_api, :elasticsearch_url)
+  @elasticsearch_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index)}"
+  @active_harvesters Application.get_env(:argos_aggregation, :active_harvesters)
 
   require Logger
 
@@ -24,7 +25,7 @@ defmodule ArgosAggregation.Application do
   defp await_index() do
     delay = 1000 * 30
 
-    case HTTPoison.get(@elasticsearch_url) do
+    case HTTPoison.get("#{@elasticsearch_url}") do
       {:ok, %HTTPoison.Response{status_code: 200}} ->
         Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
         :ok
@@ -45,10 +46,7 @@ defmodule ArgosAggregation.Application do
       if running_script?(System.argv) do
         [] # We do not want to (re)start the harvesters when running exs scripts.
       else
-        [
-          ArgosAggregation.Project.Harvester,
-          ArgosAggregation.Bibliography.Harvester
-        ]
+        @active_harvesters
       end
 
     children = children ++ [{Finch, name: ArgosFinch},]
