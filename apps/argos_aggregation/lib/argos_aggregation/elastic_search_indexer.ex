@@ -7,66 +7,27 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
   @headers [{"Content-Type", "application/json"}]
 
-  def index(%{_id: id, _source: doc}) do
-    payload =
-      %{
-        doc: doc
-      }
-      |> Poison.encode!
+  @type_to_struct_mapping [
+    {:project, Project.Project.__struct__},
+    {:bibliographic_record, Bibliography.BibliographicRecord.__struct__},
+    {:concept, Thesauri.Concept.__struct__},
+    {:place, Gazetteer.Place.__struct__}
+  ]
 
-    Finch.build(
-      :post,
-      "#{@base_url}/_update/#{id}",
-      @headers,
-      payload
-    )
-    |> Finch.request(ArgosFinch)
-    |> parse_response()
-  end
+  def index(argos_struct) do
+    {type, _struct} =
+      @type_to_struct_mapping
+      |> Enum.filter(fn ({_atom, struct}) ->
+        # Kein Plan wieso noch einmal struct.__struct__ nötig ist, obwohl es oben bereits mit __struct__ definiert ist.
+        struct.__struct__ == argos_struct.__struct__
+      end)
+      |> List.first()
 
-  def index(%Thesauri.Concept{} = concept) do
-    %{
-        doc: Map.put(concept, :type, :concept),
-        doc_as_upsert: true
-    }
-    |> index(concept)
-  end
-
-  def index(%Gazetteer.Place{} = place) do
-    %{
-        doc: Map.put(place, :type, :place),
-        doc_as_upsert: true
-    }
-    |> index(place)
-  end
-
-  def index(%Chronontology.TemporalConcept{} = temporal_concept) do
-    %{
-        doc: Map.put(temporal_concept, :type, :temporal_concept),
-        doc_as_upsert: true
-    }
-    |> index(temporal_concept)
-  end
-
-  def index(%Project.Project{} = project) do
-      %{
-        doc: Map.put(project, :type, :project),
-        doc_as_upsert: true
-      }
-      |> index(project)
-  end
-
-  def index(%Bibliography.BibliographicRecord{} = record) do
-    %{
-      doc: Map.put(record, :type, :bibliography),
-      doc_as_upsert: true
-    }
-    |> index(record)
-  end
-
-  defp index(payload, argos_struct) do
     res =
-      payload
+      %{
+        doc: Map.put(argos_struct, :type, type),
+        doc_as_upsert: true
+      }
       |> upsert()
       |> parse_response()
 
@@ -107,14 +68,21 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   returns {:ok, "created"} or {:ok, "noop"} in those case
   in case of an update {:ok, "subdocs_updated"} or {:ok, "no_subdocuments"}
   """
-  defp check_update(%{"result" => "updated"}, updated_content) do
-    Logger.info("Apply Update")
+  defp check_update(%{"result" => "updated"} = _status, updated_content) do
+    Logger.debug("Apply Update")
 
-    search_referencing_docs(updated_content)
-    |> parse_response()
-    |> get_search_hits()
-    |> Enum.map(&update_reference(&1, updated_content))
-    |> Enum.map(&index/1)
+    case search_referencing_docs(updated_content) do
+      :reference_search_not_implemented ->
+        #Logger.debug("Reference search not implemented for #{updated_content.__struct__}.")
+        []
+      res ->
+        res
+        |> parse_response()
+        |> get_search_hits()
+        |> Enum.map(&update_reference(&1, updated_content))
+        |> Enum.map(&map_to_struct/1)
+        |> Enum.map(&index/1)
+    end
   end
   defp check_update(%{"result" => "created"}, _obj) do
     []
@@ -136,7 +104,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     search_for_subdocument(:subject, concept.id)
   end
   defp search_referencing_docs(_unknown_obj) do
-    []
+    :reference_search_not_implemented
   end
 
   def search_for_subdocument(doc_type, doc_id) do
@@ -153,22 +121,28 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     |> Finch.request(ArgosFinch)
   end
 
-  defp update_reference(%{"_id" => id, "_source" => parent }, %Gazetteer.Place{} = place) do
-    %{
-      _id: id,
-      _source: put_in(parent, ["spatial", Access.filter(&(&1["resource"]["id"] == place.id)), "resource"], place )
-    }
+  defp update_reference(%{"_source" => parent }, %Gazetteer.Place{} = place) do
+    put_in(parent, ["spatial", Access.filter(&(&1["resource"]["id"] == place.id)), "resource"], Poison.encode!(place) |> Poison.decode!() )
   end
-  defp update_reference(%{"_id" => id, "_source" => parent}, %Chronontology.TemporalConcept{} = temporal) do
-    %{
-      _id: id,
-      _source: put_in(parent, ["temporal", Access.filter(&(&1["resource"]["id"] == temporal.id)), "resource"], temporal )
-    }
+  defp update_reference(%{"_source" => parent}, %Chronontology.TemporalConcept{} = temporal) do
+    put_in(parent, ["temporal", Access.filter(&(&1["resource"]["id"] == temporal.id)), "resource"], Poison.encode!(temporal) |> Poison.decode())
   end
-  defp update_reference(%{"_id" => id, "_source" => parent}, %Thesauri.Concept{} = subject) do
-    %{
-      _id: id,
-      _source: put_in(parent, ["subject", Access.filter(&(&1["resource"]["id"] == subject.id)), "resource"], subject )
-    }
+  defp update_reference(%{"_source" => parent}, %Thesauri.Concept{} = subject) do
+    put_in(parent, ["subject", Access.filter(&(&1["resource"]["id"] == subject.id)), "resource"], Poison.encode!(subject) |> Poison.decode!() )
+  end
+
+  defp map_to_struct(map) do
+    type =
+      map["type"]
+      |> String.to_existing_atom()
+
+    {_, struct} =
+      @type_to_struct_mapping
+      |> Enum.filter(fn {t, _} ->
+        t == type
+      end)
+      |> List.first()
+
+    struct.__struct__.from_map(map)
   end
 end

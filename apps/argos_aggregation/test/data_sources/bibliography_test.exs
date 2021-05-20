@@ -54,7 +54,6 @@ defmodule ArgosAggregation.BibliographyTest do
           }
         }
       ],
-      institutions: [],
       id: "001294207",
       full_record: %{}
     }
@@ -95,7 +94,7 @@ defmodule ArgosAggregation.BibliographyTest do
 
     assert("updated" == ths_indexing_2.upsert_response["result"])
 
-    %{"_version" => biblio_new_version, "_id" => biblio_new_id} =
+    %{upsert_response: %{"_version" => biblio_new_version, "_id" => biblio_new_id}} =
       ths_indexing_2.reference_update_response
       |> List.first()
 
@@ -133,7 +132,7 @@ defmodule ArgosAggregation.BibliographyTest do
 
     assert("updated" == gaz_indexing_2.upsert_response["result"])
 
-    %{"_version" => biblio_new_version, "_id" => biblio_new_id} =
+    %{upsert_response: %{"_version" => biblio_new_version, "_id" => biblio_new_id}} =
       gaz_indexing_2.reference_update_response
       |> List.first()
 
