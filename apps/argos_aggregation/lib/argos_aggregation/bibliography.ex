@@ -151,7 +151,7 @@ defmodule ArgosAggregation.Bibliography do
             [] ->
               {:halt, params}
             record_list ->
-              Logger.info("Indexing page #{params["page"]}.")
+              Logger.info("Retrieving page #{params["page"]}.")
               {
                 record_list,
                 params
@@ -159,8 +159,8 @@ defmodule ArgosAggregation.Bibliography do
               }
           end
         end,
-        fn (params) ->
-          Logger.info("Finished after #{params["page"]} pages.")
+        fn (_params) ->
+          Logger.info("Finished search.")
         end
       )
     end
@@ -222,16 +222,16 @@ defmodule ArgosAggregation.Bibliography do
 
       places =
         record["DAILinks"]["gazetteer"]
-          |> Enum.map(&Task.async( fn -> parse_place(&1) end))
-          |> Enum.map(&Task.await(&1, 1000 * 30))
-          |> Enum.filter(fn val ->
-            case val do
-              {:error, _msg} ->
-                false
-              _place ->
-                true
-            end
-          end)
+        |> Enum.map(&Task.async( fn -> parse_place(&1) end))
+        |> Enum.map(&Task.await(&1, 1000 * 30))
+        |> Enum.filter(fn val ->
+          case val do
+            {:error, _msg} ->
+              false
+            _place ->
+              true
+          end
+        end)
 
       concepts =
         record["DAILinks"]["thesauri"]
