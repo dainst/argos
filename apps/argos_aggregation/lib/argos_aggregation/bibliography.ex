@@ -14,7 +14,10 @@ defmodule ArgosAggregation.Bibliography do
 
     def from_map(%{} = data) do
       %Author{
-        label: data["label"],
+        label: %TranslatedContent{
+          text: data["label"]["text"],
+          lang: data["label"]["lang"]
+        },
         uri: data["uri"]
       }
     end
