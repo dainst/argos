@@ -69,8 +69,7 @@ defmodule ArgosAggregation.BibliographyTest do
   end
 
   test "get by id yields bibliographic record" do
-    id = "002010515"
-    record = Bibliography.DataProvider.get_by_id(id)
+    record = Bibliography.DataProvider.get_by_id("002010515")
 
     assert Bibliography.BibliographicRecord.__struct__.__struct__ == record.__struct__
 
