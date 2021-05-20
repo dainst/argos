@@ -20,9 +20,11 @@ defmodule ArgosAggregation.Project do
       type: String.t(),
     }
 
-    def create_stakeholder(data) do
+    def from_map(%{} = data) do
       %Stakeholder{
-        label: TranslatedContent.create_tc_list(data["label"]),
+        label:
+          data["label"]
+          |> Enum.map(&TranslatedContent.from_map/1),
         role: data["role"],
         uri: data["uri"],
         type: data["type"]
@@ -39,6 +41,15 @@ defmodule ArgosAggregation.Project do
       title: String.t(),
       external_id: String.t()
     }
+
+    def from_map(%{} = data) do
+      %Person{
+        firstname: data["firstname"],
+        lastname: data["lastname"],
+        title: data["title"],
+        external_id: data["external_id"]
+      }
+    end
   end
 
   defmodule Image do
@@ -49,9 +60,11 @@ defmodule ArgosAggregation.Project do
       uri: String.t()
     }
 
-    def create_image(data) do
+    def from_map(%{} = data) do
       %Image{
-        label: TranslatedContent.create_tc_list(data["label"]),
+        label:
+          data["label"]
+          |> Enum.map(&TranslatedContent.from_map/1),
         uri: data["uri"]
       }
     end
@@ -65,6 +78,16 @@ defmodule ArgosAggregation.Project do
       uri: String.t(),
       role: String.t()
     }
+
+    def from_map(%{} = data) do
+      %ExternalLink{
+        uri: data["uri"],
+        role: data["role"],
+        label:
+          data["label"]
+          |> Enum.map(&TranslatedContent.from_map/1)
+      }
+    end
   end
 
   defmodule Project do
@@ -87,55 +110,35 @@ defmodule ArgosAggregation.Project do
     @doc """
     factory function for creating a proper %Project{} from a plain map e.g. from a db request
     """
-    def create_project(data) do
-
+    def from_map(%{} = data) do
       %Project{
         id: data["id"],
-        title: TranslatedContent.create_tc_list(data["title"]),
-        description: TranslatedContent.create_tc_list(data["description"]),
+        title:
+          data["title"]
+          |> Enum.map(&TranslatedContent.from_map/1),
+        description:
+          data["description"]
+          |> Enum.map(&TranslatedContent.from_map/1),
         doi: data["doi"],
         start_date: data["start_date"],
         end_date: data["end_date"],
-        subject: create_concept_list(data["subject"]),
-        spatial:  create_spatial_list(data["spatial"]),
-        temporal: create_temporal_list(data["temporal"]),
-        stakeholders: create_stakeholder_list(data["stakeholders"]),
-        images: create_image_list(data["images"])
+        subject:
+          data["subject"]
+          |> Enum.map(&Thesauri.Concept.from_map/1),
+        spatial:
+          data["spatial"]
+          |> Enum.map(&Gazetteer.Place.from_map/1),
+        temporal:
+          data["temporal"]
+          |> Enum.map(&Thesauri.Concept.from_map/1),
+        stakeholders:
+          data["stakeholders"]
+          |> Enum.map(&Stakeholder.from_map/1),
+        images:
+          data["images"]
+          |> Enum.map(&Image.from_map/1)
       }
-
     end
-    defp create_concept_list(nil), do: []
-    defp create_concept_list([]), do: []
-    defp create_concept_list([_|_] = data) do
-      for c <- data, do: %{ resource: Concept.create_concept(c["resource"]), label: TranslatedContent.create_tc_list(c["label"])}
-    end
-
-    defp create_spatial_list(nil), do: []
-    defp create_spatial_list([]), do: []
-    defp create_spatial_list([_|_] = data) do
-      for sp <- data, do: %{ resource: Place.create_place(sp["resource"]), label: TranslatedContent.create_tc_list(sp["label"]) }
-    end
-
-    defp create_temporal_list(nil), do: []
-    defp create_temporal_list([]), do: []
-    defp create_temporal_list([_|_] = data) do
-      for t <- data, do: %{ resource: TemporalConcept.create_temporal(t["resource"]), label: TranslatedContent.create_tc_list(t["label"]) }
-    end
-
-    defp create_stakeholder_list(nil), do: []
-    defp create_stakeholder_list([]), do: []
-    defp create_stakeholder_list([_|_] = data) do
-      for st <- data, do: Stakeholder.create_stakeholder(st)
-    end
-
-    defp create_image_list(nil), do: []
-    defp create_image_list([]), do: []
-    defp create_image_list(data) do
-      for i <- data, do: Image.create_image(i)
-    end
-
-
-
   end
 
   defmodule DataProvider do

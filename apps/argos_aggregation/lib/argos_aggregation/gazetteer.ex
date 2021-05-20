@@ -13,11 +13,13 @@ defmodule ArgosAggregation.Gazetteer do
       geometry: [Geo.geometry()]
     }
 
-    def create_place(data) do
+    def from_map(%{} = data) do
       %Place{
         id: data["id"],
         uri: data["uri"],
-        label: TranslatedContent.create_tc_list(data["label"]),
+        label:
+          data["label"]
+          |> Enum.map(&TranslatedContent.from_map/1),
         geometry: Geo.JSON.encode!(
           %Geo.Point{ coordinates: List.to_tuple(data["geometry"]["coordinates"]) }
         )

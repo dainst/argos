@@ -13,16 +13,10 @@ defmodule ArgosAggregation.TranslatedContent do
     lang: String
   }
 
-  def create_translated_content(%{"text" => t, "lang" => l}) do
+  def from_map(%{"text" => t, "lang" => l}) do
     %ArgosAggregation.TranslatedContent{
       text: t,
       lang: l
     }
-  end
-
-  def create_tc_list(nil), do: []
-  def create_tc_list([]), do: []
-  def create_tc_list(data) do
-    for t <- data do create_translated_content(t) end
   end
 end

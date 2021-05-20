@@ -13,11 +13,13 @@ defmodule ArgosAggregation.Chronontology do
       ending: integer()
     }
 
-    def create_temporal(data) do
+    def from_map(%{} = data) do
       %TemporalConcept{
         id: data["id"],
         uri: data["uri"],
-        label: for t <- data["label"] do %TranslatedContent{text: t["text"], lang: t["lang"]} end,
+        label:
+          data["label"]
+          |> Enum.map(&TranslatedContent.from_map/1),
         beginning: data["beginning"],
         ending: data["ending"],
       }
