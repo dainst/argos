@@ -68,6 +68,38 @@ defmodule ArgosAggregation.BibliographyTest do
     assert reconstructed == @bibliography_record
   end
 
+  test "get by id yields bibliographic record" do
+    id = "002010515"
+    record = Bibliography.DataProvider.get_by_id(id)
+
+    assert Bibliography.BibliographicRecord.__struct__.__struct__ == record.__struct__
+
+    reconstructed =
+      record
+      |> Poison.encode!()
+      |> Poison.decode!()
+      |> Bibliography.BibliographicRecord.from_map()
+
+    assert reconstructed == record
+  end
+
+  test "get by id with invalid id yields error" do
+    assert {:error, "record not-existing not found."} == Bibliography.DataProvider.get_by_id("not-existing")
+  end
+
+  test "get all yields bibliographic records as result" do
+    records =
+      Bibliography.DataProvider.get_all()
+      |> Enum.take(10)
+
+    assert Enum.count(records) == 10
+
+    records
+    |> Enum.each(fn(record) ->
+      assert Bibliography.BibliographicRecord.__struct__.__struct__ == record.__struct__
+    end)
+  end
+
   describe "elastic search tests" do
 
     setup %{} do
