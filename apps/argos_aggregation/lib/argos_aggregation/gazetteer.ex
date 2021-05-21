@@ -13,14 +13,18 @@ defmodule ArgosAggregation.Gazetteer do
       geometry: [Geo.geometry()]
     }
 
-    def create_place(data) do
+    def from_map(%{} = data) do
       %Place{
         id: data["id"],
         uri: data["uri"],
-        label: TranslatedContent.create_tc_list(data["label"]),
-        geometry: Geo.JSON.encode!(
-          %Geo.Point{ coordinates: List.to_tuple(data["geometry"]["coordinates"]) }
-        )
+        label:
+          data["label"]
+          |> Enum.map(&TranslatedContent.from_map/1),
+        geometry:
+          data["geometry"]
+          |> Enum.map(fn (data) ->
+            Geo.JSON.encode!(data)
+          end)
       }
     end
   end
@@ -41,7 +45,7 @@ defmodule ArgosAggregation.Gazetteer do
     @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true"
-      |> HTTPoison.get()
+      |> HTTPoison.get([], [follow_redirect: true, recv_timeout: 1000 * 15 ])
       |> parse_response()
       |> parse_place_data()
     end
@@ -90,6 +94,7 @@ defmodule ArgosAggregation.Gazetteer do
 
     defp parse_names(names) do
       names
+      |> Enum.filter(fn (name) -> name != nil end)
       |> Enum.map(fn (entry) ->
         case entry do
           %{"language" => lang, "title" => title} ->
@@ -103,7 +108,6 @@ defmodule ArgosAggregation.Gazetteer do
               text: title
             }
         end
-
       end)
     end
 

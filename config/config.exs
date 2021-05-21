@@ -11,16 +11,23 @@ config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
 config :argos_api,
   elasticsearch_mapping_path: "priv/elasticsearch-mapping.json",
-  elasticsearch_url: "localhost:9200",
+  elasticsearch_url: "http://localhost:9200",
   index_name: "argos"
 
 config :argos_aggregation,
   projects_url: "http://projects.dainst.org",
   projects_harvest_interval: 1000 * 60 * 30, # 30 minutes
 
+  bibliography_url: "https://zenon.dainst.org",
+  bibliography_harvest_interval: 1000 * 60 * 30, # 30 minutes
+
   chronontology_url: "https://chronontology.dainst.org",
   gazetteer_url: "https://gazetteer.dainst.org",
-  thesauri_url: "http://thesauri.dainst.org"
+  thesauri_url: "http://thesauri.dainst.org",
+  active_harvesters: [
+    ArgosAggregation.Project.Harvester,
+    ArgosAggregation.Bibliography.Harvester
+  ]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
