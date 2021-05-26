@@ -59,7 +59,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     Poison.decode!(body)
   end
 
-  defp get_search_hits(%{"hits" => %{"hits" => hits}}) do
+  defp extract_search_hits_from_response(%{"hits" => %{"hits" => hits}}) do
     hits
   end
 
@@ -79,7 +79,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       res ->
         res
         |> parse_response()
-        |> get_search_hits()
+        |> extract_search_hits_from_response()
         |> Enum.map(&update_reference(&1, updated_content))
         |> Enum.map(&map_to_struct/1)
         |> Enum.map(&index/1)
