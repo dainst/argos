@@ -23,7 +23,9 @@ defmodule ArgosAggregation.Gazetteer do
         geometry:
           data["geometry"]
           |> Enum.map(fn (data) ->
-            Geo.JSON.encode!(data)
+            data
+            |> Geo.JSON.decode!()
+            |> Geo.JSON.encode!()
           end)
       }
     end
@@ -157,7 +159,7 @@ defmodule ArgosAggregation.Gazetteer do
     defp get_date_query(date), do: "(lastChangeDate:>=#{date})"
 
     def get_batches(base_query) do
-      Logger.info("Load batches")
+      Logger.debug("Loading data for #{base_query}.")
       Stream.resource(
         fn -> true end,
         fn (scroll) ->
@@ -168,12 +170,12 @@ defmodule ArgosAggregation.Gazetteer do
             {:ok, []} ->
               {:halt, scroll}
             {:ok, %{result: results, scroll: scroll, total: total}} ->
-              Logger.info("Indexing #{total} entries. ScrollId: #{scroll}")
+              Logger.debug("Found #{total} entries. scroll id: #{scroll}")
               {results, scroll}
           end
         end,
         fn (scroll) ->
-          Logger.info("Finished harvesting gazetteer.  ScrollId: #{scroll}")
+          Logger.debug("Finished scrolling with #{scroll}")
         end
       )
     end
