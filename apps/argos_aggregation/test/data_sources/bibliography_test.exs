@@ -71,7 +71,7 @@ defmodule ArgosAggregation.BibliographyTest do
   test "get by id yields bibliographic record" do
     record = Bibliography.DataProvider.get_by_id("002010515")
 
-    assert Bibliography.BibliographicRecord.__struct__.__struct__ == record.__struct__
+    assert %Bibliography.BibliographicRecord{ id: "002010515"} = record
 
     reconstructed =
       record
@@ -95,7 +95,7 @@ defmodule ArgosAggregation.BibliographyTest do
 
     records
     |> Enum.each(fn(record) ->
-      assert Bibliography.BibliographicRecord.__struct__.__struct__ == record.__struct__
+      assert %Bibliography.BibliographicRecord{} = record
     end)
   end
 
