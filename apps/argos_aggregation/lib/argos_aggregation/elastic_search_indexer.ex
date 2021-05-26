@@ -14,6 +14,24 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     {:place, Gazetteer.Place.__struct__}
   ]
 
+  def get_by_id(id, reference_struct) do
+    {type, _struct} =
+      @type_to_struct_mapping
+      |> Enum.filter(fn ({_atom, struct}) ->
+        # Kein Plan wieso noch einmal struct.__struct__ nötig ist, obwohl es oben bereits mit __struct__ definiert ist.
+        struct.__struct__ == reference_struct.__struct__
+      end)
+      |> List.first()
+
+    Finch.build(
+      :get,
+      "#{@base_url}/_doc/#{type}-#{id}"
+    )
+    |> Finch.request(ArgosFinch)
+    |> parse_response()
+    |> extract_doc_from_response()
+  end
+
   def index(data_struct) do
     {type, _struct} =
       @type_to_struct_mapping
@@ -61,6 +79,14 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
   defp extract_search_hits_from_response(%{"hits" => %{"hits" => hits}}) do
     hits
+  end
+
+  defp extract_doc_from_response(%{"_source" => doc}) do
+    {:ok, doc}
+  end
+
+  defp extract_doc_from_response(%{"found" => false}) do
+    {:error, :not_found}
   end
 
   defp upsert_change?(%{"result" => result}) do
