@@ -8,16 +8,19 @@ defmodule ArgosAggregation.Thesauri do
     @type t() :: %__MODULE__{
       id: String.t(),
       uri: String.t(),
-      label: list(TranslatedContent.t()),
+      label: [TranslatedContent.t()],
     }
 
-    def create_concept(%{} = data) do
+    def from_map(%{} = data) do
       %Concept{
         id: data["id"],
         uri: data["uri"],
-        label: TranslatedContent.create_tc_list(data["label"])
+        label:
+          data["label"]
+          |> Enum.map(&TranslatedContent.from_map/1)
       }
     end
+
   end
 
   defmodule DataProvider do

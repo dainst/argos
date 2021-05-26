@@ -11,4 +11,6 @@ config :logger, :console,
   format: "[$level] $message [$metadata]\n",
   metadata: [:application, :module]
 
-config :argos_aggregation, :elastic_client, ArgosAggregation.ElasticSearchIndexer.ElasticSearchClient
+config :argos_aggregation,
+  bibliography_url: "http://zenon.dev.dainst.org",
+  elastic_client: ArgosAggregation.ElasticSearchIndexer.ElasticSearchClient

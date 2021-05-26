@@ -7,7 +7,10 @@
 # General application configuration
 import Config
 
-config :argos_aggregation, :elastic_client, Helpers.ElasticTestClient
+config :argos_aggregation,
+  elastic_client: Helpers.ElasticTestClient,
+  active_harvesters: [
+  ]
 
 config :argos_api,
   index_name: "argos_testing"
