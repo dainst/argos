@@ -11,9 +11,13 @@ defmodule ArgosAggregation.MixProject do
       lockfile: "../../mix.lock",
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: compiler_paths(Mix.env()),
       deps: deps()
     ]
   end
+
+  def compiler_paths(:test), do: ["lib", "test/helpers"]
+  def compiler_paths(_), do: ["lib"]
 
   # Run "mix help compile.app" to learn about applications.
   def application do
