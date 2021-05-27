@@ -12,5 +12,4 @@ config :logger, :console,
   metadata: [:application, :module]
 
 config :argos_aggregation,
-  bibliography_url: "http://zenon.dev.dainst.org",
-  elastic_client: ArgosAggregation.ElasticSearchIndexer.ElasticSearchClient
+  bibliography_url: "http://zenon.dev.dainst.org"

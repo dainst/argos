@@ -8,7 +8,6 @@
 import Config
 
 config :argos_aggregation,
-  elastic_client: Helpers.ElasticTestClient,
   active_harvesters: [
   ]
 
