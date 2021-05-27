@@ -97,11 +97,20 @@ defmodule ArgosAggregation.Project do
       doi: String.t(),
       start_date: Date.t(),
       end_date: Date.t(),
-      subject: [Thesauri.Concept.t()],
-      spatial: [Gazetteer.Place.t()],
-      temporal: [Chronontology.TemporalConcept.t()],
+      subject: [%{
+        label: [TranslatedContent.t()],
+        resource: Thesauri.Concept.t()
+      }],
+      spatial: [%{
+        label: [TranslatedContent.t()],
+        resource: Place.t()
+      }],
+      temporal: [%{
+        label: [TranslatedContent.t()],
+        resource: Chronontology.TemporalConcept.t()
+      }],
       stakeholders: [Stakeholder.t()],
-      images: [Image.t()]
+      images: [Image.t()],
     }
 
     @doc """
@@ -121,19 +130,44 @@ defmodule ArgosAggregation.Project do
         end_date: data["end_date"],
         subject:
           data["subject"]
-          |> Enum.map(&Thesauri.Concept.from_map/1),
+          |> Enum.map(fn(subject) ->
+            %{
+              label:
+                subject["label"]
+                |> Enum.map(&TranslatedContent.from_map/1),
+              resource: Thesauri.Concept.from_map(subject["resource"])
+            }
+          end),
         spatial:
           data["spatial"]
-          |> Enum.map(&Gazetteer.Place.from_map/1),
+          |> Enum.map(fn(spatial) ->
+            %{
+              label:
+                spatial["label"]
+                |> Enum.map(&TranslatedContent.from_map/1),
+              resource: Gazetteer.Place.from_map(spatial["resource"])
+            }
+          end),
         temporal:
           data["temporal"]
-          |> Enum.map(&Chronontology.TemporalConcept.from_map/1),
+          |> Enum.map(fn(temporal) ->
+            %{
+              label:
+                temporal["label"]
+                |> Enum.map(&TranslatedContent.from_map/1),
+              resource: Chronontology.TemporalConcept.from_map(temporal["resource"])
+            }
+          end),
         stakeholders:
           data["stakeholders"]
           |> Enum.map(&Stakeholder.from_map/1),
         images:
           data["images"]
-          |> Enum.map(&Image.from_map/1)
+          |> Enum.map(&Image.from_map/1),
+        external_links:
+          data["external_links"]
+          |> Enum.map(&ExternalLink.from_map/1)
+
       }
     end
   end
@@ -346,7 +380,7 @@ defmodule ArgosAggregation.Project do
     @spec create_translated_content_list(List.t()) :: [TranslatedContent.t()]
     def create_translated_content_list([%{"language_code" => _, "content" => _}|_] = tlc_list)  do
       # takes a list with translated content items coming from the project-api and reduce them to a search-api conform list of maps
-      for tlc <- tlc_list, do: %{lang: tlc["language_code"], text: tlc["content"]}
+      for tlc <- tlc_list, do: %TranslatedContent{lang: tlc["language_code"], text: tlc["content"]}
     end
     def create_translated_content_list([] = tlc_list), do: tlc_list
     def create_translated_content_list(nil), do: []
