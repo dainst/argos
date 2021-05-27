@@ -126,16 +126,11 @@ defmodule ArgosAggregation.Gazetteer do
     @batch_size 100
 
     @base_url Application.get_env(:argos_aggregation, :gazetteer_url)
-    @behaviour ArgosAggregation.AbstractDataProvider
 
-    alias ArgosAggregation.TranslatedContent
-
-    @impl ArgosAggregation.AbstractDataProvider
     def get_all() do
       get_batches("*")
     end
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true"
       |> HTTPoison.get()
@@ -143,7 +138,6 @@ defmodule ArgosAggregation.Gazetteer do
       |> PlaceParser.parse_place
     end
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_by_date(%Date{} = date) do
       "(lastChangeDate:>=#{Date.to_iso8601(date)})"
       |> get_batches

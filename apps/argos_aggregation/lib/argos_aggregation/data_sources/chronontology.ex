@@ -27,24 +27,20 @@ defmodule ArgosAggregation.Chronontology do
   end
 
   defmodule DataProvider do
-    @behaviour ArgosAggregation.AbstractDataProvider
     @base_url Application.get_env(:argos_aggregation, :chronontology_url)
 
     require Logger
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_all() do
       []
     end
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       HTTPoison.get("#{@base_url}/data/period/#{id}")
       |> parse_response()
       |> parse_period_data()
     end
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_by_date(%Date{} = _date) do
       []
     end

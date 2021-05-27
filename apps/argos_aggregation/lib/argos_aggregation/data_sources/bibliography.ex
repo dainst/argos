@@ -89,11 +89,8 @@ defmodule ArgosAggregation.Bibliography do
 
   defmodule DataProvider do
     @base_url Application.get_env(:argos_aggregation, :bibliography_url)
-    @behaviour ArgosAggregation.AbstractDataProvider
 
     alias ArgosAggregation.Bibliography.BibliographyParser
-
-    @impl ArgosAggregation.AbstractDataProvider
     def get_all() do
       %{
         "prettyPrint" => false
@@ -101,7 +98,6 @@ defmodule ArgosAggregation.Bibliography do
       |> get_batches()
     end
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       result =
         %{
@@ -121,7 +117,6 @@ defmodule ArgosAggregation.Bibliography do
       end
     end
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_by_date(%DateTime{} = date) do
       encoded_date =
         date

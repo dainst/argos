@@ -140,17 +140,13 @@ defmodule ArgosAggregation.Project do
 
   defmodule DataProvider do
     @base_url Application.get_env(:argos_aggregation, :projects_url)
-    @behaviour ArgosAggregation.AbstractDataProvider
-
     alias ArgosAggregation.Project.ProjectParser
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_all() do
       "#{@base_url}/api/projects"
       |> get_project_list()
     end
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_by_date(%Date{} = date) do
       query =
         URI.encode_query(%{
@@ -185,7 +181,6 @@ defmodule ArgosAggregation.Project do
       end
     end
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       result =
         "#{@base_url}/api/projects/#{id}"

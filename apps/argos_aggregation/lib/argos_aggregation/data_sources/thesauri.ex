@@ -25,7 +25,6 @@ defmodule ArgosAggregation.Thesauri do
 
   defmodule DataProvider do
     @base_url Application.get_env(:argos_aggregation, :thesauri_url)
-    @behaviour ArgosAggregation.AbstractDataProvider
 
     alias ArgosAggregation.TranslatedContent
     import SweetXml
@@ -37,12 +36,10 @@ defmodule ArgosAggregation.Thesauri do
     - {:ok, xml_struct} on success, where xml_struct is the RDF XML parsed by SweetXML
     - {:error, response} for all HTTP responses besides status 200.
     """
-    @impl ArgosAggregation.AbstractDataProvider
     def get_all() do
       []
     end
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_by_id(id) do
       "#{@base_url}/#{id}.rdf"
       |> HTTPoison.get()
@@ -50,7 +47,6 @@ defmodule ArgosAggregation.Thesauri do
       |> parse_concept_data(id)
     end
 
-    @impl ArgosAggregation.AbstractDataProvider
     def get_by_date(%Date{} = _date) do
       []
     end
