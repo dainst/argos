@@ -132,7 +132,7 @@ defmodule ArgosAggregation.Gazetteer do
 
     @impl ArgosAggregation.AbstractDataProvider
     def get_all() do
-      get_batches("")
+      get_batches("*")
     end
 
     @impl ArgosAggregation.AbstractDataProvider
@@ -150,34 +150,36 @@ defmodule ArgosAggregation.Gazetteer do
     end
 
     def get_batches(base_query) do
-      Logger.debug("Loading data for #{base_query}.")
+      Logger.debug("Starting batch query with q=#{base_query}.")
       Stream.resource(
-        fn -> true end,
-        fn (scroll) ->
-          case process_batch_query(base_query, scroll, @batch_size) do
+        fn -> nil end,
+        fn (scroll_id) ->
+          case process_batch_query(base_query, scroll_id, @batch_size) do
             {:error, reason} ->
               Logger.error("Error while processing batch. #{reason}")
-              {:halt, scroll}
+              {:halt, scroll_id}
             {:ok, []} ->
-              {:halt, scroll}
+              {:halt, scroll_id}
             {:ok, %{result: results, scroll: scroll, total: total}} ->
-              Logger.debug("Found #{total} entries. scroll id: #{scroll}")
+              if is_nil(scroll_id) do
+                Logger.debug("Found #{total} entries.")
+              end
               {results, scroll}
           end
         end,
-        fn (scroll) ->
-          Logger.debug("Finished scrolling with #{scroll}")
+        fn (_scroll_id) ->
+          Logger.debug("Finished scrolling batches.")
         end
       )
     end
 
-    defp process_batch_query(query, scroll, limit) when is_boolean(scroll) do
-      %{q: query, limit: limit, scroll: scroll}
+    defp process_batch_query(query, nil, limit) do
+      %{q: query, limit: limit, scroll: true}
       |> get_record_list
       |> handle_result
     end
-    defp process_batch_query(query, scroll, limit) do
-      %{q: query, limit: limit, scrollId: scroll}
+    defp process_batch_query(query, scroll_id, limit) do
+      %{q: query, limit: limit, scrollId: scroll_id}
       |> get_record_list
       |> handle_result
     end
