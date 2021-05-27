@@ -145,18 +145,9 @@ defmodule ArgosAggregation.Gazetteer do
 
     @impl ArgosAggregation.AbstractDataProvider
     def get_by_date(%Date{} = date) do
-      Date.to_iso8601(date)
-      |> get_date_query
+      "(lastChangeDate:>=#{Date.to_iso8601(date)})"
       |> get_batches
     end
-
-    def get_by_date(%DateTime{} = datetime) do
-        datetime
-        |> DateTime.to_date #gazetteer does not support time queries
-        |> get_by_date
-    end
-
-    defp get_date_query(date), do: "(lastChangeDate:>=#{date})"
 
     def get_batches(base_query) do
       Logger.debug("Loading data for #{base_query}.")

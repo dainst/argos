@@ -47,17 +47,4 @@ defmodule ArgosAggregation.GazetteerTest do
       assert %Place{} = record
     end)
   end
-
-  test "get by date using datetime yields places as result" do
-    records  =
-      DataProvider.get_by_date(~D[2021-01-01])
-      |> Enum.take(10)
-
-    assert Enum.count(records) == 10
-
-    records
-    |> Enum.each(fn(record) ->
-      assert %Place{} = record
-    end)
-  end
 end
