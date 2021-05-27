@@ -232,7 +232,10 @@ defmodule ArgosAggregation.Gazetteer do
     end
 
     def handle_info(:run, state) do # TODO: Übernommen, warum info und nicht cast/call?
-      now = DateTime.now!(get_timezone())
+      now =
+        DateTime.now!(get_timezone())
+        |> DateTime.to_date()
+
       run_harvest(state.last_run)
 
       state = %{state | last_run: now}
@@ -248,13 +251,8 @@ defmodule ArgosAggregation.Gazetteer do
       |> Enum.each(&ElasticSearchIndexer.index/1)
     end
 
-    def run_harvest(%DateTime{} = datetime) do
-      DataProvider.get_by_date(datetime)
-      |> Enum.each(&ElasticSearchIndexer.index/1)
-    end
-
-    def run_harvest(%Date{} = datetime) do
-      DataProvider.get_by_date(datetime)
+    def run_harvest(%Date{} = date) do
+      DataProvider.get_by_date(date)
       |> Enum.each(&ElasticSearchIndexer.index/1)
     end
   end
