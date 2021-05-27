@@ -4,10 +4,11 @@ defmodule ArgosAggregation.GazetteerTest do
 
   doctest ArgosAggregation.Gazetteer
 
-  alias Helpers.ElasticTestClient, as: TestClient
-  alias ArgosAggregation.Gazetteer.Place
-  alias ArgosAggregation.Gazetteer.DataProvider
-  alias ArgosAggregation.Gazetteer.Harvester
+  alias ArgosAggregation.Gazetteer.{
+    Place, DataProvider, Harvester
+  }
+
+  alias ArgosAggregation.TestHelpers
 
   test "get by id yields place with requested id" do
     {:ok, place } = DataProvider.get_by_id("2048575")
@@ -46,5 +47,27 @@ defmodule ArgosAggregation.GazetteerTest do
     |> Enum.each(fn(record) ->
       assert %Place{} = record
     end)
+  end
+
+  describe "elastic search tests" do
+
+    setup %{} do
+      TestHelpers.create_index()
+
+      on_exit(fn ->
+        TestHelpers.remove_index()
+      end)
+      :ok
+    end
+
+    test "place can be added to index" do
+      {:ok, place } = DataProvider.get_by_id("2048575")
+
+      indexing_response = ArgosAggregation.ElasticSearchIndexer.index(place)
+
+      assert %{
+        upsert_response: %{"_id" => "place-2048575", "result" => "created"}
+      } = indexing_response
+    end
   end
 end
