@@ -231,7 +231,9 @@ defmodule ArgosAggregation.Project do
 
     defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}} = _response) do
       case Poison.decode(body) do
-        {:ok, data} ->
+        {:ok, %{"code" => 404}} ->
+          {:error, 404}
+        {:ok, data } ->
           {:ok, data["data"]}
         {:error, reason} ->
           {:error, reason}
@@ -240,6 +242,10 @@ defmodule ArgosAggregation.Project do
     defp handle_result({_, %HTTPoison.Response{status_code: 404}}) do
       {:error, 404}
     end
+    defp handle_result({_, %HTTPoison.Response{status_code: 400}}) do
+      {:error, 400}
+    end
+
     defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}) do
       Logger.error("No connection to #{@base_url}")
       {:error, :econnrefused}
