@@ -32,8 +32,7 @@ defmodule ArgosAPI.MixProject do
       {:httpoison, "~> 1.6.2"},
       {:remix, "~> 0.0.1", only: :dev},
       {:plug_cowboy, "~> 2.4"},
-      {:cors_plug, "~> 2.0"},
-      {:tongue, "~> 2.0"}
+      {:cors_plug, "~> 2.0"}
       # {:sibling_app_in_umbrella, in_umbrella: true}
     ]
   end
