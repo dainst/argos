@@ -149,7 +149,7 @@ defmodule ArgosAggregation.Gazetteer do
       |> get_batches
     end
 
-    def get_batches(base_query) do
+    defp get_batches(base_query) do
       Logger.debug("Starting batch query with q=#{base_query}.")
       Stream.resource(
         fn -> nil end,
@@ -201,7 +201,7 @@ defmodule ArgosAggregation.Gazetteer do
       {:ok, %{result: places, scroll: scroll, total: total}}
     end
 
-    def get_record_list(params) do
+    defp get_record_list(params) do
       "#{@base_url}/search.json?shortLanguageCodes=true"
       |> HTTPoison.get([], [{:params, params}])
       |> parse_response
