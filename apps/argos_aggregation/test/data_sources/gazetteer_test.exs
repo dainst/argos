@@ -9,29 +9,55 @@ defmodule ArgosAggregation.GazetteerTest do
   alias ArgosAggregation.Gazetteer.DataProvider
   alias ArgosAggregation.Gazetteer.Harvester
 
-  test "run gazzetteer data provider get_by_date" do
-    [data|_] =
-      DataProvider.get_by_date(~D[2021-01-01])
-      |> Enum.to_list()
-    assert %Place{} = data
+  test "get by id yields place with requested id" do
+    {:ok, place } = DataProvider.get_by_id("2048575")
+    assert %Place{ id: "2048575"} = place
+
+    reconstructed =
+      place
+      |> Poison.encode!()
+      |> Poison.decode!()
+      |> Place.from_map()
+
+    assert place == reconstructed
   end
 
-  test "run gazzetteer data provider get_by_datetime" do
-    [data|_] =
-      DataProvider.get_by_date(~U[2021-01-01 19:59:03Z])
-      |> Enum.to_list()
-    assert %Place{} = data
-  end
-
-  test "run gazetteer data provider get_by_id" do
-    data = DataProvider.get_by_id("2048575")
-    assert {:ok, %Place{}} = data
-  end
-
-  test "run gazetteer data provider get_all" do
-    [data|_] =
+  test "get all yields places as result" do
+    records =
       DataProvider.get_all()
       |> Enum.take(10)
-    assert %Place{} = data
+
+    assert Enum.count(records) == 10
+
+    records
+    |> Enum.each(fn(record) ->
+      assert %Place{} = record
+    end)
+  end
+
+  test "get by date yields places as result" do
+    records  =
+      DataProvider.get_by_date(~D[2021-01-01])
+      |> Enum.take(10)
+
+    assert Enum.count(records) == 10
+
+    records
+    |> Enum.each(fn(record) ->
+      assert %Place{} = record
+    end)
+  end
+
+  test "get by date using datetime yields places as result" do
+    records  =
+      DataProvider.get_by_date(~D[2021-01-01])
+      |> Enum.take(10)
+
+    assert Enum.count(records) == 10
+
+    records
+    |> Enum.each(fn(record) ->
+      assert %Place{} = record
+    end)
   end
 end
