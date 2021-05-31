@@ -12,15 +12,15 @@ defmodule ArgosAggregation.Gazetteer do
       field :geometry, {:array, :map}
     end
 
-    def changeset(fields, params \\ %{}) do
-      fields
+    def changeset(place, params \\ %{}) do
+      place
       |> cast(params, [:geometry])
       |> cast_embed(:core_fields)
       |> validate_required([:core_fields, :geometry])
     end
 
     def create(params) do
-      Place.changeset(%Place{}, params)
+      changeset(%Place{}, params)
       |> apply_action(:create)
     end
   end
@@ -155,7 +155,7 @@ defmodule ArgosAggregation.Gazetteer do
       place_params = %{
         "core_fields" => core_fields,
         "geometry" => parse_geometries_as_geo_json(gazetteer_data["prefLocation"])
-      }
+      } |> IO.inspect
 
       case Place.create(place_params) do
         {:ok, place } ->
