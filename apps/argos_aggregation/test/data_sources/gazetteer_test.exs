@@ -5,7 +5,7 @@ defmodule ArgosAggregation.GazetteerTest do
   doctest ArgosAggregation.Gazetteer
 
   alias ArgosAggregation.Gazetteer.{
-    Place, DataProvider, Place
+    Place, DataProvider
   }
 
   alias ArgosAggregation.CoreFields
