@@ -5,22 +5,15 @@ defmodule ArgosAggregation.GazetteerTest do
   doctest ArgosAggregation.Gazetteer
 
   alias ArgosAggregation.Gazetteer.{
-    Place, DataProvider
+    Place, DataProvider, Place
   }
+
+  alias ArgosAggregation.CoreFields
 
   alias ArgosAggregation.TestHelpers
 
   test "get by id yields place with requested id" do
-    {:ok, place } = DataProvider.get_by_id("2048575")
-    assert %Place{ id: "2048575"} = place
-
-    reconstructed =
-      place
-      |> Poison.encode!()
-      |> Poison.decode!()
-      |> Place.from_map()
-
-    assert place == reconstructed
+    assert %Place{ core_fields: %CoreFields{source_id: "2048575"}} = DataProvider.get_by_id("2048575")
   end
 
   test "get all yields places as result" do
@@ -61,7 +54,7 @@ defmodule ArgosAggregation.GazetteerTest do
     end
 
     test "place can be added to index" do
-      {:ok, place } = DataProvider.get_by_id("2048575")
+      place = DataProvider.get_by_id("2048575")
 
       indexing_response = ArgosAggregation.ElasticSearchIndexer.index(place)
 

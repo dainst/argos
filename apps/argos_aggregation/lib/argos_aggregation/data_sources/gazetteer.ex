@@ -1,131 +1,39 @@
 defmodule ArgosAggregation.Gazetteer do
 
   defmodule Place do
-    alias Geo
-    alias ArgosAggregation.TranslatedContent
+    use ArgosAggregation.Schema
 
-    @enforce_keys [:id, :uri, :label]
-    defstruct [:id, :uri, :label, :geometry]
-    @type t() :: %__MODULE__{
-      id: Integer.t(),
-      uri: String.t(),
-      label: [TranslatedContent.t()],
-      geometry: [Geo.geometry()]
-    }
+    alias ArgosAggregation.CoreFields
 
-    def from_map(%{} = data) do
-      %Place{
-        id: data["id"],
-        uri: data["uri"],
-        label:
-          data["label"]
-          |> Enum.map(&TranslatedContent.from_map/1),
-        geometry:
-          data["geometry"]
-          |> Enum.map(fn (data) ->
-            data
-            |> Geo.JSON.decode!()
-            |> Geo.JSON.encode!()
-          end)
-      }
+    import Ecto.Changeset
+
+    embedded_schema do
+      embeds_one(:core_fields, CoreFields)
+      field :geometry, {:array, :map}
+    end
+
+    def changeset(fields, params \\ %{}) do
+      fields
+      |> cast(params, [:geometry])
+      |> cast_embed(:core_fields)
+      |> validate_required([:core_fields, :geometry])
+    end
+
+    def create(params) do
+      Place.changeset(%Place{}, params)
+      |> apply_action(:create)
     end
   end
 
   require Logger
 
-  defmodule PlaceParser do
-    alias ArgosAggregation.TranslatedContent
-
-    def parse_place({:ok, place}), do: place |> parse_place
-    def parse_place(%{"@id" => id, "gazId" => gid, "names" => names, "prefName" => p_name, "prefLocation" => p_loc}) do
-      {:ok,
-        %Place{
-          uri: id,
-          id: gid,
-          label: parse_names([p_name] ++ names),
-          geometry: parse_geometries_as_geo_json(p_loc)
-        }
-      }
-    end
-    def parse_place(place_data) when not is_map_key(place_data, "names") and not is_map_key(place_data, "prefName") do
-     Logger.warn("Male formated entry")
-     {:error, "Male formated entry"}
-    end
-    def parse_place(place_data) when not is_map_key(place_data, "names") do
-       Map.put(place_data, "names", []) |> parse_place
-    end
-    def parse_place(place_data) when not is_map_key(place_data, "prefLocation") do
-      Map.put(place_data, "prefLocation", []) |> parse_place
-    end
-    def parse_place(place_data) when not is_map_key(place_data, "prefName") do
-      Map.put(place_data, "prefName", %{}) |> parse_place
-    end
-    def parse_place(%{"@id" => id, "gazId" => gid, "names" => names, "prefName" => p_name, "prefLocation" => p_loc}) do
-      {:ok,
-        %Place{
-          uri: id,
-          id: gid,
-          label: parse_names([p_name] ++ names),
-          geometry: parse_geometries_as_geo_json(p_loc)
-        }
-      }
-    end
-    def parse_place(_data) do
-      Logger.error("unsupported format")
-      {:error, "unsupported format"}
-    end
-
-    defp parse_names(names) do
-      names
-      |> Enum.filter(fn (name) -> name != nil end)
-      |> Enum.map(fn (entry) ->
-        case entry do
-          %{"language" => lang, "title" => title} ->
-            %TranslatedContent{
-              lang: lang,
-              text: title
-            }
-          %{"title" => title} ->
-            %TranslatedContent{
-              lang: "",
-              text: title
-            }
-          _ -> nil
-        end
-      end)
-    end
-
-    defp parse_geometries_as_geo_json(%{"coordinates" => coor, "shape" => shp}), do: [ create_point(coor), create_polygons(shp) ]
-    defp parse_geometries_as_geo_json(%{"shape" => shp}),  do: [ create_polygons(shp)]
-    defp parse_geometries_as_geo_json(%{"coordinates" => coor}), do: [ create_point(coor)]
-    defp parse_geometries_as_geo_json(_),  do: []
-
-    defp create_point(coords) do
-      Geo.JSON.encode!(
-        %Geo.Point{ coordinates: List.to_tuple(coords) }
-      )
-    end
-
-    defp create_polygons(multi_polygon_list) do
-      multi_polygon_list
-      |> Enum.map(fn polygon_list ->
-        polygon_list
-        |> Enum.map(fn point_list ->
-          point_list
-          |> Enum.map(&List.to_tuple(&1))
-        end)
-      end)
-      |> (fn val ->
-        %Geo.MultiPolygon{coordinates: val}
-      end).()
-      |> Geo.JSON.encode!()
-    end
-  end
 
   defmodule DataProvider do
     @batch_size 100
 
     @base_url Application.get_env(:argos_aggregation, :gazetteer_url)
+
+    alias ArgosAggregation.Gazetteer.PlaceParser
 
     def get_all() do
       get_batches("*")
@@ -139,10 +47,17 @@ defmodule ArgosAggregation.Gazetteer do
           [ArgosAggregation.Application.get_http_user_agent_header()]
         )
 
-      request
-      |> Finch.request(ArgosFinch)
-      |> parse_response(request)
-      |> PlaceParser.parse_place
+      response =
+        request
+        |> Finch.request(ArgosFinch)
+        |> parse_response(request)
+
+      case response do
+        {:ok, body} ->
+          PlaceParser.parse_place(body)
+        error ->
+          error
+      end
     end
 
     def get_by_date(%Date{} = date) do
@@ -176,34 +91,26 @@ defmodule ArgosAggregation.Gazetteer do
 
     defp process_batch_query(query, nil, limit) do
       %{q: query, limit: limit, scroll: true}
-      |> get_record_list
-      |> handle_result
+      |> run_search()
+      |> parse_search_result()
     end
     defp process_batch_query(query, scroll_id, limit) do
       %{q: query, limit: limit, scrollId: scroll_id}
-      |> get_record_list
-      |> handle_result
+      |> run_search()
+      |> parse_search_result()
     end
 
-    defp handle_result({:error, reason}), do: {:error, reason}
-    defp handle_result({:ok, %{"total" => 0}}), do: {:ok, []}
-    defp handle_result({:ok, %{"result" => []}}), do: {:ok, []}
-    defp handle_result({:ok, %{"result" => result, "scrollId" => scroll, "total" => total}}) do
+    defp parse_search_result({:error, reason}), do: {:error, reason}
+    defp parse_search_result({:ok, %{"total" => 0}}), do: {:ok, []}
+    defp parse_search_result({:ok, %{"result" => []}}), do: {:ok, []}
+    defp parse_search_result({:ok, %{"result" => result, "scrollId" => scroll, "total" => total}}) do
       places =
         result
-        |> Task.async_stream(PlaceParser, :parse_place, [])
-        |> Enum.flat_map(
-          fn entry ->
-            case entry do
-              {:ok, {:ok, place}} -> [place]
-              _ -> []
-            end
-          end)
+        |> Enum.map(&PlaceParser.parse_place/1)
       {:ok, %{result: places, scroll: scroll, total: total}}
     end
 
-    defp get_record_list(params) do
-
+    defp run_search(params) do
       request =
         Finch.build(
           :get,
@@ -230,6 +137,78 @@ defmodule ArgosAggregation.Gazetteer do
       request
       |> Finch.request(ArgosFinch)
       |> parse_response(request)
+    end
+  end
+
+  defmodule PlaceParser do
+    alias ArgosAggregation.TranslatedContent
+
+    def parse_place(gazetteer_data) do
+
+      core_fields = %{
+        "type" => :place,
+        "source_id" => gazetteer_data["gazId"],
+        "uri" => gazetteer_data["@id"],
+        "title" => parse_names([gazetteer_data["prefName"]] ++ Map.get(gazetteer_data, "names", []))
+      }
+
+      place_params = %{
+        "core_fields" => core_fields,
+        "geometry" => parse_geometries_as_geo_json(gazetteer_data["prefLocation"])
+      }
+
+      case Place.create(place_params) do
+        {:ok, place } ->
+          place
+        error ->
+          error
+      end
+    end
+
+    defp parse_names(names) do
+      names
+      |> Enum.filter(fn (name) -> name != nil end)
+      |> Enum.map(fn (entry) ->
+        case entry do
+          %{"language" => lang, "title" => title} ->
+            %{
+              "lang" => lang,
+              "text" => title
+            }
+          %{"title" => title} ->
+            %{
+              "lang" => "",
+              "text" => title
+            }
+          _ -> nil
+        end
+      end)
+    end
+
+    defp parse_geometries_as_geo_json(%{"coordinates" => coor, "shape" => shp}), do: [ create_point(coor), create_polygons(shp) ]
+    defp parse_geometries_as_geo_json(%{"shape" => shp}),  do: [ create_polygons(shp)]
+    defp parse_geometries_as_geo_json(%{"coordinates" => coor}), do: [ create_point(coor)]
+    defp parse_geometries_as_geo_json(_),  do: []
+
+    defp create_point(coords) do
+      Geo.JSON.encode!(
+        %Geo.Point{ coordinates: List.to_tuple(coords) }
+      )
+    end
+
+    defp create_polygons(multi_polygon_list) do
+      multi_polygon_list
+      |> Enum.map(fn polygon_list ->
+        polygon_list
+        |> Enum.map(fn point_list ->
+          point_list
+          |> Enum.map(&List.to_tuple(&1))
+        end)
+      end)
+      |> (fn val ->
+        %Geo.MultiPolygon{coordinates: val}
+      end).()
+      |> Geo.JSON.encode!()
     end
   end
 

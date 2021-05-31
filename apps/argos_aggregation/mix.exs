@@ -37,8 +37,8 @@ defmodule ArgosAggregation.MixProject do
       {:geo, "~> 3.3.7"},
       {:sweet_xml, "~> 0.6.6"},
       {:finch, "~> 0.7"},
-      {:tongue, "~> 2.0"}
-      # {:sibling_app_in_umbrella, in_umbrella: true}
+      {:tongue, "~> 2.0"},
+      {:ecto, "~> 3.6"}
     ]
   end
 

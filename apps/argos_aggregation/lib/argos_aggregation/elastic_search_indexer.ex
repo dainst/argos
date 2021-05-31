@@ -1,7 +1,7 @@
 defmodule ArgosAggregation.ElasticSearchIndexer do
   require Logger
   alias ArgosAggregation.{
-    Chronontology, Gazetteer, Thesauri, Project, Bibliography
+    Chronontology, Gazetteer, Thesauri, Project, Bibliography, CoreFields
   }
 
   @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
@@ -33,17 +33,9 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   end
 
   def index(data_struct) do
-    {type, _struct} =
-      @type_to_struct_mapping
-      |> Enum.filter(fn ({_atom, struct}) ->
-        # Kein Plan wieso noch einmal struct.__struct__ nötig ist, obwohl es oben bereits mit __struct__ definiert ist.
-        struct.__struct__ == data_struct.__struct__
-      end)
-      |> List.first()
-
     res =
       %{
-        doc: Map.put(data_struct, :type, type),
+        doc: data_struct,
         doc_as_upsert: true
       }
       |> upsert()
@@ -57,8 +49,8 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     %{upsert_response: res, referencing_docs_update_response: res_reference_update}
   end
 
-  def upsert(%{doc: %{type: type, id: id}} = data) do
-    Logger.debug("Indexing #{type}-#{id}.")
+  def upsert(%{doc: %_{core_fields: %CoreFields{type: type, source_id: source_id}}} = data) do
+    Logger.debug("Indexing #{type}-#{source_id}.")
 
     data_json =
       data
@@ -66,7 +58,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     Finch.build(
       :post,
-      "#{@base_url}/_update/#{type}-#{id}",
+      "#{@base_url}/_update/#{type}-#{source_id}",
       @headers,
       data_json
     )
@@ -117,7 +109,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   end
 
   defp search_referencing_docs(%Gazetteer.Place{} = place) do
-    search_for_subdocument(:spatial, place.id)
+    search_for_subdocument(:spatial, place.core_fields.source_id)
   end
   defp search_referencing_docs(%Chronontology.TemporalConcept{} = temporal) do
     search_for_subdocument(:temporal, temporal.id)
