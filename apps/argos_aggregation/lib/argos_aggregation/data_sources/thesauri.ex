@@ -1,32 +1,31 @@
 defmodule ArgosAggregation.Thesauri do
-
   defmodule Concept do
-    alias ArgosAggregation.TranslatedContent
+    use ArgosAggregation.Schema
 
-    @enforce_keys [:id, :uri, :label]
-    defstruct [:id, :uri, :label]
-    @type t() :: %__MODULE__{
-      id: String.t(),
-      uri: String.t(),
-      label: [TranslatedContent.t()],
-    }
+    alias ArgosAggregation.CoreFields
 
-    def from_map(%{} = data) do
-      %Concept{
-        id: data["id"],
-        uri: data["uri"],
-        label:
-          data["label"]
-          |> Enum.map(&TranslatedContent.from_map/1)
-      }
+    import Ecto.Changeset
+
+    embedded_schema do
+      embeds_one(:core_fields, CoreFields)
     end
 
+    def changeset(concept, params \\ %{}) do
+      concept
+      |> cast(params, [])
+      |> cast_embed(:core_fields)
+      |> validate_required([:core_fields])
+    end
+
+    def create(params) do
+      Concept.changeset(%Concept{}, params)
+      |> apply_action(:create)
+    end
   end
 
   defmodule DataProvider do
     @base_url Application.get_env(:argos_aggregation, :thesauri_url)
 
-    alias ArgosAggregation.TranslatedContent
     import SweetXml
     require Logger
 
@@ -69,13 +68,21 @@ defmodule ArgosAggregation.Thesauri do
         |> SweetXml.parse()
         |> xml_to_labels(id)
 
-      {
-        :ok, %Concept{
-          id: id,
-          uri: "#{@base_url}/#{id}",
-          label: labels
+      params = %{
+        "core_fields" => %{
+          "source_id" => id,
+          "type" => :concept,
+          "uri" => "#{@base_url}/#{id}",
+          "title" => labels
         }
       }
+
+      case Concept.create(params) do
+        {:ok, concept} ->
+          concept
+        error ->
+          error
+      end
     end
 
     defp parse_concept_data({:error, _} = error, _id) do
@@ -85,22 +92,23 @@ defmodule ArgosAggregation.Thesauri do
     defp xml_to_labels(xml, id) do
       xml
       |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skos:prefLabel)l)
-      |> Enum.map(fn(pref_label) ->
-        %TranslatedContent{
-          lang: xpath(pref_label, ~x(./@xml:lang)s),
-          text: xpath(pref_label, ~x(./text(\))s)
+      |> Enum.map(fn pref_label ->
+        %{
+          "lang" => xpath(pref_label, ~x(./@xml:lang)s),
+          "text" => xpath(pref_label, ~x(./text(\))s)
         }
       end)
       |> case do
         [] ->
           xml
           |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skosxl:literalForm)l)
-          |> Enum.map(fn(pref_label) ->
-            %TranslatedContent{
-              lang: xpath(pref_label, ~x(./@xml:lang)s),
-              text: xpath(pref_label, ~x(./text(\))s)
+          |> Enum.map(fn pref_label ->
+            %{
+              "lang" => xpath(pref_label, ~x(./@xml:lang)s),
+              "text" => xpath(pref_label, ~x(./text(\))s)
             }
-      end)
+          end)
+
         val ->
           val
       end
@@ -108,6 +116,7 @@ defmodule ArgosAggregation.Thesauri do
         [] ->
           Logger.warning("No labels found for concept #{@base_url}/#{id}.")
           []
+
         val ->
           val
       end

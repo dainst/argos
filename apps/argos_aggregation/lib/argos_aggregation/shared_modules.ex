@@ -18,10 +18,11 @@ defmodule ArgosAggregation.CoreFields do
 
   embedded_schema do
     field :source_id, :string
-    field :type, Ecto.Enum, values: [:place, :project, :bibliographic_record]
+    field :type, Ecto.Enum, values: [:place, :concept, :project, :bibliographic_record]
     field :uri, :string
     embeds_many :title, TranslatedContent
     embeds_many :spatial, Place
+    embeds_many :is_a, Concept
   end
 
   def changeset(fields, params \\ %{}) do
