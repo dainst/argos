@@ -1,180 +1,43 @@
-
-
 defmodule ArgosAggregation.Project do
-
   require Logger
+
   alias ArgosAggregation.{
-    Thesauri, Gazetteer, Chronontology, TranslatedContent
+    Thesauri,
+    Gazetteer,
+    Chronontology
   }
 
-  defmodule Stakeholder do
-    @enforce_keys [:label]
-    defstruct [:label, :role, :uri, :type]
-    @type t() :: %__MODULE__{
-      label: [TranslatedContent.t()],
-      role: String.t(),
-      uri: String.t(),
-      type: String.t(),
-    }
-
-    def from_map(%{} = data) do
-      %Stakeholder{
-        label:
-          data["label"]
-          |> Enum.map(&TranslatedContent.from_map/1),
-        role: data["role"],
-        uri: data["uri"],
-        type: data["type"]
-      }
-    end
-  end
-
-  defmodule Person do
-    @enforce_keys [:firstname, :lastname]
-    defstruct [:firstname, :lastname, title: "", external_id: ""]
-    @type t() :: %__MODULE__{
-      firstname: String.t(),
-      lastname: String.t(),
-      title: String.t(),
-      external_id: String.t()
-    }
-
-    def from_map(%{} = data) do
-      %Person{
-        firstname: data["firstname"],
-        lastname: data["lastname"],
-        title: data["title"],
-        external_id: data["external_id"]
-      }
-    end
-  end
-
-  defmodule Image do
-    @enforce_keys [:uri]
-    defstruct [:uri, label: ""]
-    @type t() :: %__MODULE__{
-      label: [TranslatedContent.t()],
-      uri: String.t()
-    }
-
-    def from_map(%{} = data) do
-      %Image{
-        label:
-          data["label"]
-          |> Enum.map(&TranslatedContent.from_map/1),
-        uri: data["uri"]
-      }
-    end
-  end
-
-  defmodule ExternalLink do
-    @enforce_keys [:uri]
-    defstruct [:uri, label: "", role: "data"]
-    @type t() :: %__MODULE__{
-      label: [TranslatedContent.t()],
-      uri: String.t(),
-      role: String.t()
-    }
-
-    def from_map(%{} = data) do
-      %ExternalLink{
-        uri: data["uri"],
-        role: data["role"],
-        label:
-          data["label"]
-          |> Enum.map(&TranslatedContent.from_map/1)
-      }
-    end
-  end
-
   defmodule Project do
-    @enforce_keys [:id, :title]
-    defstruct [:id, :title, description: [], doi: "", start_date: nil, end_date: nil, subject: [], spatial: [], temporal: [], images: [], stakeholders: [], external_links: [] ]
-    @type t() :: %__MODULE__{
-      id: String.t(),
-      title: [TranslatedContent.t()],
-      description: [TranslatedContent.t()],
-      doi: String.t(),
-      start_date: Date.t(),
-      end_date: Date.t(),
-      subject: [%{
-        label: [TranslatedContent.t()],
-        resource: Thesauri.Concept.t()
-      }],
-      spatial: [%{
-        label: [TranslatedContent.t()],
-        resource: Place.t()
-      }],
-      temporal: [%{
-        label: [TranslatedContent.t()],
-        resource: Chronontology.TemporalConcept.t()
-      }],
-      stakeholders: [Stakeholder.t()],
-      images: [Image.t()],
-    }
+    use ArgosAggregation.Schema
 
-    @doc """
-    factory function for creating a proper %Project{} from a plain map e.g. from a db request
-    """
-    def from_map(%{} = data) do
-      %Project{
-        id: data["id"],
-        title:
-          data["title"]
-          |> Enum.map(&TranslatedContent.from_map/1),
-        description:
-          data["description"]
-          |> Enum.map(&TranslatedContent.from_map/1),
-        doi: data["doi"],
-        start_date: data["start_date"],
-        end_date: data["end_date"],
-        subject:
-          data["subject"]
-          |> Enum.map(fn(subject) ->
-            %{
-              label:
-                subject["label"]
-                |> Enum.map(&TranslatedContent.from_map/1),
-              resource: Thesauri.Concept.from_map(subject["resource"])
-            }
-          end),
-        spatial:
-          data["spatial"]
-          |> Enum.map(fn(spatial) ->
-            %{
-              label:
-                spatial["label"]
-                |> Enum.map(&TranslatedContent.from_map/1),
-              resource: Gazetteer.Place.from_map(spatial["resource"])
-            }
-          end),
-        temporal:
-          data["temporal"]
-          |> Enum.map(fn(temporal) ->
-            %{
-              label:
-                temporal["label"]
-                |> Enum.map(&TranslatedContent.from_map/1),
-              resource: Chronontology.TemporalConcept.from_map(temporal["resource"])
-            }
-          end),
-        stakeholders:
-          data["stakeholders"]
-          |> Enum.map(&Stakeholder.from_map/1),
-        images:
-          data["images"]
-          |> Enum.map(&Image.from_map/1),
-        external_links:
-          data["external_links"]
-          |> Enum.map(&ExternalLink.from_map/1)
+    alias ArgosAggregation.CoreFields
 
-      }
+    import Ecto.Changeset
+
+    embedded_schema do
+      embeds_one(:core_fields, CoreFields)
+    end
+
+    def changeset(project, params \\ %{}) do
+      project
+      |> cast(params, [])
+      |> cast_embed(:core_fields)
+      |> validate_required(:core_fields)
+    end
+
+    def create(params) do
+      changeset(%Project{}, params)
+      |> apply_action(:create)
     end
   end
 
   defmodule DataProvider do
     @base_url Application.get_env(:argos_aggregation, :projects_url)
     alias ArgosAggregation.Project.ProjectParser
+
+    alias ArgosAggregation.Gazetteer
+    alias ArgosAggregation.Thesauri
+    alias ArgosAggregation.Chronontology
 
     def get_all() do
       "#{@base_url}/api/projects"
@@ -190,6 +53,7 @@ defmodule ArgosAggregation.Project do
       "#{@base_url}/api/projects?#{query}"
       |> get_project_list()
     end
+
     def get_by_date(%DateTime{} = date) do
       query =
         URI.encode_query(%{
@@ -210,7 +74,8 @@ defmodule ArgosAggregation.Project do
         {:ok, data} ->
           data
           |> Enum.map(&ProjectParser.parse_project(&1))
-        {:error, _ } ->
+
+        {:error, _} ->
           []
       end
     end
@@ -224,7 +89,8 @@ defmodule ArgosAggregation.Project do
       case result do
         {:ok, data} ->
           ProjectParser.parse_project(data)
-        {:error, reason } ->
+
+        {:error, reason} ->
           {:error, reason}
       end
     end
@@ -233,15 +99,19 @@ defmodule ArgosAggregation.Project do
       case Poison.decode(body) do
         {:ok, %{"code" => 404}} ->
           {:error, 404}
-        {:ok, data } ->
+
+        {:ok, data} ->
           {:ok, data["data"]}
+
         {:error, reason} ->
           {:error, reason}
       end
     end
+
     defp handle_result({_, %HTTPoison.Response{status_code: 404}}) do
       {:error, 404}
     end
+
     defp handle_result({_, %HTTPoison.Response{status_code: 400}}) do
       {:error, 400}
     end
@@ -250,6 +120,7 @@ defmodule ArgosAggregation.Project do
       Logger.error("No connection to #{@base_url}")
       {:error, :econnrefused}
     end
+
     defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :timeout}}) do
       Logger.error("Timeout for #{@base_url}")
       {:error, :timeout}
@@ -257,140 +128,173 @@ defmodule ArgosAggregation.Project do
   end
 
   defmodule ProjectParser do
+    @base_url Application.get_env(:argos_aggregation, :projects_url)
+
     def parse_project(data) do
-      denormalized_lr =
-        data["linked_resources"]
-        |> denormalize_linked_resources()
+      external_links = parse_external_links(data["images"], data["external_links"])
 
-      {data, denormalized_lr}
-      |> convert_to_struct()
-    end
+      {spatial_topics, general_topics, temporal_topics} =
+        parse_linked_resources(data["linked_resources"])
 
-    defp denormalize_linked_resources(lr) do
-      lr
-      |> get_linked_resources()
-      |> convert_linked_resources()
-    end
+      {persons, organisations} = parse_stakeholders(data["stakeholders"])
 
-    defp get_linked_resources([] = res), do: res
-    defp get_linked_resources([_|_] = resources) do
-      resources
-      |> Enum.map(&get_linked_resource(&1))
-      |> Enum.reject(fn (val) ->
-        val == :unknown
-      end)
-    end
-    defp get_linked_resource(%{"linked_system" => "gazetteer", "res_id" => rid } = resource) do
-      Gazetteer.DataProvider.get_by_id(rid)
-      |> handle_response(resource)
-    end
-    defp get_linked_resource(%{"linked_system" => "chronontology", "res_id" => rid } = resource) do
-      Chronontology.DataProvider.get_by_id(rid)
-      |> handle_response(resource)
-    end
-    defp get_linked_resource(%{"linked_system" => "thesaurus", "res_id" => rid } = resource) do
-      Thesauri.DataProvider.get_by_id(rid)
-      |> handle_response(resource)
-    end
-    defp get_linked_resource(%{"linked_system" => unknown } ) do
-      Logger.info("Unknown resource #{unknown}. Please provider matching data provider")
-      :unknown
-    end
-
-    defp handle_response({:ok, res}, resource) do
-      Map.put(resource, :linked_data, res)
-    end
-    defp handle_response({:error, err}, resource) do
-      Logger.error(err)
-      # TODO mark as retry candidate
-      resource
-    end
-
-    defp convert_to_struct({proj, %{spatial: s, temporal: t, subject: c}}) do
-      project = %Project{
-        id: proj["id"],
-        title:  create_translated_content_list(proj["titles"]),
-        description: create_translated_content_list(proj["descriptions"]),
-        start_date:
-        case proj["starts_at"] do
-          nil ->
-            nil
-          val ->
-            Date.from_iso8601!(val)
-        end,
-        end_date:
-        case proj["ends_at"] do
-          nil ->
-            nil
-          val ->
-            Date.from_iso8601!(val)
-        end,
-        doi: get_doi(proj),
-        spatial: s,
-        temporal: t,
-        subject: c,
-        stakeholders: create_stakeholder_list(proj),
-        images: create_images(proj),
-        external_links: create_external_links(proj)
+      core_fields = %{
+        "type" => :project,
+        "source_id" => "#{data["id"]}",
+        "uri" => "#{@base_url}/api/projects/#{data["id"]}",
+        "title" => parse_translations(data["titles"]),
+        "description" => parse_translations(data["descriptions"]),
+        "external_links" => external_links,
+        "persons" => persons,
+        "organisations" => organisations
       }
 
-      project
+      params = %{
+        "core_fields" => core_fields
+      }
+
+      case Project.create(params) do
+        {:ok, project} ->
+          project
+          |> insert_topics(general_topics, spatial_topics, temporal_topics)
+
+        error ->
+          error
+      end
     end
 
-    defp get_doi(%{"doi" => doi}), do: doi
-    defp get_doi(_), do: ""
-
-    defp create_external_links(%{"external_links" => ex_list}) do
-      for %{"url" => u, "labels" => l} <- ex_list, do: %ExternalLink{uri: u, label: create_translated_content_list(l)}
-    end
-
-    defp create_images(%{"images" => i_list}) do
-      for %{"path" => p, "labels" => l} <- i_list, do: %Image{uri: p, label: create_translated_content_list(l)}
-    end
-
-    defp create_stakeholder_list(%{"stakeholders" => st_list}) do
-      for st <- st_list, do: create_stakeholder(st)
-    end
-
-    defp create_stakeholder(%{ "person" => %{"first_name" => p_fn, "last_name" => p_ln, "title" => tp, "orc_id" => orc_id }, "role" => role}) do
-      name = create_name(tp, p_ln, p_fn)
-      %Stakeholder{label: [%{default: name}], role: role, uri: orc_id, type: :person}
-    end
-
-    defp create_name("" = _tp, p_ln, p_fn), do: "#{p_ln}, #{p_fn}"
-    defp create_name(tp, p_ln, p_fn), do: "#{tp} #{p_ln}, #{p_fn}"
-
-    defp convert_linked_resources(linked_resources) do
-      linked_resources
-      |> Enum.map(fn (%{:linked_data => _data, "descriptions" => desc} = res) ->
-        labels = create_translated_content_list(desc)
-        {labels, res}
+    defp parse_translations(translation_list) do
+      translation_list
+      |> Enum.map(fn value ->
+        %{
+          "lang" => value["language_code"],
+          "text" => value["content"]
+        }
       end)
-      |> Enum.reduce(%{
-        spatial: [],
-        temporal: [],
-        subject: []
-      }, &put_resource/2)
     end
 
-    defp put_resource({labels, %{"linked_system" => "gazetteer"} = lr}, acc) do
-      Map.put(acc, :spatial, acc.spatial ++ [ %{label: labels, resource: lr.linked_data}])
-    end
-    defp put_resource({labels, %{"linked_system" => "chronontology"} = lr}, acc) do
-      Map.put(acc, :temporal, acc.temporal ++ [ %{label: labels, resource: lr.linked_data}])
-    end
-    defp put_resource({labels, %{"linked_system" => "thesaurus"} = lr}, acc) do
-      Map.put(acc, :subject, acc.subject ++ [ %{label: labels, resource: lr.linked_data}])
+    defp parse_external_links(images, external_links) do
+      image_links =
+        images
+        |> Enum.map(fn image ->
+          %{
+            "label" => parse_translations(image["labels"]),
+            "url" => image["path"],
+            "type" => :image
+          }
+        end)
+
+      other_links =
+        external_links
+        |> Enum.map(fn image ->
+          %{
+            "label" => parse_translations(image["labels"]),
+            "url" => image["url"],
+            "type" => :website
+          }
+        end)
+
+      image_links ++ other_links
     end
 
-    @spec create_translated_content_list(List.t()) :: [TranslatedContent.t()]
-    def create_translated_content_list([%{"language_code" => _, "content" => _}|_] = tlc_list)  do
-      # takes a list with translated content items coming from the project-api and reduce them to a search-api conform list of maps
-      for tlc <- tlc_list, do: %TranslatedContent{lang: tlc["language_code"], text: tlc["content"]}
-    end
-    def create_translated_content_list([] = tlc_list), do: tlc_list
-    def create_translated_content_list(nil), do: []
+    defp parse_linked_resources(linked_resources) do
+      grouped =
+        linked_resources
+        |> Enum.group_by(fn res ->
+          res["linked_system"]
+        end)
 
+      spatial_topics =
+        grouped
+        |> Map.get("gazetteer", [])
+        |> Enum.map(fn res ->
+          %{
+            "topic_context_note" => parse_translations(res["descriptions"]),
+            "resource" => Map.from_struct(Gazetteer.DataProvider.get_by_id(res["res_id"]))
+          }
+        end)
+
+      general_topics =
+        grouped
+        |> Map.get("thesaurus", [])
+        |> Enum.map(fn res ->
+          %{
+            "topic_context_note" => parse_translations(res["descriptions"]),
+            "resource" => Map.from_struct(Thesauri.DataProvider.get_by_id(res["res_id"]))
+          }
+        end)
+
+      temporal_topics =
+        grouped
+        |> Map.get("chronontology", [])
+        |> Enum.map(fn res ->
+          %{
+            "topic_context_note" => parse_translations(res["descriptions"]),
+            "resource" => Map.from_struct(Chronontology.DataProvider.get_by_id(res["res_id"]))
+          }
+        end)
+
+      {spatial_topics, general_topics, temporal_topics}
+    end
+
+    defp parse_stakeholders(stakeholders) do
+      persons =
+        stakeholders
+        |> Enum.map(fn person ->
+          %{
+            "name" =>
+              case person do
+                %{
+                  "first_name" => first_name,
+                  "last_name" => last_name,
+                  "title" => ""
+                } ->
+                  "#{first_name} #{last_name}"
+
+                %{
+                  "first_name" => first_name,
+                  "last_name" => last_name,
+                  "title" => title
+                } ->
+                  "#{title} #{first_name} #{last_name}"
+
+                %{
+                  "first_name" => "",
+                  "last_name" => last_name
+                } ->
+                  last_name
+
+                _ ->
+                  nil
+              end,
+            "uri" => person["orc_id"]
+          }
+        end)
+        |> Enum.reject(fn person ->
+          is_nil(person["name"])
+        end)
+
+      {persons, []}
+    end
+
+    defp insert_topics(project, general, spatial, temporal) do
+      Map.update!(
+        project,
+        :core_fields,
+        fn core_field ->
+          core_field
+          |> Map.update!(:general_topics, fn _ ->
+            general
+          end)
+          |> Map.update!(:spatial_topics, fn _ ->
+            spatial
+          end)
+          |> Map.update!(:temporal_topics, fn _ ->
+            temporal
+          end)
+        end
+      )
+    end
   end
 
   defmodule Harvester do
@@ -416,7 +320,8 @@ defmodule ArgosAggregation.Project do
       GenServer.start_link(__MODULE__, %{})
     end
 
-    def handle_info(:run, state) do # TODO: Übernommen, warum info und nicht cast/call?
+    # TODO: Übernommen, warum info und nicht cast/call?
+    def handle_info(:run, state) do
       now = DateTime.now!(get_timezone())
       run_harvest(state.last_run)
 
@@ -428,6 +333,7 @@ defmodule ArgosAggregation.Project do
     defp schedule_next_harvest() do
       Process.send_after(self(), :run, @interval)
     end
+
     def run_harvest() do
       DataProvider.get_all()
       |> Enum.each(&ElasticSearchIndexer.index/1)
@@ -440,8 +346,7 @@ defmodule ArgosAggregation.Project do
 
     def reload(id) do
       DataProvider.get_by_id(id)
-      |> ElasticSearchIndexer.index
+      |> ElasticSearchIndexer.index()
     end
   end
-
 end

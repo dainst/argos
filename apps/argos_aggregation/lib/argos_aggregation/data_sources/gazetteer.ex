@@ -141,8 +141,6 @@ defmodule ArgosAggregation.Gazetteer do
   end
 
   defmodule PlaceParser do
-    alias ArgosAggregation.TranslatedContent
-
     def parse_place(gazetteer_data) do
 
       core_fields = %{
@@ -155,7 +153,7 @@ defmodule ArgosAggregation.Gazetteer do
       place_params = %{
         "core_fields" => core_fields,
         "geometry" => parse_geometries_as_geo_json(gazetteer_data["prefLocation"])
-      } |> IO.inspect
+      }
 
       case Place.create(place_params) do
         {:ok, place } ->
