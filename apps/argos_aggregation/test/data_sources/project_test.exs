@@ -166,7 +166,7 @@ defmodule ArgosAggregation.ProjectTest do
       :ok
     end
 
-    test "updating referenced thesauri concept updates bibliographic record" do
+    test "updating referenced thesauri concept updates project" do
       ths_data = Thesauri.DataProvider.get_by_id("_ab3a94b2")
 
       ths_indexing = ElasticSearchIndexer.index(ths_data)

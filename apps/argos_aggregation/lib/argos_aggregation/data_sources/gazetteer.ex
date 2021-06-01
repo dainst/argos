@@ -20,8 +20,14 @@ defmodule ArgosAggregation.Gazetteer do
     end
 
     def create(params) do
-      changeset(%Place{}, params)
-      |> apply_action(:create)
+      creation =
+        changeset(%Place{}, params)
+        |> apply_action(:create)
+
+      case creation do
+        {:ok, place} -> place
+        changeset_with_error -> changeset_with_error
+      end
     end
   end
 
@@ -39,7 +45,7 @@ defmodule ArgosAggregation.Gazetteer do
       get_batches("*")
     end
 
-    def get_by_id(id) do
+    def get_by_id(id, as_map \\ false) do
       request =
         Finch.build(
           :get,
@@ -54,7 +60,11 @@ defmodule ArgosAggregation.Gazetteer do
 
       case response do
         {:ok, body} ->
-          PlaceParser.parse_place(body)
+          place_params = PlaceParser.parse_place(body)
+          case as_map do
+            true -> place_params
+            false -> Place.create(place_params)
+          end
         error ->
           error
       end
@@ -150,17 +160,10 @@ defmodule ArgosAggregation.Gazetteer do
         "title" => parse_names([gazetteer_data["prefName"]] ++ Map.get(gazetteer_data, "names", []))
       }
 
-      place_params = %{
+      %{
         "core_fields" => core_fields,
         "geometry" => parse_geometries_as_geo_json(gazetteer_data["prefLocation"])
       }
-
-      case Place.create(place_params) do
-        {:ok, place } ->
-          place
-        error ->
-          error
-      end
     end
 
     defp parse_names(names) do

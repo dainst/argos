@@ -20,8 +20,14 @@ defmodule ArgosAggregation.Chronontology do
     end
 
     def create(params) do
-      changeset(%TemporalConcept{}, params)
-      |> apply_action(:create)
+      creation =
+        changeset(%TemporalConcept{}, params)
+        |> apply_action(:create)
+
+      case creation do
+        {:ok, tp} -> tp
+        changeset_with_error -> changeset_with_error
+      end
     end
   end
 
@@ -36,10 +42,21 @@ defmodule ArgosAggregation.Chronontology do
       []
     end
 
-    def get_by_id(id) do
-      HTTPoison.get("#{@base_url}/data/period/#{id}")
-      |> parse_response()
-      |> parse_period_data()
+    def get_by_id(id, as_map \\ false) do
+      response =
+        HTTPoison.get("#{@base_url}/data/period/#{id}")
+        |> parse_response()
+
+      case response do
+        {:ok, data} ->
+          temporal_concept_params = parse_period_data(data)
+          case as_map do
+            true -> temporal_concept_params
+            false -> TemporalConcept.create(temporal_concept_params)
+          end
+        error ->
+          error
+      end
     end
 
     def get_by_date(%Date{} = _date) do
@@ -59,7 +76,7 @@ defmodule ArgosAggregation.Chronontology do
       {:error, error.reason()}
     end
 
-    defp parse_period_data({:ok, data}) do
+    defp parse_period_data(data) do
       # TODO: Es gibt potenziell mehrere timespan, wie damit umgehen?
       beginning =
         case data["resource"]["hasTimespan"] do
@@ -108,23 +125,11 @@ defmodule ArgosAggregation.Chronontology do
         ]
       }
 
-      temporal_concept_params = %{
+      %{
         "core_fields" => core_fields,
         "beginning" => beginning,
         "ending" => ending
       }
-
-      case TemporalConcept.create(temporal_concept_params) do
-        {:ok, place} ->
-          place
-
-        error ->
-          error
-      end
-    end
-
-    defp parse_period_data(error) do
-      error
     end
 
     defp parse_names(chronontology_data) do

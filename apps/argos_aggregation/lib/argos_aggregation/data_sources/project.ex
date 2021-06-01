@@ -145,6 +145,9 @@ defmodule ArgosAggregation.Project do
         "title" => parse_translations(data["titles"]),
         "description" => parse_translations(data["descriptions"]),
         "external_links" => external_links,
+        "general_topics" => general_topics,
+        "spatial_topics" => spatial_topics,
+        "temporal_topics" => temporal_topics,
         "persons" => persons,
         "organisations" => organisations
       }
@@ -156,8 +159,6 @@ defmodule ArgosAggregation.Project do
       case Project.create(params) do
         {:ok, project} ->
           project
-          |> insert_topics(general_topics, spatial_topics, temporal_topics)
-
         error ->
           error
       end
@@ -210,7 +211,7 @@ defmodule ArgosAggregation.Project do
         |> Enum.map(fn res ->
           %{
             "topic_context_note" => parse_translations(res["descriptions"]),
-            "resource" => Map.from_struct(Gazetteer.DataProvider.get_by_id(res["res_id"]))
+            "resource" => Gazetteer.DataProvider.get_by_id(res["res_id"], true)
           }
         end)
 
@@ -220,7 +221,7 @@ defmodule ArgosAggregation.Project do
         |> Enum.map(fn res ->
           %{
             "topic_context_note" => parse_translations(res["descriptions"]),
-            "resource" => Map.from_struct(Thesauri.DataProvider.get_by_id(res["res_id"]))
+            "resource" => Thesauri.DataProvider.get_by_id(res["res_id"], true)
           }
         end)
 
@@ -230,7 +231,7 @@ defmodule ArgosAggregation.Project do
         |> Enum.map(fn res ->
           %{
             "topic_context_note" => parse_translations(res["descriptions"]),
-            "resource" => Map.from_struct(Chronontology.DataProvider.get_by_id(res["res_id"]))
+            "resource" => Chronontology.DataProvider.get_by_id(res["res_id"], true)
           }
         end)
 
@@ -275,25 +276,6 @@ defmodule ArgosAggregation.Project do
         end)
 
       {persons, []}
-    end
-
-    defp insert_topics(project, general, spatial, temporal) do
-      Map.update!(
-        project,
-        :core_fields,
-        fn core_field ->
-          core_field
-          |> Map.update!(:general_topics, fn _ ->
-            general
-          end)
-          |> Map.update!(:spatial_topics, fn _ ->
-            spatial
-          end)
-          |> Map.update!(:temporal_topics, fn _ ->
-            temporal
-          end)
-        end
-      )
     end
   end
 

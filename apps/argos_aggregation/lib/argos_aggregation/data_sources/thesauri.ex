@@ -18,8 +18,14 @@ defmodule ArgosAggregation.Thesauri do
     end
 
     def create(params) do
-      Concept.changeset(%Concept{}, params)
-      |> apply_action(:create)
+      creation =
+        Concept.changeset(%Concept{}, params)
+        |> apply_action(:create)
+
+      case creation do
+        {:ok, concept} -> concept
+        changeset_with_error -> changeset_with_error
+      end
     end
   end
 
@@ -39,11 +45,22 @@ defmodule ArgosAggregation.Thesauri do
       []
     end
 
-    def get_by_id(id) do
-      "#{@base_url}/#{id}.rdf"
-      |> HTTPoison.get()
-      |> parse_response()
-      |> parse_concept_data(id)
+    def get_by_id(id, as_map \\ false) do
+      response =
+        "#{@base_url}/#{id}.rdf"
+        |> HTTPoison.get()
+        |> parse_response()
+
+      case response do
+        {:ok, data} ->
+          concept_params = parse_concept_data(data, id)
+          case as_map do
+            true -> concept_params
+            false -> Concept.create(concept_params)
+          end
+        error ->
+          error
+      end
     end
 
     def get_by_date(%Date{} = _date) do
@@ -62,13 +79,13 @@ defmodule ArgosAggregation.Thesauri do
       {:error, error.reason()}
     end
 
-    defp parse_concept_data({:ok, data}, id) do
+    defp parse_concept_data(data, id) do
       labels =
         data
         |> SweetXml.parse()
         |> xml_to_labels(id)
 
-      params = %{
+      %{
         "core_fields" => %{
           "source_id" => id,
           "type" => :concept,
@@ -76,17 +93,6 @@ defmodule ArgosAggregation.Thesauri do
           "title" => labels
         }
       }
-
-      case Concept.create(params) do
-        {:ok, concept} ->
-          concept
-        error ->
-          error
-      end
-    end
-
-    defp parse_concept_data({:error, _} = error, _id) do
-      error
     end
 
     defp xml_to_labels(xml, id) do
