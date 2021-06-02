@@ -5,15 +5,22 @@ defmodule ArgosAggregation.NaturalLanguageDetector do
   def get_language_key(string, threshold \\ 0.9)
   def get_language_key(string, threshold) when is_binary(string) do
     detection_result =
-      string
-      |> Tongue.detect()
-      |> Enum.filter(fn ({_key, score}) ->
-        score > threshold
-      end)
-      |> Enum.sort(fn ({_key, score}, :desc) ->
-        score
-      end)
-      |> List.first()
+      try do
+        string
+        |> Tongue.detect()
+        |> Enum.filter(fn ({_key, score}) ->
+          score > threshold
+        end)
+        |> Enum.sort(fn ({_key, score}, :desc) ->
+          score
+        end)
+        |> List.first()
+      catch
+        :exit, value ->
+          Logger.warning("Timeout, retrying: ")
+          Logger.warning(value)
+          get_language_key(string, threshold)
+        end
 
     case detection_result do
       {lang_code, _score} ->
