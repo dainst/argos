@@ -36,17 +36,23 @@ defmodule ArgosAggregation.NaturalLanguageDetector do
   end
 
   def get_language_keys_with_scores(string) when is_binary(string) do
-    string
-    |> Tongue.detect()
-    |> Enum.sort(fn ({_key, value}, :desc) ->
-      value
-    end)
-    |> Enum.map(fn({key, score}) ->
-      %{
-        lang: Atom.to_string(key),
-        score: score
-      }
-    end)
+    try do
+      string
+      |> Tongue.detect()
+      |> Enum.sort(fn ({_key, value}, :desc) ->
+        value
+      end)
+      |> Enum.map(fn({key, score}) ->
+        %{
+          lang: Atom.to_string(key),
+          score: score
+        }
+      end)
+    catch
+      :exit, _value ->
+        Logger.warning("Detection process timed out, retrying to parse #{string}")
+        get_language_keys_with_scores(string)
+      end
   end
 
   def get_language_keys_with_scores(_no_string) do
