@@ -45,7 +45,7 @@ defmodule ArgosAggregation.CoreFields do
   embedded_schema do
     field :id, :string
     field :source_id, :string
-    field :type, Ecto.Enum, values: [:place, :concept, :temporal_concept, :project, :bibliographic_record]
+    field :type, Ecto.Enum, values: [:place, :concept, :temporal_concept, :project, :biblio]
     field :uri, :string
     embeds_many :title, TranslatedContent
     embeds_many :description, TranslatedContent

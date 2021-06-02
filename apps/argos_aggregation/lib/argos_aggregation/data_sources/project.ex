@@ -25,9 +25,6 @@ defmodule ArgosAggregation.Project do
       |> validate_required(:core_fields)
     end
 
-    def create({:ok, params}) do
-      create(params)
-    end
     def create(params) do
       changeset(%Project{}, params)
       |> apply_action(:create)

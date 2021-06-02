@@ -49,6 +49,9 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   defp validate(%{"core_fields" => %{"type" => :project}} = params) do
     Project.Project.create(params)
   end
+  defp validate(%{"core_fields" => %{"type" => :biblio}} = params) do
+    Bibliography.BibliographicRecord.create(params)
+  end
 
   def upsert(%{doc: %_{core_fields: %CoreFields{id: id}}} = data) do
     Logger.debug("Indexing #{id}.")
@@ -131,8 +134,13 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       %{"type" => "project"} = core_fields ->
         Project.DataProvider.get_by_id(core_fields["source_id"])
         |> index()
+      %{"type" => "biblio"} = core_fields ->
+        Bibliography.DataProvider.get_by_id(core_fields["source_id"])
+        |> index()
       not_implemented ->
-        Logger.error("Updating reference for type #{not_implemented["type"]}.")
+        msg = "Updating reference for type #{not_implemented["type"]} not implemented."
+        Logger.error(msg)
+        {:error, msg}
     end
   end
 end
