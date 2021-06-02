@@ -155,6 +155,13 @@ defmodule ArgosAggregation.Gazetteer do
       |> Finch.request(ArgosFinch)
       |> parse_response(request)
     end
+    defp parse_response({:error, %Mint.TransportError{reason: :timeout}}, request) do
+      Logger.warning("TransportError: timeout, retrying for #{[request.host,request.path]}")
+
+      request
+      |> Finch.request(ArgosFinch)
+      |> parse_response(request)
+    end
   end
 
   defmodule PlaceParser do
