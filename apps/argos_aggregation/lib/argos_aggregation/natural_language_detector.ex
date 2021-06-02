@@ -16,9 +16,8 @@ defmodule ArgosAggregation.NaturalLanguageDetector do
         end)
         |> List.first()
       catch
-        :exit, value ->
-          Logger.warning("Timeout, retrying: ")
-          Logger.warning(value)
+        :exit, _value ->
+          Logger.warning("Detection process timed out, retrying to parse #{string}")
           get_language_key(string, threshold)
         end
 
