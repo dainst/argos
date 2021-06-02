@@ -88,7 +88,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   defp update_referencing_data(true, updated_content) do
     case search_referencing_docs(updated_content) do
       :reference_search_not_implemented ->
-        Logger.debug("Reference search not implemented for #{updated_content.__struct__}. Nothing else gets updated.")
+        # Logger.debug("Reference search not implemented for #{updated_content.__struct__}. Nothing else gets updated.")
         []
       res ->
         res
