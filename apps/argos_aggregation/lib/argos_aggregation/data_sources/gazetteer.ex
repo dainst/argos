@@ -168,7 +168,7 @@ defmodule ArgosAggregation.Gazetteer do
     def parse_place(gazetteer_data) do
 
       core_fields = %{
-        "type" => :place,
+        "type" => "place",
         "source_id" => gazetteer_data["gazId"],
         "uri" => gazetteer_data["@id"],
         "title" => parse_names([gazetteer_data["prefName"]] ++ Map.get(gazetteer_data, "names", []))

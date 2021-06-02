@@ -212,7 +212,7 @@ defmodule ArgosAggregation.Bibliography do
         end)
 
       core_fields = %{
-        "type" => :biblio,
+        "type" => "biblio",
         "source_id" => record["id"],
         "uri" => "#{@base_url}/Record/#{record["id"]}",
         "title" => [

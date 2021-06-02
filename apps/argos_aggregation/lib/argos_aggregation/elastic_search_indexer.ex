@@ -37,19 +37,19 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
   end
 
-  defp validate(%{"core_fields" => %{"type" => :place}} = params) do
+  defp validate(%{"core_fields" => %{"type" => "place"}} = params) do
     Gazetteer.Place.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => :concept}} = params) do
+  defp validate(%{"core_fields" => %{"type" => "concept"}} = params) do
     Thesauri.Concept.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => :temporal_concept}} = params) do
+  defp validate(%{"core_fields" => %{"type" => "temporal_concept"}} = params) do
     Chronontology.TemporalConcept.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => :project}} = params) do
+  defp validate(%{"core_fields" => %{"type" => "project"}} = params) do
     Project.Project.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => :biblio}} = params) do
+  defp validate(%{"core_fields" => %{"type" => "biblio"}} = params) do
     Bibliography.BibliographicRecord.create(params)
   end
 

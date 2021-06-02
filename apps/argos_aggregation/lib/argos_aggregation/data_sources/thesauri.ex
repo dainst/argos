@@ -78,7 +78,7 @@ defmodule ArgosAggregation.Thesauri do
       %{
         "core_fields" => %{
           "source_id" => id,
-          "type" => :concept,
+          "type" => "concept",
           "uri" => "#{@base_url}/#{id}",
           "title" => labels
         }

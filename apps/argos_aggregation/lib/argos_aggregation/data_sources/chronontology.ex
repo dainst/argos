@@ -93,7 +93,7 @@ defmodule ArgosAggregation.Chronontology do
       # TODO Gazetteer Place spatiallyPartOfRegion and hasCoreArea? https://chronontology.dainst.org/period/X5lOSI8YQFiL
 
       core_fields = %{
-        "type" => :temporal_concept,
+        "type" => "temporal_concept",
         "source_id" => data["resource"]["id"],
         "uri" => "#{@base_url}/period/#{data["resource"]["id"]}",
         "title" => parse_names(data["resource"]["names"]),

@@ -139,7 +139,7 @@ defmodule ArgosAggregation.Project do
       {persons, organisations} = parse_stakeholders(data["stakeholders"])
 
       core_fields = %{
-        "type" => :project,
+        "type" => "project",
         "source_id" => "#{data["id"]}",
         "uri" => "#{@base_url}/api/projects/#{data["id"]}",
         "title" => parse_translations(data["titles"]),
