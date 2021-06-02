@@ -126,11 +126,28 @@ defmodule ArgosAggregation.Gazetteer do
     defp parse_response({:ok, %Finch.Response{status: 200, body: body}}, _request) do
       { :ok, Poison.decode!(body) }
     end
-
+    defp parse_response({:ok, %Finch.Response{status: 301, headers: headers}}, old_request) do
+      headers
+      |> Enum.into(%{})
+      |> Map.get("location")
+      |> case do
+        "/doc/" <> new_doc ->
+          request =
+            Finch.build(
+              :get,
+              "#{@base_url}/doc/#{new_doc}?shortLanguageCodes=true",
+              [ArgosAggregation.Application.get_http_user_agent_header()]
+            )
+          request
+          |> Finch.request(ArgosFinch)
+          |> parse_response(request)
+        _ ->
+          { :error, "Received unhandled status code 301 for #{[old_request.host,old_request.path]}." }
+      end
+    end
     defp parse_response({:ok, %Finch.Response{status: code}}, request) do
       { :error, "Received status code #{code} for #{[request.host,request.path]}." }
     end
-
     defp parse_response({:error, %Mint.TransportError{reason: :closed}}, request) do
       Logger.warning("TransportError: closed, retrying for #{[request.host,request.path]}")
 
