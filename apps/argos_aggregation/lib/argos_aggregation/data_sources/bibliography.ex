@@ -96,9 +96,15 @@ defmodule ArgosAggregation.Bibliography do
     def get_batches(query_params) do
       Stream.resource(
         fn () ->
-          query_params
-          |> Map.put("page", 1)
-          |> Map.put("limit", 100)
+          final_params =
+            query_params
+            |> Map.put("page", 1)
+            |> Map.put("limit", 100)
+
+          Logger.info("Running query with parameters:")
+          Logger.info(final_params)
+
+          final_params
         end,
         fn (params) ->
           case process_batch_query(params) do
@@ -278,9 +284,9 @@ defmodule ArgosAggregation.Bibliography do
     defp parse_place(data) do
       "https://gazetteer.dainst.org/place/" <> gaz_id = data["uri"]
       case Gazetteer.DataProvider.get_by_id(gaz_id) do
-        {:error, _} = error ->
+        {:error, msg} = error ->
           Logger.error("Received error for #{data["uri"]}:")
-          Logger.error(error)
+          Logger.error(msg)
           error
         place ->
           %{
@@ -296,9 +302,9 @@ defmodule ArgosAggregation.Bibliography do
     defp parse_concept(data) do
       "http://thesauri.dainst.org/" <> ths_id = data["uri"]
       case Thesauri.DataProvider.get_by_id(ths_id) do
-        {:error, _} = error ->
+        {:error, msg} = error ->
           Logger.error("Received error for #{data["uri"]}:")
-          Logger.error(error)
+          Logger.error(msg)
           error
         concept ->
           %{
