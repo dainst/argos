@@ -132,33 +132,9 @@ defmodule ArgosAggregation.ProjectTest do
     "updated_at" => "2021-06-01T07:44:07"
   }
 
-  test "get by id yields project" do
-    id = "1"
-
-    {:ok, record} =
-      id
-      |> Project.DataProvider.get_by_id()
-      |> Project.Project.create()
-
-    assert %Project.Project{core_fields: %CoreFields{source_id: ^id}} = record
-  end
-
   test "get by id with invalid id yields error" do
     assert {:error, 404} == Project.DataProvider.get_by_id("-1")
     assert {:error, 400} == Project.DataProvider.get_by_id("not-a-number")
-  end
-
-  test "get all yields projects as result" do
-    records =
-      Project.DataProvider.get_all()
-      |> Enum.take(10)
-
-    assert Enum.count(records) == 10
-
-    records
-    |> Enum.each(fn record ->
-      assert {:ok, %Project.Project{}} = Project.Project.create(record)
-    end)
   end
 
   describe "elastic search tests" do
@@ -169,6 +145,30 @@ defmodule ArgosAggregation.ProjectTest do
         TestHelpers.remove_index()
       end)
       :ok
+    end
+
+      test "get by id yields project" do
+        id = "1"
+
+        {:ok, record} =
+          id
+          |> Project.DataProvider.get_by_id()
+          |> Project.Project.create()
+
+        assert %Project.Project{core_fields: %CoreFields{source_id: ^id}} = record
+      end
+
+    test "get all yields projects as result" do
+      records =
+        Project.DataProvider.get_all()
+        |> Enum.take(10)
+
+      assert Enum.count(records) == 10
+
+      records
+      |> Enum.each(fn record ->
+        assert {:ok, %Project.Project{}} = Project.Project.create(record)
+      end)
     end
 
     test "updating referenced thesauri concept updates project" do

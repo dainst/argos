@@ -126,33 +126,10 @@ defmodule ArgosAggregation.BibliographyTest do
     "lastIndexed" => "2021-02-24T03:04:18Z"
   }
 
-  test "get by id yields bibliographic record" do
-    id = "002023378"
-
-    {:ok, record } =
-      id
-      |> Bibliography.DataProvider.get_by_id()
-      |> Bibliography.BibliographicRecord.create()
-
-      assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
-  end
-
   test "get by id with invalid id yields error" do
     assert {:error, "record not-existing not found."} == Bibliography.DataProvider.get_by_id("not-existing")
   end
 
-  test "get all yields bibliographic records as result" do
-    records =
-      Bibliography.DataProvider.get_all()
-      |> Enum.take(10)
-
-    assert Enum.count(records) == 10
-
-    records
-    |> Enum.each(fn(record) ->
-      assert {:ok, %BibliographicRecord{}} = BibliographicRecord.create(record)
-    end)
-  end
 
   describe "elastic search tests" do
 
@@ -163,6 +140,30 @@ defmodule ArgosAggregation.BibliographyTest do
         TestHelpers.remove_index()
       end)
       :ok
+    end
+
+    test "get all yields bibliographic records as result" do
+      records =
+        Bibliography.DataProvider.get_all()
+        |> Enum.take(10)
+
+      assert Enum.count(records) == 10
+
+      records
+      |> Enum.each(fn(record) ->
+        assert {:ok, %BibliographicRecord{}} = BibliographicRecord.create(record)
+      end)
+    end
+
+    test "get by id yields bibliographic record" do
+      id = "002023378"
+
+      {:ok, record } =
+        id
+        |> Bibliography.DataProvider.get_by_id()
+        |> Bibliography.BibliographicRecord.create()
+
+        assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
     end
 
     test "updating referenced thesauri concept updates bibliographic record" do
