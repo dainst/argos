@@ -133,9 +133,14 @@ defmodule ArgosAggregation.ProjectTest do
   }
 
   test "get by id yields project" do
-    record = Project.DataProvider.get_by_id("1")
+    id = "1"
 
-    assert %Project.Project{core_fields: %CoreFields{source_id: "1"}} = record
+    {:ok, record} =
+      id
+      |> Project.DataProvider.get_by_id()
+      |> Project.Project.create()
+
+    assert %Project.Project{core_fields: %CoreFields{source_id: ^id}} = record
   end
 
   test "get by id with invalid id yields error" do
@@ -152,7 +157,7 @@ defmodule ArgosAggregation.ProjectTest do
 
     records
     |> Enum.each(fn record ->
-      assert %Project.Project{} = record
+      assert {:ok, %Project.Project{}} = Project.Project.create(record)
     end)
   end
 
@@ -186,13 +191,13 @@ defmodule ArgosAggregation.ProjectTest do
       ths_indexing =
         ths_data
         |> Map.update!(
-          :core_fields,
+          "core_fields",
           fn (old_core) ->
             Map.update!(
               old_core,
-              :title,
+              "title",
               fn (old_title) ->
-                old_title ++ [%ArgosAggregation.TranslatedContent{text: "Test name", lang: "de"}]
+                old_title ++ [%{"text" => "Test name", "lang" => "de"}]
               end)
           end)
         |> ElasticSearchIndexer.index()
@@ -230,13 +235,13 @@ defmodule ArgosAggregation.ProjectTest do
       gaz_indexing =
         gaz_data
         |> Map.update!(
-          :core_fields,
+          "core_fields",
           fn (old_core) ->
             Map.update!(
               old_core,
-              :title,
+              "title",
               fn (old_title) ->
-                old_title ++ [%ArgosAggregation.TranslatedContent{text: "Test name", lang: "de"}]
+                old_title ++ [%{"text" => "Test name", "lang" => "de"}]
               end)
           end)
         |> ElasticSearchIndexer.index()
@@ -273,13 +278,13 @@ defmodule ArgosAggregation.ProjectTest do
       chron_indexing =
         chron_data
         |> Map.update!(
-          :core_fields,
+          "core_fields",
           fn (old_core) ->
             Map.update!(
               old_core,
-              :title,
+              "title",
               fn (old_title) ->
-                old_title ++ [%ArgosAggregation.TranslatedContent{text: "Test name", lang: "de"}]
+                old_title ++ [%{"text" => "Test name", "lang" => "de"}]
               end)
           end)
         |> ElasticSearchIndexer.index()

@@ -7,21 +7,47 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
   @headers [{"Content-Type", "application/json"}]
 
-  def index(data_struct) do
-    res =
-      %{
-        doc: data_struct,
-        doc_as_upsert: true
-      }
-      |> upsert()
-      |> parse_response()
+  def index({:ok, data}) do
+    index(data)
+  end
 
-    res_reference_update =
-      res
-      |> upsert_change?()
-      |> update_referencing_data(data_struct)
+  def index(data) do
+    validation = validate(data)
 
-    %{upsert_response: res, referencing_docs_update_response: res_reference_update}
+    case validation do
+      {:ok, struct} ->
+        res =
+          %{
+            doc: struct,
+            doc_as_upsert: true
+          }
+          |> upsert()
+          |> parse_response()
+
+        res_reference_update =
+          res
+          |> upsert_change?()
+          |> update_referencing_data(struct)
+
+        %{upsert_response: res, referencing_docs_update_response: res_reference_update}
+
+      error ->
+        error
+    end
+
+  end
+
+  defp validate(%{"core_fields" => %{"type" => :place}} = params) do
+    Gazetteer.Place.create(params)
+  end
+  defp validate(%{"core_fields" => %{"type" => :concept}} = params) do
+    Thesauri.Concept.create(params)
+  end
+  defp validate(%{"core_fields" => %{"type" => :temporal_concept}} = params) do
+    Chronontology.TemporalConcept.create(params)
+  end
+  defp validate(%{"core_fields" => %{"type" => :project}} = params) do
+    Project.Project.create(params)
   end
 
   def upsert(%{doc: %_{core_fields: %CoreFields{id: id}}} = data) do

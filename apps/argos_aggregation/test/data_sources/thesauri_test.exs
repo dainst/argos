@@ -13,8 +13,14 @@ defmodule ArgosAggregation.ThesauriTest do
   alias ArgosAggregation.CoreFields
 
   test "get by id yields concept with requested id" do
-    concept = DataProvider.get_by_id("_b7707545")
-    assert %Concept{core_fields: %CoreFields{source_id: "_b7707545"}} = concept
+    id = "_b7707545"
+
+    {:ok, concept} =
+      id
+      |> DataProvider.get_by_id()
+      |> Concept.create()
+
+    assert %Concept{core_fields: %CoreFields{source_id: ^id}} = concept
   end
 
   test "get by id with invalid id yields 404" do

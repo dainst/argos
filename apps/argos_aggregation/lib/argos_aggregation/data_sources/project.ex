@@ -25,6 +25,9 @@ defmodule ArgosAggregation.Project do
       |> validate_required(:core_fields)
     end
 
+    def create({:ok, params}) do
+      create(params)
+    end
     def create(params) do
       changeset(%Project{}, params)
       |> apply_action(:create)
@@ -152,16 +155,9 @@ defmodule ArgosAggregation.Project do
         "organisations" => organisations
       }
 
-      params = %{
+      %{
         "core_fields" => core_fields
       }
-
-      case Project.create(params) do
-        {:ok, project} ->
-          project
-        error ->
-          error
-      end
     end
 
     defp parse_translations(translation_list) do
@@ -211,7 +207,7 @@ defmodule ArgosAggregation.Project do
         |> Enum.map(fn res ->
           %{
             "topic_context_note" => parse_translations(res["descriptions"]),
-            "resource" => Gazetteer.DataProvider.get_by_id(res["res_id"], true)
+            "resource" => Gazetteer.DataProvider.get_by_id(res["res_id"])
           }
         end)
 
@@ -221,7 +217,7 @@ defmodule ArgosAggregation.Project do
         |> Enum.map(fn res ->
           %{
             "topic_context_note" => parse_translations(res["descriptions"]),
-            "resource" => Thesauri.DataProvider.get_by_id(res["res_id"], true)
+            "resource" => Thesauri.DataProvider.get_by_id(res["res_id"])
           }
         end)
 
@@ -231,7 +227,7 @@ defmodule ArgosAggregation.Project do
         |> Enum.map(fn res ->
           %{
             "topic_context_note" => parse_translations(res["descriptions"]),
-            "resource" => Chronontology.DataProvider.get_by_id(res["res_id"], true)
+            "resource" => Chronontology.DataProvider.get_by_id(res["res_id"])
           }
         end)
 
@@ -324,11 +320,6 @@ defmodule ArgosAggregation.Project do
     def run_harvest(%DateTime{} = datetime) do
       DataProvider.get_by_date(datetime)
       |> Enum.each(&ElasticSearchIndexer.index/1)
-    end
-
-    def reload(id) do
-      DataProvider.get_by_id(id)
-      |> ElasticSearchIndexer.index()
     end
   end
 end

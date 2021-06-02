@@ -20,14 +20,8 @@ defmodule ArgosAggregation.Chronontology do
     end
 
     def create(params) do
-      creation =
-        changeset(%TemporalConcept{}, params)
-        |> apply_action(:create)
-
-      case creation do
-        {:ok, tp} -> tp
-        changeset_with_error -> changeset_with_error
-      end
+      changeset(%TemporalConcept{}, params)
+      |> apply_action(:create)
     end
   end
 
@@ -42,18 +36,14 @@ defmodule ArgosAggregation.Chronontology do
       []
     end
 
-    def get_by_id(id, as_map \\ false) do
+    def get_by_id(id) do
       response =
         HTTPoison.get("#{@base_url}/data/period/#{id}")
         |> parse_response()
 
       case response do
         {:ok, data} ->
-          temporal_concept_params = parse_period_data(data)
-          case as_map do
-            true -> temporal_concept_params
-            false -> TemporalConcept.create(temporal_concept_params)
-          end
+          parse_period_data(data)
         error ->
           error
       end
@@ -80,15 +70,10 @@ defmodule ArgosAggregation.Chronontology do
       # TODO: Es gibt potenziell mehrere timespan, wie damit umgehen?
       beginning =
         case data["resource"]["hasTimespan"] do
-          [%{"beginning" => %{"at" => at}}] ->
-            at
-
           [%{"begin" => %{"at" => at}}] ->
             at
-
-          [%{"beginning" => %{"notBefore" => notBefore}}] ->
+          [%{"begin" => %{"notBefore" => notBefore}}] ->
             notBefore
-
           _ ->
             Logger.warning("Found no begin date for period #{data["resource"]["id"]}")
             ""
@@ -96,15 +81,10 @@ defmodule ArgosAggregation.Chronontology do
 
       ending =
         case data["resource"]["hasTimespan"] do
-          [%{"ending" => %{"at" => at}}] ->
-            at
-
           [%{"end" => %{"at" => at}}] ->
             at
-
-          [%{"ending" => %{"notAfter" => notAfter}}] ->
+          [%{"end" => %{"notAfter" => notAfter}}] ->
             notAfter
-
           _ ->
             Logger.warning("Found no end date for period #{data["resource"]["id"]}")
             ""

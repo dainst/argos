@@ -11,12 +11,15 @@ defmodule ArgosAggregation.ChronontologyTest do
 
   alias ArgosAggregation.CoreFields
 
-  alias ArgosAggregation.TestHelpers
-
   test "get by id yields temporal concept with requested id" do
     id = "X5lOSI8YQFiL"
 
-    assert %TemporalConcept{core_fields: %CoreFields{source_id: id}} = DataProvider.get_by_id(id)
+    {:ok, tc} =
+      id
+      |> DataProvider.get_by_id()
+      |> TemporalConcept.create()
+
+    assert %TemporalConcept{core_fields: %CoreFields{source_id: ^id}} = tc
   end
 
   test "get by id with invalid id yields 404" do

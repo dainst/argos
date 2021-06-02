@@ -13,7 +13,14 @@ defmodule ArgosAggregation.GazetteerTest do
   alias ArgosAggregation.TestHelpers
 
   test "get by id yields place with requested id" do
-    assert %Place{ core_fields: %CoreFields{source_id: "2048575"}} = DataProvider.get_by_id("2048575")
+    id = "2048575"
+
+    {:ok, place} =
+      id
+      |> DataProvider.get_by_id()
+      |> Place.create()
+
+    assert %Place{ core_fields: %CoreFields{source_id: ^id}} = place
   end
 
   test "get all yields places as result" do
@@ -25,7 +32,7 @@ defmodule ArgosAggregation.GazetteerTest do
 
     records
     |> Enum.each(fn(record) ->
-      assert %Place{} = record
+      assert {:ok, %Place{}} = Place.create(record)
     end)
   end
 
@@ -38,7 +45,7 @@ defmodule ArgosAggregation.GazetteerTest do
 
     records
     |> Enum.each(fn(record) ->
-      assert %Place{} = record
+      assert {:ok, %Place{}} = Place.create(record)
     end)
   end
 

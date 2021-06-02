@@ -18,14 +18,8 @@ defmodule ArgosAggregation.Thesauri do
     end
 
     def create(params) do
-      creation =
-        Concept.changeset(%Concept{}, params)
-        |> apply_action(:create)
-
-      case creation do
-        {:ok, concept} -> concept
-        changeset_with_error -> changeset_with_error
-      end
+      Concept.changeset(%Concept{}, params)
+      |> apply_action(:create)
     end
   end
 
@@ -45,7 +39,7 @@ defmodule ArgosAggregation.Thesauri do
       []
     end
 
-    def get_by_id(id, as_map \\ false) do
+    def get_by_id(id) do
       response =
         "#{@base_url}/#{id}.rdf"
         |> HTTPoison.get()
@@ -53,11 +47,7 @@ defmodule ArgosAggregation.Thesauri do
 
       case response do
         {:ok, data} ->
-          concept_params = parse_concept_data(data, id)
-          case as_map do
-            true -> concept_params
-            false -> Concept.create(concept_params)
-          end
+          parse_concept_data(data, id)
         error ->
           error
       end
