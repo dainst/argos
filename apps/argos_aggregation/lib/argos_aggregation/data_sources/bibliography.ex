@@ -188,7 +188,7 @@ defmodule ArgosAggregation.Bibliography do
       spatial_topics =
         record["DAILinks"]["gazetteer"]
         |> Enum.map(&Task.async( fn -> parse_place(&1) end))
-        |> Enum.map(&Task.await(&1, 1000 * 30))
+        |> Enum.map(&Task.await(&1, 1000 * 60 * 5))
         |> Enum.filter(fn val ->
           case val do
             {:error, _msg} ->
@@ -201,7 +201,7 @@ defmodule ArgosAggregation.Bibliography do
       general_topics =
         record["DAILinks"]["thesauri"]
         |> Enum.map(&Task.async( fn -> parse_concept(&1) end))
-        |> Enum.map(&Task.await(&1, 1000 * 30))
+        |> Enum.map(&Task.await(&1, 1000 * 60 * 5))
         |> Enum.filter(fn val ->
           case val do
             {:error, _msg} ->
@@ -283,7 +283,7 @@ defmodule ArgosAggregation.Bibliography do
 
     defp parse_place(data) do
       "https://gazetteer.dainst.org/place/" <> gaz_id = data["uri"]
-      case Gazetteer.DataProvider.get_by_id(gaz_id) do
+      case Gazetteer.DataProvider.get_by_id(gaz_id, false) do
         {:error, msg} = error ->
           Logger.error("Received error for #{data["uri"]}:")
           Logger.error(msg)

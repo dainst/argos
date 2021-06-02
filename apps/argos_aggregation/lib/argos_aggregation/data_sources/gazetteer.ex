@@ -39,7 +39,16 @@ defmodule ArgosAggregation.Gazetteer do
       get_batches("*")
     end
 
-    def get_by_id(id) do
+    def get_by_id(id, force_reload \\ true) do
+      case force_reload do
+        true ->
+          get_by_id_from_source(id)
+        false ->
+          get_by_id_locally(id)
+      end
+    end
+
+    defp get_by_id_from_source(id) do
       request =
         Finch.build(
           :get,
@@ -57,6 +66,21 @@ defmodule ArgosAggregation.Gazetteer do
           PlaceParser.parse_place(body)
         error ->
           error
+      end
+    end
+
+    defp get_by_id_locally(id) do
+      case ArgosAggregation.ElasticSearchIndexer.get_doc("place-#{id}") do
+        {:error, 404} ->
+          case get_by_id_from_source(id) do
+            {:error, _} = error->
+              error
+            place ->
+              ArgosAggregation.ElasticSearchIndexer.index(place)
+              place
+          end
+        {:ok, place} ->
+           place
       end
     end
 

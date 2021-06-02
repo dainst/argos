@@ -7,10 +7,6 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
   @headers [{"Content-Type", "application/json"}]
 
-  def index({:ok, data}) do
-    index(data)
-  end
-
   def index(data) do
     validation = validate(data)
 
@@ -35,6 +31,16 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         error
     end
 
+  end
+
+  def get_doc(doc_id) do
+    Finch.build(
+      :get,
+      "#{@base_url}/_doc/#{doc_id}"
+    )
+    |> Finch.request(ArgosFinch)
+    |> parse_response()
+    |> extract_doc_from_response()
   end
 
   defp validate(%{"core_fields" => %{"type" => "place"}} = params) do
@@ -75,6 +81,14 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
   defp extract_search_hits_from_response(%{"hits" => %{"hits" => hits}}) do
     hits
+  end
+
+  defp extract_doc_from_response(%{"found" => false}) do
+    {:error, 404}
+  end
+
+  defp extract_doc_from_response(%{"_source" => data}) do
+    {:ok, data}
   end
 
   defp upsert_change?(%{"result" => result}) do

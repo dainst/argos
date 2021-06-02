@@ -69,5 +69,46 @@ defmodule ArgosAggregation.GazetteerTest do
         upsert_response: %{"_id" => "place-2048575", "result" => "created"}
       } = indexing_response
     end
+
+    test "place can be reloaded locally" do
+      id = "2048575"
+
+      # First, load from gazetteer, manually add another title variant and push to index.
+      DataProvider.get_by_id(id)
+      |> Map.update!(
+          "core_fields",
+          fn (old_core) ->
+            Map.update!(
+              old_core,
+              "title",
+              fn (old_title) ->
+                old_title ++ [%{"text" => "Test name", "lang" => "de"}]
+              end)
+          end)
+      |> ArgosAggregation.ElasticSearchIndexer.index()
+
+      # Now reload both locally and from iDAI.gazetteer.
+      {:ok, place_from_index} =
+        id
+        |> DataProvider.get_by_id(false)
+        |> Place.create()
+      {:ok, place_from_gazetteer} =
+        id
+        |> DataProvider.get_by_id()
+        |> Place.create()
+
+      # Finally compare the title field length.
+      assert length(place_from_index.core_fields.title) - 1 == length(place_from_gazetteer.core_fields.title)
+    end
+
+    test "if place was requested to be loaded locally, but was missing in the index, it is also automatically indexed" do
+      {:ok, place } =
+        DataProvider.get_by_id("2048575", false)
+        |> Place.create()
+
+      TestHelpers.refresh_index()
+
+      assert {:ok, _place_from_index} = ArgosAggregation.ElasticSearchIndexer.get_doc(place.core_fields.id)
+    end
   end
 end

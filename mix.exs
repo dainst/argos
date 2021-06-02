@@ -33,7 +33,7 @@ defmodule Argos.MixProject do
   end
 
   defp aliases do
-    seed_days_ago = 7
+    seed_days_ago = 3
     [
       "update-mapping": [
         "run --eval 'ArgosAPI.Release.update_mapping()' -- --script"

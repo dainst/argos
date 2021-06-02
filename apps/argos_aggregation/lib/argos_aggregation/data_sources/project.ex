@@ -204,7 +204,7 @@ defmodule ArgosAggregation.Project do
         |> Enum.map(fn res ->
           %{
             "topic_context_note" => parse_translations(res["descriptions"]),
-            "resource" => Gazetteer.DataProvider.get_by_id(res["res_id"])
+            "resource" => Gazetteer.DataProvider.get_by_id(res["res_id"], false)
           }
         end)
 
