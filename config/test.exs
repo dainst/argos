@@ -8,6 +8,7 @@
 import Config
 
 config :argos_aggregation,
+  await_index: false,
   active_harvesters: [
   ]
 

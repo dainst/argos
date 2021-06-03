@@ -42,6 +42,10 @@ defmodule ArgosAggregation.Application do
   end
 
   def start(_type, _args) do
+    if Application.get_env(:argos_aggregation, :await_index, true) do
+      await_index()
+    end
+
     active_harvesters =
       if running_script?(System.argv) do
         [] # We do not want to (re)start the harvesters when running exs scripts.
@@ -54,8 +58,6 @@ defmodule ArgosAggregation.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ArgosAggregation.Supervisor]
-
-    await_index()
 
     Supervisor.start_link(children, opts)
   end
