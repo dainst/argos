@@ -36,7 +36,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   def get_doc(doc_id) do
     Finch.build(
       :get,
-      "#{@base_url}/_doc/#{doc_id}"
+      "#{@base_url}/_doc/#{doc_id}&retry_on_conflict=5"
     )
     |> Finch.request(ArgosFinch)
     |> parse_response()
