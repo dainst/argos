@@ -70,7 +70,7 @@ defmodule ArgosAggregation.Gazetteer do
     end
 
     defp get_by_id_locally(id) do
-      case ArgosAggregation.ElasticSearchIndexer.get_doc("place-#{id}") do
+      case ArgosAggregation.ElasticSearchIndexer.get_doc("place_#{id}") do
         {:error, 404} ->
           case get_by_id_from_source(id) do
             {:error, _} = error->

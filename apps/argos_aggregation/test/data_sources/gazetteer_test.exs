@@ -66,7 +66,7 @@ defmodule ArgosAggregation.GazetteerTest do
       indexing_response = ArgosAggregation.ElasticSearchIndexer.index(place)
 
       assert %{
-        upsert_response: %{"_id" => "place-2048575", "result" => "created"}
+        upsert_response: %{"_id" => "place_2048575", "result" => "created"}
       } = indexing_response
     end
 

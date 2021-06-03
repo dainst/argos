@@ -117,13 +117,13 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   end
 
   defp search_referencing_docs(%Gazetteer.Place{} = place) do
-    search_for_subdocument(:spatial_topic_id, place.core_fields.source_id)
+    search_for_subdocument(:spatial_topic_id, place.core_fields.id)
   end
   defp search_referencing_docs(%Chronontology.TemporalConcept{} = temporal) do
-    search_for_subdocument(:temporal_topic_id, temporal.core_fields.source_id)
+    search_for_subdocument(:temporal_topic_id, temporal.core_fields.id)
   end
   defp search_referencing_docs(%Thesauri.Concept{} = concept) do
-    search_for_subdocument(:general_topic_id, concept.core_fields.source_id)
+    search_for_subdocument(:general_topic_id, concept.core_fields.id)
   end
   defp search_referencing_docs(_unknown_obj) do
     :reference_search_not_implemented
