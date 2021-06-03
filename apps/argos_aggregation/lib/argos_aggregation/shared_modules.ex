@@ -73,7 +73,7 @@ defmodule ArgosAggregation.CoreFields do
   end
 
   defp create_id(changeset) do
-    put_change(changeset, :id, "#{get_field(changeset, :type)}-#{get_field(changeset, :source_id)}")
+    put_change(changeset, :id, "#{get_field(changeset, :type)}_#{get_field(changeset, :source_id)}")
   end
 end
 
