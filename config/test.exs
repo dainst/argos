@@ -13,6 +13,7 @@ config :argos_aggregation,
   ]
 
 config :argos_api,
+  await_index: false,
   index_name: "argos_testing"
 
 config :logger, level: :info

@@ -19,7 +19,8 @@ defmodule ArgosAPI.SearchController do
     case result do
       {:ok, val} ->
         send_resp(conn, 200, Poison.encode!(val))
-      {:error, val} -> send_resp(conn, 400, Poison.encode!(val))
+      {:error, val} ->
+        send_resp(conn, 400, Poison.encode!(val))
     end
   end
 
