@@ -34,11 +34,9 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   end
 
   def get_doc(doc_id) do
-    Finch.build(
-      :get,
-      "#{@base_url}/_doc/#{doc_id}"
-    )
-    |> Finch.request(ArgosFinch)
+
+    "#{@base_url}/_doc/#{doc_id}"
+    |> HTTPoison.get()
     |> parse_response()
     |> extract_doc_from_response()
   end
@@ -66,16 +64,10 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       data
       |> Poison.encode!
 
-    Finch.build(
-      :post,
-      "#{@base_url}/_update/#{id}?retry_on_conflict=5",
-      @headers,
-      data_json
-    )
-    |> Finch.request(ArgosFinch)
+    "#{@base_url}/_update/#{id}?retry_on_conflict=5"
+    |> HTTPoison.post(data_json, @headers)
   end
-
-  defp parse_response({:ok, %Finch.Response{body: body}}) do
+  defp parse_response({:ok, %HTTPoison.Response{body: body}}) do
     Poison.decode!(body)
   end
 
@@ -139,8 +131,8 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         }
       }
     )
-    Finch.build(:post, "#{@base_url}/_search", @headers, query)
-    |> Finch.request(ArgosFinch)
+    "#{@base_url}/_search"
+    |> HTTPoison.post(query, @headers)
   end
 
   defp update_reference(%{"_source" => parent }) do

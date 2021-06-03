@@ -146,35 +146,18 @@ defmodule ArgosAggregation.Bibliography do
     end
 
     def get_record_list(params) do
-      request =
-        Finch.build(
-        :get,
-        "#{@base_url}/api/v1/search?#{URI.encode_query(params)}",
-        [ArgosAggregation.Application.get_http_user_agent_header()]
-      )
-
-      request
-      |> Finch.request(ArgosFinch)
-      |> parse_response(request)
+      "#{@base_url}/api/v1/search?#{URI.encode_query(params)}"
+      |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+      |> parse_response()
     end
 
-    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}, _request) do
+    defp parse_response({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
       { :ok, Poison.decode!(body) }
     end
-
-    defp parse_response({:ok, %Finch.Response{status: code}}, request) do
-      { :error, "Received status code #{code} for #{[request.host,request.path]}." }
+    defp parse_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
+      { :error, "Received status code #{code} for #{req}." }
     end
-
-    defp parse_response({:error, %Mint.TransportError{reason: :closed}}, request) do
-      Logger.warning("TransportError: closed, retrying for #{[request.host,request.path]}")
-
-      request
-      |> Finch.request(ArgosFinch)
-      |> parse_response(request)
-    end
-
-    defp parse_response({:error, error}, _request) do
+    defp parse_response({:error, error}) do
       { :error, error.reason() }
     end
   end

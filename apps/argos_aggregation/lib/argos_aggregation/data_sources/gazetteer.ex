@@ -49,17 +49,10 @@ defmodule ArgosAggregation.Gazetteer do
     end
 
     defp get_by_id_from_source(id) do
-      request =
-        Finch.build(
-          :get,
-          "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true",
-          [ArgosAggregation.Application.get_http_user_agent_header()]
-        )
-
       response =
-        request
-        |> Finch.request(ArgosFinch)
-        |> parse_response(request)
+        "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true"
+        |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+        |> parse_response()
 
       case response do
         {:ok, body} ->
@@ -135,57 +128,18 @@ defmodule ArgosAggregation.Gazetteer do
     end
 
     defp run_search(params) do
-      request =
-        Finch.build(
-          :get,
-          "#{@base_url}/search.json?shortLanguageCodes=true&#{URI.encode_query(params)}",
-          [ArgosAggregation.Application.get_http_user_agent_header()]
-        )
-
-      request
-      |> Finch.request(ArgosFinch)
-      |> parse_response(request)
+      "#{@base_url}/search.json?shortLanguageCodes=true&#{URI.encode_query(params)}"
+      |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+      |> parse_response()
     end
 
-    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}, _request) do
-      { :ok, Poison.decode!(body) }
+    defp parse_response({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
+      Poison.decode(body)
     end
-    defp parse_response({:ok, %Finch.Response{status: 301, headers: headers}}, old_request) do
-      headers
-      |> Enum.into(%{})
-      |> Map.get("location")
-      |> case do
-        "/doc/" <> new_doc ->
-          request =
-            Finch.build(
-              :get,
-              "#{@base_url}/doc/#{new_doc}?shortLanguageCodes=true",
-              [ArgosAggregation.Application.get_http_user_agent_header()]
-            )
-          request
-          |> Finch.request(ArgosFinch)
-          |> parse_response(request)
-        _ ->
-          { :error, "Received unhandled status code 301 for #{[old_request.host,old_request.path]}." }
-      end
+    defp parse_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
+      {:error, "Received unhandled status code #{code} for #{req.url}."}
     end
-    defp parse_response({:ok, %Finch.Response{status: code}}, request) do
-      { :error, "Received status code #{code} for #{[request.host,request.path]}." }
-    end
-    defp parse_response({:error, %Mint.TransportError{reason: :closed}}, request) do
-      Logger.warning("TransportError: closed, retrying for #{[request.host,request.path]}")
-
-      request
-      |> Finch.request(ArgosFinch)
-      |> parse_response(request)
-    end
-    defp parse_response({:error, %Mint.TransportError{reason: :timeout}}, request) do
-      Logger.warning("TransportError: timeout, retrying for #{[request.host,request.path]}")
-
-      request
-      |> Finch.request(ArgosFinch)
-      |> parse_response(request)
-    end
+    defp parse_response({:error, error}), do: {:error, error.reason()}
   end
 
   defmodule PlaceParser do

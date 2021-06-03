@@ -35,7 +35,6 @@ defmodule ArgosAggregation.MixProject do
       {:tzdata, "~> 1.0.4"},
       {:geo, "~> 3.3.7"},
       {:sweet_xml, "~> 0.6.6"},
-      {:finch, "~> 0.7"},
       {:tongue, "~> 2.0"},
       {:ecto, "~> 3.6"}
     ]

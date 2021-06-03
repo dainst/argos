@@ -98,8 +98,6 @@ defmodule ArgosAPI.Application do
       Logger.info("Starting server...")
     end
 
-    children = [{Finch, name: ArgosAPIFinch}] ++ children
-
     Supervisor.start_link(children, opts)
   end
 end
