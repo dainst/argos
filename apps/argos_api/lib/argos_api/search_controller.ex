@@ -116,13 +116,17 @@ defmodule ArgosAPI.SearchController do
           []
       end
 
-      filters =
-        es_response["aggregations"]
-        |> SearchAggregations.reshape_search_result_aggregations()
+    filters =
+      es_response["aggregations"]
+      |> SearchAggregations.reshape_search_result_aggregations()
+
+    total =
+      es_response["hits"]["total"]["value"]
 
     %{
       results: results,
-      filters: filters
+      filters: filters,
+      total: total
     }
   end
 end
