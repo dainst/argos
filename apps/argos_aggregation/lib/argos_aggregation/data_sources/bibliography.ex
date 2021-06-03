@@ -101,8 +101,7 @@ defmodule ArgosAggregation.Bibliography do
             |> Map.put("page", 1)
             |> Map.put("limit", 100)
 
-          Logger.info("Running query with parameters:")
-          Logger.info(final_params)
+          Logger.info("Running bibliography batch query with for #{@base_url}/api/v1/search?#{URI.encode_query(final_params)}")
 
           final_params
         end,
