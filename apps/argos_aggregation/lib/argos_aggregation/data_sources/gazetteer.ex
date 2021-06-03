@@ -51,7 +51,7 @@ defmodule ArgosAggregation.Gazetteer do
     defp get_by_id_from_source(id) do
       response =
         "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true"
-        |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+        |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()], follow_redirect: true)
         |> parse_response()
 
       case response do
@@ -139,7 +139,9 @@ defmodule ArgosAggregation.Gazetteer do
     defp parse_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
       {:error, "Received unhandled status code #{code} for #{req.url}."}
     end
-    defp parse_response({:error, error}), do: {:error, error.reason()}
+    defp parse_response({:error, error}) do
+      {:error, error}
+    end
   end
 
   defmodule PlaceParser do
