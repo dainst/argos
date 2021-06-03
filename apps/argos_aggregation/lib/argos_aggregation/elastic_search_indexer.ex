@@ -36,7 +36,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   def get_doc(doc_id) do
     Finch.build(
       :get,
-      "#{@base_url}/_doc/#{doc_id}&retry_on_conflict=5"
+      "#{@base_url}/_doc/#{doc_id}"
     )
     |> Finch.request(ArgosFinch)
     |> parse_response()
@@ -68,7 +68,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     Finch.build(
       :post,
-      "#{@base_url}/_update/#{id}",
+      "#{@base_url}/_update/#{id}?retry_on_conflict=5",
       @headers,
       data_json
     )
@@ -117,13 +117,13 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   end
 
   defp search_referencing_docs(%Gazetteer.Place{} = place) do
-    search_for_subdocument(:spatial_topic, place.core_fields.source_id)
+    search_for_subdocument(:spatial_topic_id, place.core_fields.source_id)
   end
   defp search_referencing_docs(%Chronontology.TemporalConcept{} = temporal) do
-    search_for_subdocument(:temporal_topic, temporal.core_fields.source_id)
+    search_for_subdocument(:temporal_topic_id, temporal.core_fields.source_id)
   end
   defp search_referencing_docs(%Thesauri.Concept{} = concept) do
-    search_for_subdocument(:general_topic, concept.core_fields.source_id)
+    search_for_subdocument(:general_topic_id, concept.core_fields.source_id)
   end
   defp search_referencing_docs(_unknown_obj) do
     :reference_search_not_implemented

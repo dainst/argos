@@ -13,3 +13,5 @@ config :argos_aggregation,
 
 config :argos_api,
   index_name: "argos_testing"
+
+config :logger, level: :info

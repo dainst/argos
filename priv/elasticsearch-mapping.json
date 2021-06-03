@@ -18,32 +18,32 @@
     "dynamic_templates": 
     [
         {
-            "general_topic": {
-                "path_match": "core_fields.general_topics.resource.core_fields.source_id",
+            "general_topic_id": {
+                "path_match": "core_fields.general_topics.resource.core_fields.id",
                 "mapping": {
                     "type": "keyword",
                     "store": true,
-                    "copy_to": "general_topic"
+                    "copy_to": "general_topic_id"
                 }
             }
         },
         {
-            "spatial_topic": {
-                "path_match": "core_fields.spatial_topics.resource.core_fields.source_id",
+            "spatial_topic_id": {
+                "path_match": "core_fields.spatial_topics.resource.core_fields.id",
                 "mapping": {
                     "type": "keyword",
                     "store": true,
-                    "copy_to": "spatial_topic"
+                    "copy_to": "spatial_topic_id"
                 }
             }
         },
         {
-            "temporal_topic": {
-                "path_match": "core_fields.temporal_topics.resource.core_fields.source_id",
+            "temporal_topic_id": {
+                "path_match": "core_fields.temporal_topics.resource.core_fields.id",
                 "mapping": {
                     "type": "keyword",
                     "store": true,
-                    "copy_to": "temporal_topic"
+                    "copy_to": "temporal_topic_id"
                 }
             }
         },
