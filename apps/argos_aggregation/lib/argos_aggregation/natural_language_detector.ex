@@ -17,13 +17,15 @@ defmodule ArgosAggregation.NaturalLanguageDetector do
         |> List.first()
       catch
         :exit, _value ->
-          Logger.warning("Detection process timed out, retrying to parse #{string}")
-          get_language_key(string, threshold)
+          :retry
         end
 
     case detection_result do
       {lang_code, _score} ->
         Atom.to_string(lang_code)
+      :retry ->
+        Logger.warning("Detection process timed out, retrying to parse #{string}")
+        get_language_key(string, threshold)
       nil ->
         # Nothing over threshold
         ""
