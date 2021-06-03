@@ -3,55 +3,22 @@ defmodule ArgosAPI.SearchAggregations do
 
   def aggregation_definitions() do
     %{
+      general_topic_id: create_topic_aggregation_definition("general_topic"),
+      spatial_topic_id: create_topic_aggregation_definition("spatial_topic"),
+      temporal_topic_id: create_topic_aggregation_definition("temporal_topic"),
       type: %{terms: %{field: "type" }},
-      "spatial.resource.id": %{
-        terms: %{field: "spatial.resource.id"},
-        aggs: %{
-          example_doc: %{
-            top_hits: %{
-              size: 1,
-              _source: %{
-                include: ["spatial.resource"]
-              }
-            }
-          }
-        }
-      },
-      "temporal.resource.id": %{
-        terms: %{field: "temporal.resource.id" },
-        aggs: %{
-          example_doc: %{
-            top_hits: %{
-              size: 1,
-              _source: %{
-                include: ["temporal.resource"]
-              }
-            }
-          }
-        }
-      },
-      "subject.resource.id": %{
-        terms: %{field: "subject.resource.id"},
-        aggs: %{
-          example_doc: %{
-            top_hits: %{
-              size: 1,
-              _source: %{
-                include: ["subject.resource"]
-              }
-            }
-          }
-        }
-      },
-      "stakeholders.uri": %{
-        terms: %{field: "stakeholders.uri"},
-        aggs: %{
-          example_doc: %{
-            top_hits: %{
-              size: 1,
-              _source: %{
-                include: ["stakeholders"]
-              }
+    }
+  end
+
+  defp create_topic_aggregation_definition(type) do
+    %{
+      terms: %{field: "core_fields.#{type}s.resource.core_fields.id"},
+      aggs: %{
+        example_doc: %{
+          top_hits: %{
+            size: 1,
+            _source: %{
+              include: ["core_fields.#{type}s.resource"]
             }
           }
         }
@@ -80,12 +47,12 @@ defmodule ArgosAPI.SearchAggregations do
       "example_doc" => %{
         "hits" => %{
           "hits" => [
-            %{"_source" => example}
+            %{"_source" => example_doc_containing_aggregation}
           ]
         }
       }
     }) do
-      reshape_bucket_values_by_example(aggregation_name, count, key, example)
+      reshape_bucket_values_by_example(aggregation_name, count, key, example_doc_containing_aggregation)
   end
   defp reshape_aggregation_bucket(
     _name,
@@ -94,57 +61,28 @@ defmodule ArgosAPI.SearchAggregations do
     %{ key: key, count: count, label: []}
   end
 
-  defp reshape_bucket_values_by_example("spatial.resource.id", count, id, %{"spatial" => resource_list}) do
-    place =
-      resource_list
-      |> Enum.map(fn (%{"resource" => place}) ->
-        place
+
+  defp reshape_bucket_values_by_example("general_topic_id", count, id, %{"core_fields" => %{"general_topics" => topics_in_example}}) do
+    %{key: id, count: count, label: create_topic_label_by_example(id, topics_in_example)}
+  end
+  defp reshape_bucket_values_by_example("spatial_topic_id", count, id, %{"core_fields" => %{"spatial_topics" => topics_in_example}}) do
+    %{key: id, count: count, label: create_topic_label_by_example(id, topics_in_example)}
+  end
+  defp reshape_bucket_values_by_example("temporal_topic_id", count, id, %{"core_fields" => %{"temporal_topics" => topics_in_example}}) do
+    %{key: id, count: count, label: create_topic_label_by_example(id, topics_in_example)}
+  end
+
+  defp create_topic_label_by_example(id, topics_in_example) do
+    topic =
+      topics_in_example
+      |> Enum.map(fn (%{"resource" => topic }) ->
+        topic
       end)
-      |> Enum.filter(fn(place) ->
-        place["id"] == id
+      |> Enum.filter(fn(topic) ->
+        topic["core_fields"]["id"] == id
       end)
       |> List.first()
 
-    %{key: id, count: count, label: place["label"]}
-  end
-  defp reshape_bucket_values_by_example("subject.resource.id", count, id, %{"subject" => resource_list}) do
-    concept =
-      resource_list
-      |> Enum.map(fn (%{"resource" => concept}) ->
-        concept
-      end)
-      |> Enum.filter(fn(concept) ->
-        concept["id"] == id
-      end)
-      |> List.first()
-
-    %{key: id, count: count, label: concept["label"]}
-  end
-  defp reshape_bucket_values_by_example("temporal.resource.id", count, id, %{"temporal" => resource_list}) do
-    temporal_concept =
-      resource_list
-      |> Enum.map(fn (%{"resource" => temporal_concept}) ->
-        temporal_concept
-      end)
-      |> Enum.filter(fn(temporal_concept) ->
-        temporal_concept["id"] == id
-      end)
-      |> List.first()
-
-    %{key: id, count: count, label: temporal_concept["label"]}
-  end
-  defp reshape_bucket_values_by_example("stakeholders.uri", count, uri, %{"stakeholders" => stakeholders}) do
-    stakeholder =
-      stakeholders
-      |> Enum.filter(fn(stakeholder) ->
-        stakeholder["uri"] == uri
-      end)
-      |> List.first()
-
-    %{key: uri, count: count, label: stakeholder["label"]}
-  end
-  defp reshape_bucket_values_by_example(aggregation_name, _count, _key, example) do
-    Logger.warning("Unknown aggregation name or example while trying to generate output value: #{aggregation_name}. Example provided:")
-    Logger.warning(example)
+      topic["core_fields"]["title"]
   end
 end
