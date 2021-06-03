@@ -24,64 +24,24 @@ defmodule ArgosAggregation.Bibliography do
   end
 
   defmodule BibliographicRecord do
-    @enforce_keys [:id, :title, :persons, :full_record]
-    defstruct [:id, :title, description: [], subject: [], spatial: [], persons: [], institutions: [], full_record: %{}]
-    @type t() :: %__MODULE__{
-      id: String.t(),
-      title: TranslatedContent.t(),
-      description: [TranslatedContent.t()],
-      subject: [
-        %{
-          label: String.t(),
-          resource: Thesauri.Concept.t(),
-        }
-      ],
-      spatial: [
-        %{
-          label: String.t(),
-          resource: Place.t()
-        }
-      ],
-      persons: [Author.t()],
-      institutions: [Author.t()],
-      full_record: Map.t()
-    }
+    use ArgosAggregation.Schema
 
-    @doc """
-    factory function for creating a proper %BibliographicRecord{} from a plain map
-    """
-    def from_map(%{} = data) do
-      %BibliographicRecord{
-        id: data["id"],
-        title: TranslatedContent.from_map(data["title"]),
-        description:
-          data["description"]
-          |> Enum.map(&TranslatedContent.from_map/1),
-        subject:
-          data["subject"]
-          |> Enum.map(fn(subject) ->
-            %{
-              label: subject["label"],
-              resource: Thesauri.Concept.from_map(subject["resource"])
-            }
-          end),
-        spatial:
-          data["spatial"]
-          |> Enum.map(fn(spatial) ->
-            %{
-              label: spatial["label"],
-              resource: Gazetteer.Place.from_map(spatial["resource"])
-            }
-          end),
-        persons:
-          data["persons"]
-          |> Enum.map(&Author.from_map/1),
-        institutions:
-          data["institutions"]
-          |> Enum.map(&Author.from_map/1),
-        full_record:
-          data["full_record"]
-      }
+    import Ecto.Changeset
+
+    embedded_schema do
+      embeds_one(:core_fields, ArgosAggregation.CoreFields)
+    end
+
+    def changeset(project, params \\ %{}) do
+      project
+      |> cast(params, [])
+      |> cast_embed(:core_fields)
+      |> validate_required(:core_fields)
+    end
+
+    def create(params) do
+      changeset(%BibliographicRecord{}, params)
+      |> apply_action(:create)
     end
   end
 
@@ -136,9 +96,14 @@ defmodule ArgosAggregation.Bibliography do
     def get_batches(query_params) do
       Stream.resource(
         fn () ->
-          query_params
-          |> Map.put("page", 1)
-          |> Map.put("limit", 100)
+          final_params =
+            query_params
+            |> Map.put("page", 1)
+            |> Map.put("limit", 100)
+
+          Logger.info("Running bibliography batch query with for #{@base_url}/api/v1/search?#{URI.encode_query(final_params)}")
+
+          final_params
         end,
         fn (params) ->
           case process_batch_query(params) do
@@ -215,12 +180,14 @@ defmodule ArgosAggregation.Bibliography do
   end
 
   defmodule BibliographyParser do
+    @base_url Application.get_env(:argos_aggregation, :bibliography_url)
+
     def parse_record(record) do
 
-      places =
+      spatial_topics =
         record["DAILinks"]["gazetteer"]
         |> Enum.map(&Task.async( fn -> parse_place(&1) end))
-        |> Enum.map(&Task.await(&1, 1000 * 30))
+        |> Enum.map(&Task.await(&1, 1000 * 60 * 5))
         |> Enum.filter(fn val ->
           case val do
             {:error, _msg} ->
@@ -230,10 +197,10 @@ defmodule ArgosAggregation.Bibliography do
           end
         end)
 
-      concepts =
+      general_topics =
         record["DAILinks"]["thesauri"]
         |> Enum.map(&Task.async( fn -> parse_concept(&1) end))
-        |> Enum.map(&Task.await(&1, 1000 * 30))
+        |> Enum.map(&Task.await(&1, 1000 * 60 * 5))
         |> Enum.filter(fn val ->
           case val do
             {:error, _msg} ->
@@ -243,27 +210,34 @@ defmodule ArgosAggregation.Bibliography do
           end
         end)
 
-      %BibliographicRecord{
-        id: record["id"],
-        title: %TranslatedContent{
-          text: record["title"],
-          lang: NaturalLanguageDetector.get_language_key(record["title"])
-        },
-        description: parse_descriptions(record),
-        persons: parse_persons(record),
-        institutions: parse_institutions(record),
-        spatial: places,
-        subject: concepts,
-        full_record: record
+      core_fields = %{
+        "type" => "biblio",
+        "source_id" => record["id"],
+        "uri" => "#{@base_url}/Record/#{record["id"]}",
+        "title" => [
+          %{
+            "text" => record["title"],
+            "lang" => NaturalLanguageDetector.get_language_key(record["title"])
+          }
+        ],
+        "general_topics" => general_topics,
+        "spatial_topics" => spatial_topics,
+        "description" => parse_descriptions(record),
+        "persons" => parse_persons(record),
+        "institutions" => parse_institutions(record),
+      }
+
+      %{
+        "core_fields" => core_fields
       }
     end
 
     defp parse_descriptions(record) do
       record["summary"]
       |> Enum.map(fn(summary) ->
-        %TranslatedContent{
-          text: summary,
-          lang: NaturalLanguageDetector.get_language_key(summary)
+        %{
+          "text" => summary,
+          "lang" => NaturalLanguageDetector.get_language_key(summary)
         }
       end)
     end
@@ -284,12 +258,8 @@ defmodule ArgosAggregation.Bibliography do
       primary ++ secondary
       |> Enum.uniq()
       |> Enum.map(fn name ->
-        %Author{
-          label: %TranslatedContent{
-            text: name,
-            lang: ""
-          },
-          uri: ""
+        %{
+          "name" => name
         }
       end)
     end
@@ -300,12 +270,8 @@ defmodule ArgosAggregation.Bibliography do
         map -> Map.keys(map)
       end
       |> Enum.map(fn name ->
-        %Author{
-          label: %TranslatedContent{
-            text: name,
-            lang: ""
-          },
-          uri: ""
+        %{
+          "name" => name
         }
       end)
     end
@@ -316,16 +282,15 @@ defmodule ArgosAggregation.Bibliography do
 
     defp parse_place(data) do
       "https://gazetteer.dainst.org/place/" <> gaz_id = data["uri"]
-      case Gazetteer.DataProvider.get_by_id(gaz_id) do
-        {:ok, place} ->
-          %{
-            label: "subject heading",
-            resource: place
-          }
-        error ->
+      case Gazetteer.DataProvider.get_by_id(gaz_id, false) do
+        {:error, msg} = error ->
           Logger.error("Received error for #{data["uri"]}:")
-          Logger.error(error)
+          Logger.error(msg)
           error
+        place ->
+          %{
+            "resource" => place
+          }
       end
     end
 
@@ -336,13 +301,14 @@ defmodule ArgosAggregation.Bibliography do
     defp parse_concept(data) do
       "http://thesauri.dainst.org/" <> ths_id = data["uri"]
       case Thesauri.DataProvider.get_by_id(ths_id) do
-        {:ok, concept} ->
-          %{
-            label: "subject heading",
-            resource: concept
-          }
-        error ->
+        {:error, msg} = error ->
+          Logger.error("Received error for #{data["uri"]}:")
+          Logger.error(msg)
           error
+        concept ->
+          %{
+            "resource" => concept
+          }
       end
     end
   end

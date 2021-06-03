@@ -77,8 +77,9 @@ defmodule ArgosAPI.Application do
   end
 
   def start(_type, _args) do
-
-    initialize_index()
+    if Application.get_env(:argos_api, :await_index, true) do
+      initialize_index()
+    end
 
     children =
       if running_script?(System.argv) do
@@ -96,6 +97,8 @@ defmodule ArgosAPI.Application do
     if children != [] do
       Logger.info("Starting server...")
     end
+
+    children = [{Finch, name: ArgosAPIFinch}] ++ children
 
     Supervisor.start_link(children, opts)
   end

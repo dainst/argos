@@ -19,7 +19,8 @@ defmodule ArgosAPI.SearchController do
     case result do
       {:ok, val} ->
         send_resp(conn, 200, Poison.encode!(val))
-      {:error, val} -> send_resp(conn, 400, Poison.encode!(val))
+      {:error, val} ->
+        send_resp(conn, 400, Poison.encode!(val))
     end
   end
 
@@ -116,13 +117,17 @@ defmodule ArgosAPI.SearchController do
           []
       end
 
-      filters =
-        es_response["aggregations"]
-        |> SearchAggregations.reshape_search_result_aggregations()
+    filters =
+      es_response["aggregations"]
+      |> SearchAggregations.reshape_search_result_aggregations()
+
+    total =
+      es_response["hits"]["total"]["value"]
 
     %{
       results: results,
-      filters: filters
+      filters: filters,
+      total: total
     }
   end
 end

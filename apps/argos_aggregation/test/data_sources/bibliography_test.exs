@@ -5,99 +5,131 @@ defmodule ArgosAggregation.BibliographyTest do
   doctest(ArgosAggregation.Bibliography)
 
   alias ArgosAggregation.{
-    Gazetteer, Thesauri, Bibliography, ElasticSearchIndexer, TranslatedContent, TestHelpers
+    Gazetteer, Thesauri, Bibliography, Bibliography.BibliographicRecord, ElasticSearchIndexer, CoreFields, TestHelpers
   }
 
-  @bibliography_record %Bibliography.BibliographicRecord{
-      title:
-        %TranslatedContent{
-          text: "Morminte geto-dacice descoperite în judeţul Călăraşi.",
-          lang: "ro"
+  @zenon_data %{
+    "authors" => %{
+        "primary" => %{
+            "Robinson, Mark" => %{
+                "role" => [
+                    "aut"
+                ]
+            },
+            "Trümper, Monika" => %{
+                "role" => [
+                    "aut"
+                ]
+            },
+            "Brünenberg, Clemens" => %{
+                "role" => [
+                    "aut"
+                ]
+            },
+            "Dickmann, Jens-Arne" => %{
+                "role" => [
+                    "aut"
+                ]
+            },
+            "Esposito, Domenico" => %{
+                "role" => [
+                    "aut"
+                ]
+            },
+            "Ferrandes, Antonio F." => %{
+                "role" => [
+                    "aut"
+                ]
+            },
+            "Pardini, Giacomo" => %{
+                "role" => [
+                    "aut"
+                ]
+            },
+            "Rummel, Christoph" => %{
+                "role" => [
+                    "aut"
+                ]
+            },
+            "Pegurri, Alessandra" => %{
+                "role" => [
+                    "aut"
+                ]
+            }
         },
-      subject: [
+        "secondary" => [],
+        "corporate" => []
+    },
+    "primaryAuthorsNames" => [
+        "Robinson, Mark"
+    ],
+    "secondaryAuthorsNames" => [
+        "Trümper, Monika"
+    ],
+    "corporateAuthorsNames" => [],
+    "bibliographicLevel" => "SerialPart",
+    "bibliographyNotes" => [],
+    "callNumbers" => [],
+    "formats" => [
+        "Article"
+    ],
+    "generalNotes" => [],
+    "id" => "002023387",
+    "isbns" => [],
+    "issns" => [
+        "2510-4713"
+    ],
+    "languages" => [
+        "English"
+    ],
+    "publicationDates" => [
+        "2021"
+    ],
+    "publishers" => [
+        "Deutsches Archäologisches Institut,"
+    ],
+    "series" => [],
+    "shortTitle" => "Stabian Baths in Pompeii. New Research on the Archaic Defenses of the City ",
+    "subjects" => [
+        [
+            "Pompeji", "Bäder"
+        ]
+    ],
+    "summary" => [
+        "The plan of the Archaic city of Pompeii and the existence of a distinct walled Altstadt have been much debated in scholarship. The area of the Stabian Baths plays a key role in this debate. Based on a series of excavations in the palaestra of the baths, Heinrich Sulze (1940) and particularly Hans Eschebach (1970s) reconstructed a defensive wall and parallel ditch in this area. Eschebach also identified an Archaic street and city gate in the northern part of the baths. While Eschebach’s reconstruction was challenged by later research, the evidence and his interpretation of his trenches have never been systematically reassessed. It is the aim of this paper to fill this crucial gap. Based on the re-exposition of Sulze’s and Eschebach’s archaeological contexts and new excavations it is shown that no traces of an Archaic wall, robber trench, palisade, or ditch or of any other Archaic features can be securely identified in the area of the Stabian Baths. Focus here is on a key trench in the palaestra (Area III) that had been excavated by both Sulze and Eschebach and provides the most important insights into the development and use of this terrain, from the Bronze Age to A.D. 79. The archaeological contexts are described in detail and interpreted particularly with a view to the early history of Pompeii, and more briefly with a view to the development of the baths."
+    ],
+    "title" => "Stabian Baths in Pompeii. New Research on the Archaic Defenses of the City ",
+    "urls" => [
         %{
-          resource: %Thesauri.Concept{
-            uri: "http://thesauri.dainst.org/_b7707545",
-            label:
-            [
-              %TranslatedContent{
-                text: "Beigabensitten", lang: "de"
-              }
-            ],
-            id: "_b7707545"
-          },
-          label: "subject_heading"
+            "url" => "https:///nbn-resolving.org//urn:nbn:de:0048-aa.v0i2.1023.7",
+            "desc" => "Available online "
         }
-      ],
-      spatial: [
-        %{
-          resource: %Gazetteer.Place{
-            uri: "https://gazetteer.dainst.org/place/2067337",
-            label:
-              [
-                %TranslatedContent{
-                  text: "Călărasi (jud.)", lang: "de"
-                }
-              ],
-            id: "2067337",
-            geometry: []
-          },
-          label: "subject_heading"
-        }
-      ],
-      persons: [
-        %Bibliography.Author{
-          uri: "",
-          label: %TranslatedContent{
-            text: "Serbanescu, Done",
-            lang: ""
+    ],
+    "containerPageRange" => "1-201365",
+    "additionalInformation" => [],
+    "parentId" => "002023378",
+    "thesaurus" => [],
+    "DAILinks" => %{
+        "gazetteer" => [
+            %{
+                "label" => "Pompeji",
+                "uri" => "https://gazetteer.dainst.org/place/2338718"
+            }
+        ],
+        "thesauri" => [
+          %{
+            "label" => "Bäder",
+            "uri" => "http://thesauri.dainst.org/_031c59e9"
           }
-        }
-      ],
-      id: "001294207",
-      full_record: %{}
-    }
-
-  test "recreating bibliographic record from json yields same result" do
-    reconstructed =
-      @bibliography_record
-      |> Poison.encode!()
-      |> Poison.decode!()
-      |> Bibliography.BibliographicRecord.from_map()
-
-    assert reconstructed == @bibliography_record
-  end
-
-  test "get by id yields bibliographic record" do
-    record = Bibliography.DataProvider.get_by_id("002010515")
-
-    assert %Bibliography.BibliographicRecord{ id: "002010515"} = record
-
-    reconstructed =
-      record
-      |> Poison.encode!()
-      |> Poison.decode!()
-      |> Bibliography.BibliographicRecord.from_map()
-
-    assert reconstructed == record
-  end
+        ]
+    },
+    "lastIndexed" => "2021-02-24T03:04:18Z"
+  }
 
   test "get by id with invalid id yields error" do
     assert {:error, "record not-existing not found."} == Bibliography.DataProvider.get_by_id("not-existing")
   end
 
-  test "get all yields bibliographic records as result" do
-    records =
-      Bibliography.DataProvider.get_all()
-      |> Enum.take(10)
-
-    assert Enum.count(records) == 10
-
-    records
-    |> Enum.each(fn(record) ->
-      assert %Bibliography.BibliographicRecord{} = record
-    end)
-  end
 
   describe "elastic search tests" do
 
@@ -110,16 +142,41 @@ defmodule ArgosAggregation.BibliographyTest do
       :ok
     end
 
-    test "updating referenced thesauri concept updates bibliographic record" do
-      ths_indexing_1 =
-        Thesauri.DataProvider.get_by_id("_b7707545")
-        |> fn ({:ok, concept}) -> concept end.()
-        |> ElasticSearchIndexer.index()
+    test "get all yields bibliographic records as result" do
+      records =
+        Bibliography.DataProvider.get_all()
+        |> Enum.take(10)
 
-      assert("created" == ths_indexing_1.upsert_response["result"])
+      assert Enum.count(records) == 10
+
+      records
+      |> Enum.each(fn(record) ->
+        assert {:ok, %BibliographicRecord{}} = BibliographicRecord.create(record)
+      end)
+    end
+
+    test "get by id yields bibliographic record" do
+      id = "002023378"
+
+      {:ok, record } =
+        id
+        |> Bibliography.DataProvider.get_by_id()
+        |> Bibliography.BibliographicRecord.create()
+
+        assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
+    end
+
+    test "updating referenced thesauri concept updates bibliographic record" do
+
+      ths_data = Thesauri.DataProvider.get_by_id("_031c59e9")
+
+      ths_indexing = ElasticSearchIndexer.index(ths_data)
+
+      assert("created" == ths_indexing.upsert_response["result"])
 
       biblio_indexing =
-        @bibliography_record
+        @zenon_data
+        |> Bibliography.BibliographyParser.parse_record()
         |> ElasticSearchIndexer.index()
 
       assert("created" == biblio_indexing.upsert_response["result"])
@@ -127,18 +184,24 @@ defmodule ArgosAggregation.BibliographyTest do
       # Force refresh to make sure recently upserted docs are considered in search.
       TestHelpers.refresh_index()
 
-      ths_indexing_2 =
-        Thesauri.DataProvider.get_by_id("_b7707545")
-        |> fn ({:ok, concept}) -> concept end.()
+      ths_indexing =
+        ths_data
         |> Map.update!(
-            :label, fn (old) -> old ++ [%TranslatedContent{ text: "Test name", lang: "de" }] end
-          )
+          "core_fields",
+          fn (old_core) ->
+            Map.update!(
+              old_core,
+              "title",
+              fn (old_title) ->
+                old_title ++ [%{"text" => "Test name", "lang" => "de"}]
+              end)
+          end)
         |> ElasticSearchIndexer.index()
 
-      assert("updated" == ths_indexing_2.upsert_response["result"])
+      assert("updated" == ths_indexing.upsert_response["result"])
 
       %{upsert_response: %{"_version" => biblio_new_version, "_id" => biblio_new_id}} =
-        ths_indexing_2.referencing_docs_update_response
+        ths_indexing.referencing_docs_update_response
         |> List.first()
 
       %{"_version" => biblio_old_version, "_id" => biblio_old_id} = biblio_indexing.upsert_response
@@ -149,15 +212,15 @@ defmodule ArgosAggregation.BibliographyTest do
 
 
     test "updating referenced gazetteer place updates bibliographic record" do
-      gaz_indexing_1 =
-        Gazetteer.DataProvider.get_by_id("2067337")
-        |> fn ({:ok, place}) -> place end.()
-        |> ElasticSearchIndexer.index()
+      gaz_data = Gazetteer.DataProvider.get_by_id("2338718")
 
-      assert("created" == gaz_indexing_1.upsert_response["result"])
+      gaz_indexing = ElasticSearchIndexer.index(gaz_data)
+
+      assert("created" == gaz_indexing.upsert_response["result"])
 
       biblio_indexing =
-        @bibliography_record
+        @zenon_data
+        |> Bibliography.BibliographyParser.parse_record()
         |> ElasticSearchIndexer.index()
 
       assert("created" == biblio_indexing.upsert_response["result"])
@@ -165,18 +228,24 @@ defmodule ArgosAggregation.BibliographyTest do
       # Force refresh to make sure recently upserted docs are considered in search.
       TestHelpers.refresh_index()
 
-      gaz_indexing_2 =
-        Gazetteer.DataProvider.get_by_id("2067337")
-        |> fn ({:ok, place}) -> place end.()
+      gaz_indexing =
+        gaz_data
         |> Map.update!(
-            :label, fn (old) -> old ++ [%TranslatedContent{ text: "Test name", lang: "de" }] end
-          )
+          "core_fields",
+          fn (old_core) ->
+            Map.update!(
+              old_core,
+              "title",
+              fn (old_title) ->
+                old_title ++ [%{"text" => "Test name", "lang" => "de"}]
+              end)
+          end)
         |> ElasticSearchIndexer.index()
 
-      assert("updated" == gaz_indexing_2.upsert_response["result"])
+      assert("updated" == gaz_indexing.upsert_response["result"])
 
       %{upsert_response: %{"_version" => biblio_new_version, "_id" => biblio_new_id}} =
-        gaz_indexing_2.referencing_docs_update_response
+        gaz_indexing.referencing_docs_update_response
         |> List.first()
 
       %{"_version" => biblio_old_version, "_id" => biblio_old_id} = biblio_indexing.upsert_response

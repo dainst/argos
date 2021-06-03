@@ -1,64 +1,66 @@
 defmodule ArgosAggregation.ElasticSearchIndexer do
   require Logger
   alias ArgosAggregation.{
-    Chronontology, Gazetteer, Thesauri, Project, Bibliography
+    Chronontology, Gazetteer, Thesauri, Project, Bibliography, CoreFields
   }
 
   @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
   @headers [{"Content-Type", "application/json"}]
 
-  @type_to_struct_mapping [
-    {:project, Project.Project.__struct__},
-    {:bibliographic_record, Bibliography.BibliographicRecord.__struct__},
-    {:concept, Thesauri.Concept.__struct__},
-    {:place, Gazetteer.Place.__struct__}
-  ]
+  def index(data) do
+    validation = validate(data)
 
-  def get_by_id(id, reference_struct) do
-    {type, _struct} =
-      @type_to_struct_mapping
-      |> Enum.filter(fn ({_atom, struct}) ->
-        # Kein Plan wieso noch einmal struct.__struct__ nötig ist, obwohl es oben bereits mit __struct__ definiert ist.
-        struct.__struct__ == reference_struct.__struct__
-      end)
-      |> List.first()
+    case validation do
+      {:ok, struct} ->
+        res =
+          %{
+            doc: struct,
+            doc_as_upsert: true
+          }
+          |> upsert()
+          |> parse_response()
 
+        res_reference_update =
+          res
+          |> upsert_change?()
+          |> update_referencing_data(struct)
+
+        %{upsert_response: res, referencing_docs_update_response: res_reference_update}
+
+      error ->
+        error
+    end
+
+  end
+
+  def get_doc(doc_id) do
     Finch.build(
       :get,
-      "#{@base_url}/_doc/#{type}-#{id}"
+      "#{@base_url}/_doc/#{doc_id}"
     )
     |> Finch.request(ArgosFinch)
     |> parse_response()
     |> extract_doc_from_response()
   end
 
-  def index(data_struct) do
-    {type, _struct} =
-      @type_to_struct_mapping
-      |> Enum.filter(fn ({_atom, struct}) ->
-        # Kein Plan wieso noch einmal struct.__struct__ nötig ist, obwohl es oben bereits mit __struct__ definiert ist.
-        struct.__struct__ == data_struct.__struct__
-      end)
-      |> List.first()
-
-    res =
-      %{
-        doc: Map.put(data_struct, :type, type),
-        doc_as_upsert: true
-      }
-      |> upsert()
-      |> parse_response()
-
-    res_reference_update =
-      res
-      |> upsert_change?()
-      |> update_referencing_data(data_struct)
-
-    %{upsert_response: res, referencing_docs_update_response: res_reference_update}
+  defp validate(%{"core_fields" => %{"type" => "place"}} = params) do
+    Gazetteer.Place.create(params)
+  end
+  defp validate(%{"core_fields" => %{"type" => "concept"}} = params) do
+    Thesauri.Concept.create(params)
+  end
+  defp validate(%{"core_fields" => %{"type" => "temporal_concept"}} = params) do
+    Chronontology.TemporalConcept.create(params)
+  end
+  defp validate(%{"core_fields" => %{"type" => "project"}} = params) do
+    Project.Project.create(params)
+  end
+  defp validate(%{"core_fields" => %{"type" => "biblio"}} = params) do
+    Bibliography.BibliographicRecord.create(params)
   end
 
-  def upsert(%{doc: %{type: type, id: id}} = data) do
-    Logger.debug("Indexing #{type}-#{id}.")
+  def upsert(%{doc: %_{core_fields: %CoreFields{id: id}}} = data) do
+    Logger.debug("Indexing #{id}.")
 
     data_json =
       data
@@ -66,7 +68,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
     Finch.build(
       :post,
-      "#{@base_url}/_update/#{type}-#{id}",
+      "#{@base_url}/_update/#{id}?retry_on_conflict=5",
       @headers,
       data_json
     )
@@ -81,12 +83,12 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     hits
   end
 
-  defp extract_doc_from_response(%{"_source" => doc}) do
-    {:ok, doc}
+  defp extract_doc_from_response(%{"found" => false}) do
+    {:error, 404}
   end
 
-  defp extract_doc_from_response(%{"found" => false}) do
-    {:error, :not_found}
+  defp extract_doc_from_response(%{"_source" => data}) do
+    {:ok, data}
   end
 
   defp upsert_change?(%{"result" => result}) do
@@ -100,15 +102,13 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   defp update_referencing_data(true, updated_content) do
     case search_referencing_docs(updated_content) do
       :reference_search_not_implemented ->
-        #Logger.debug("Reference search not implemented for #{updated_content.__struct__}. Nothing else gets updated.")
+        # Logger.debug("Reference search not implemented for #{updated_content.__struct__}. Nothing else gets updated.")
         []
       res ->
         res
         |> parse_response()
         |> extract_search_hits_from_response()
-        |> Enum.map(&update_reference(&1, updated_content))
-        |> Enum.map(&map_to_struct/1)
-        |> Enum.map(&index/1)
+        |> Enum.map(&update_reference(&1))
     end
   end
 
@@ -117,13 +117,13 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   end
 
   defp search_referencing_docs(%Gazetteer.Place{} = place) do
-    search_for_subdocument(:spatial, place.id)
+    search_for_subdocument(:spatial_topic_id, place.core_fields.id)
   end
   defp search_referencing_docs(%Chronontology.TemporalConcept{} = temporal) do
-    search_for_subdocument(:temporal, temporal.id)
+    search_for_subdocument(:temporal_topic_id, temporal.core_fields.id)
   end
   defp search_referencing_docs(%Thesauri.Concept{} = concept) do
-    search_for_subdocument(:subject, concept.id)
+    search_for_subdocument(:general_topic_id, concept.core_fields.id)
   end
   defp search_referencing_docs(_unknown_obj) do
     :reference_search_not_implemented
@@ -134,7 +134,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
       query: %{
         query_string: %{
           query: "#{doc_id}",
-            fields: ["#{doc_type}.resource.id"]
+            fields: ["#{doc_type}"]
           }
         }
       }
@@ -143,28 +143,18 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     |> Finch.request(ArgosFinch)
   end
 
-  defp update_reference(%{"_source" => parent }, %Gazetteer.Place{} = place) do
-    put_in(parent, ["spatial", Access.filter(&(&1["resource"]["id"] == place.id)), "resource"], Poison.encode!(place) |> Poison.decode!() ) # TODO/Hacky: Poison action necessary to get an all string keyed dictionary.
-  end
-  defp update_reference(%{"_source" => parent}, %Chronontology.TemporalConcept{} = temporal) do
-    put_in(parent, ["temporal", Access.filter(&(&1["resource"]["id"] == temporal.id)), "resource"], Poison.encode!(temporal) |> Poison.decode())
-  end
-  defp update_reference(%{"_source" => parent}, %Thesauri.Concept{} = subject) do
-    put_in(parent, ["subject", Access.filter(&(&1["resource"]["id"] == subject.id)), "resource"], Poison.encode!(subject) |> Poison.decode!() )
-  end
-
-  defp map_to_struct(map) do
-    type =
-      map["type"]
-      |> String.to_existing_atom()
-
-    {_, struct} =
-      @type_to_struct_mapping
-      |> Enum.filter(fn {t, _} ->
-        t == type
-      end)
-      |> List.first()
-
-    struct.__struct__.from_map(map)
+  defp update_reference(%{"_source" => parent }) do
+    case parent["core_fields"] do
+      %{"type" => "project"} = core_fields ->
+        Project.DataProvider.get_by_id(core_fields["source_id"])
+        |> index()
+      %{"type" => "biblio"} = core_fields ->
+        Bibliography.DataProvider.get_by_id(core_fields["source_id"])
+        |> index()
+      not_implemented ->
+        msg = "Updating reference for type #{not_implemented["type"]} not implemented."
+        Logger.error(msg)
+        {:error, msg}
+    end
   end
 end

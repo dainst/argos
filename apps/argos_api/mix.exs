@@ -30,10 +30,10 @@ defmodule ArgosAPI.MixProject do
     [
       {:poison, "~> 4.0"},
       {:httpoison, "~> 1.6.2"},
-      {:remix, "~> 0.0.1", only: :dev},
+      {:exsync, "~> 0.2", only: :dev},
       {:plug_cowboy, "~> 2.4"},
-      {:cors_plug, "~> 2.0"}
-      # {:sibling_app_in_umbrella, in_umbrella: true}
+      {:cors_plug, "~> 2.0"},
+      {:argos_aggregation, in_umbrella: true}
     ]
   end
 end

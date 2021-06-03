@@ -1,33 +1,34 @@
 defmodule ArgosAggregation.Chronontology do
-
   defmodule TemporalConcept do
-    alias ArgosAggregation.TranslatedContent
+    use ArgosAggregation.Schema
 
-    @enforce_keys [:id, :uri, :label, :beginning, :ending]
-    defstruct [:id, :uri, :label, :beginning, :ending]
-    @type t() :: %__MODULE__{
-      id: String.t(),
-      uri: String.t(),
-      label: TranslatedContent.t(),
-      beginning: integer(),
-      ending: integer()
-    }
+    alias ArgosAggregation.CoreFields
 
-    def from_map(%{} = data) do
-      %TemporalConcept{
-        id: data["id"],
-        uri: data["uri"],
-        label:
-          data["label"]
-          |> Enum.map(&TranslatedContent.from_map/1),
-        beginning: data["beginning"],
-        ending: data["ending"],
-      }
+    import Ecto.Changeset
+
+    embedded_schema do
+      embeds_one(:core_fields, CoreFields)
+      field(:beginning, :integer)
+      field(:ending, :integer)
+    end
+
+    def changeset(temporal_concept, params \\ %{}) do
+      temporal_concept
+      |> cast(params, [:beginning, :ending])
+      |> cast_embed(:core_fields)
+      |> validate_required([:core_fields])
+    end
+
+    def create(params) do
+      changeset(%TemporalConcept{}, params)
+      |> apply_action(:create)
     end
   end
 
   defmodule DataProvider do
     @base_url Application.get_env(:argos_aggregation, :chronontology_url)
+
+    alias ArgosAggregation.NaturalLanguageDetector
 
     require Logger
 
@@ -36,9 +37,16 @@ defmodule ArgosAggregation.Chronontology do
     end
 
     def get_by_id(id) do
-      HTTPoison.get("#{@base_url}/data/period/#{id}")
-      |> parse_response()
-      |> parse_period_data()
+      response =
+        HTTPoison.get("#{@base_url}/data/period/#{id}")
+        |> parse_response()
+
+      case response do
+        {:ok, data} ->
+          parse_period_data(data)
+        error ->
+          error
+      end
     end
 
     def get_by_date(%Date{} = _date) do
@@ -58,13 +66,13 @@ defmodule ArgosAggregation.Chronontology do
       {:error, error.reason()}
     end
 
-    defp parse_period_data({:ok, data}) do
+    defp parse_period_data(data) do
       # TODO: Es gibt potenziell mehrere timespan, wie damit umgehen?
       beginning =
         case data["resource"]["hasTimespan"] do
-          [%{"beginning" => %{"at" => at}}] ->
+          [%{"begin" => %{"at" => at}}] ->
             at
-          [%{"beginning" => %{"notBefore" => notBefore}}] ->
+          [%{"begin" => %{"notBefore" => notBefore}}] ->
             notBefore
           _ ->
             Logger.warning("Found no begin date for period #{data["resource"]["id"]}")
@@ -73,31 +81,47 @@ defmodule ArgosAggregation.Chronontology do
 
       ending =
         case data["resource"]["hasTimespan"] do
-          [%{"ending" => %{"at" => at}}] ->
+          [%{"end" => %{"at" => at}}] ->
             at
-          [%{"ending" => %{"notAfter" => notAfter}}] ->
+          [%{"end" => %{"notAfter" => notAfter}}] ->
             notAfter
           _ ->
             Logger.warning("Found no end date for period #{data["resource"]["id"]}")
             ""
         end
 
-      {:ok, %TemporalConcept{
-        id: data["resource"]["id"],
-        uri: "#{@base_url}/period/#{data["resource"]["id"]}",
-        label: create_translated_content_list( data["resource"]["names"]),
-        beginning: beginning,
-        ending: ending
-      }}
+      # TODO Gazetteer Place spatiallyPartOfRegion and hasCoreArea? https://chronontology.dainst.org/period/X5lOSI8YQFiL
+
+      core_fields = %{
+        "type" => "temporal_concept",
+        "source_id" => data["resource"]["id"],
+        "uri" => "#{@base_url}/period/#{data["resource"]["id"]}",
+        "title" => parse_names(data["resource"]["names"]),
+        "description" => [
+          %{
+            "lang" => NaturalLanguageDetector.get_language_key(data["resource"]["description"]),
+            "text" => data["resource"]["description"]
+          }
+        ]
+      }
+
+      %{
+        "core_fields" => core_fields,
+        "beginning" => beginning,
+        "ending" => ending
+      }
     end
 
-    defp parse_period_data(error) do
-      error
+    defp parse_names(chronontology_data) do
+      chronontology_data
+      |> Enum.map(fn {lang_key, name_variants} ->
+        name_variants
+        |> Enum.map(fn variant ->
+          %{"text" => variant, "lang" => lang_key}
+        end)
+      end)
+      |> List.flatten()
     end
-
-    defp create_translated_content_list(%{} = tlc_map), do: Enum.map(tlc_map, &create_translated_content_list/1)
-    defp create_translated_content_list({key, sub_list}), do: for val <- sub_list, do: %{lang: key, text: val}
-    defp create_translated_content_list([] = tlc_list), do: tlc_list
 
     # def fetch!(query, offset, limit) do
     #   params = %{q: query, size: limit, from: offset}
