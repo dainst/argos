@@ -28,10 +28,10 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
     :reference_search_not_implemented
   end
 
-  def search(query) do
+  def run_query(query) do
     "#{@base_url}/_search"
-      |> HTTPoison.post(query, [{"Content-Type", "application/json"}])
-      |> handle_result()
+    |> HTTPoison.post(query, [{"Content-Type", "application/json"}])
+    |> handle_result()
   end
 
   defp search_field(field_name, term) do

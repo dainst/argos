@@ -125,34 +125,98 @@ defmodule ArgosAPITest do
     "updated_at" => "2021-06-01T07:44:07"
   }
 
-  setup_all %{} do
-    TestHelpers.create_index()
-
-    @example_project_params
-    |> ArgosAggregation.Project.ProjectParser.parse_project()
-    |> case do
-      {:ok, params} -> params
-    end
-    |> ArgosAggregation.ElasticSearch.Indexer.index()
-
-    TestHelpers.refresh_index()
-
-    on_exit(fn ->
-      TestHelpers.remove_index()
-    end)
-    :ok
-  end
-
-  test "basic search yields result" do
-    %{resp_body: body } =
-      conn(:get, "/search", %{q: "*"})
+  test "invalid size yields 400 status" do
+    response =
+      conn(:get, "/search", %{size: "invalid"})
       |> ArgosAPI.Router.call(%{})
 
-    %{"total" => total} =
-      body
-      |> Poison.decode!()
+    assert response.status == 400
 
-    # 1 project, 2 places
-    assert total == 3
+    response =
+      conn(:get, "/search?size=-1")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 400
+
+    response =
+      conn(:get, "/search?size=10.5")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 400
+  end
+
+  test "invalid from yields 400 status" do
+    response =
+      conn(:get, "/search?from=invalid")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 400
+
+    response =
+      conn(:get, "/search?from=-1")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 400
+
+    response =
+      conn(:get, "/search?from=10.5")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 400
+  end
+
+  test "invalid filters yield 400 status" do
+    %{status: status} =
+      conn(:get, "/search?filter[]=missing_colon")
+      |> ArgosAPI.Router.call(%{})
+
+    assert status == 400
+
+    %{status: status} =
+      conn(:get, "/search?!filter[]=missing_colon")
+      |> ArgosAPI.Router.call(%{})
+
+    assert status == 400
+
+    %{status: status} =
+      conn(:get, "/search?filter=missing_brackets")
+      |> ArgosAPI.Router.call(%{})
+
+    assert status == 400
+
+  end
+
+  describe "elastic search tests" do
+
+    setup do
+      TestHelpers.create_index()
+
+      @example_project_params
+      |> ArgosAggregation.Project.ProjectParser.parse_project()
+      |> case do
+        {:ok, params} -> params
+      end
+      |> ArgosAggregation.ElasticSearch.Indexer.index()
+
+      TestHelpers.refresh_index()
+
+      on_exit(fn ->
+        TestHelpers.remove_index()
+      end)
+      :ok
+    end
+
+    test "basic search yields result" do
+      %{resp_body: body } =
+        conn(:get, "/search", %{q: "*"})
+        |> ArgosAPI.Router.call(%{})
+
+      %{"total" => total} =
+        body
+        |> Poison.decode!()
+
+      # 1 project, 2 places
+      assert total == 3
+    end
   end
 end

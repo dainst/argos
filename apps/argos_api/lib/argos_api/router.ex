@@ -16,6 +16,8 @@ defmodule ArgosAPI.Router do
   plug :fetch_query_params
   plug :dispatch
 
+  alias ArgosAPI.Errors
+
   get "/doc/:id" do
     ArgosAPI.DocumentController.get(conn)
   end
@@ -29,7 +31,7 @@ defmodule ArgosAPI.Router do
   end
 
   match _ do
-    send_resp(conn, 404, Poison.encode!(%{message: "Requested page not found!"}))
+    Errors.send(conn, 404, "Requested page not found!")
   end
 
   def json_response(conn, _opts) do
