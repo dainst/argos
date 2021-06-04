@@ -31,7 +31,8 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
   def run_query(query) do
     "#{@base_url}/_search"
     |> HTTPoison.post(query, [{"Content-Type", "application/json"}])
-    |> handle_result()
+    |> parse_response()
+    |> extract_search_result_from_response()
   end
 
   defp search_field(field_name, term) do
@@ -48,6 +49,10 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
     |> HTTPoison.post(query, @headers)
   end
 
+  defp parse_response({:ok, %HTTPoison.Response{body: body}}) do
+    Poison.decode(body)
+  end
+
   defp extract_doc_from_response({:ok, %{"found" => false}}) do
     {:error, 404}
   end
@@ -58,23 +63,7 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
     error
   end
 
-  defp parse_response({:ok, %HTTPoison.Response{body: body}}) do
-    Poison.decode(body)
-  end
-
-  defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
-    data =
-      body
-      |> Poison.decode()
-      |> parse_search_response()
-    {:ok, data}
-  end
-
-  defp handle_result(error) do
-    error
-  end
-
-  defp parse_search_response({:ok, es_response}) do
+  defp extract_search_result_from_response({:ok, es_response}) do
     results =
       case es_response do
         %{"hits" => %{"hits" => list}} ->
@@ -93,10 +82,13 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
     total =
       es_response["hits"]["total"]["value"]
 
-    %{
-      results: results,
-      filters: filters,
-      total: total
+    {
+      :ok,
+      %{
+        results: results,
+        filters: filters,
+        total: total
+      }
     }
   end
 end
