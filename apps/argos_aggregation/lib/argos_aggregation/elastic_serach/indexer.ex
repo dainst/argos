@@ -1,4 +1,4 @@
-defmodule ArgosAggregation.ElasticSearchIndexer do
+defmodule ArgosAggregation.ElasticSearch.Indexer do
   require Logger
   alias ArgosAggregation.{
     Chronontology, Gazetteer, Thesauri, Project, Bibliography, CoreFields
@@ -31,14 +31,6 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
         error
     end
 
-  end
-
-  def get_doc(doc_id) do
-
-    "#{@base_url}/_doc/#{doc_id}"
-    |> HTTPoison.get()
-    |> parse_response()
-    |> extract_doc_from_response()
   end
 
   defp validate(%{"core_fields" => %{"type" => "place"}} = params) do
@@ -75,14 +67,6 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
     hits
   end
 
-  defp extract_doc_from_response(%{"found" => false}) do
-    {:error, 404}
-  end
-
-  defp extract_doc_from_response(%{"_source" => data}) do
-    {:ok, data}
-  end
-
   defp upsert_change?(%{"result" => result}) do
     case result do
       "updated" -> true
@@ -92,7 +76,7 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
   end
 
   defp update_referencing_data(true, updated_content) do
-    case search_referencing_docs(updated_content) do
+    case ArgosAggregation.ElasticSearch.DataProvider.search_referencing_docs(updated_content) do
       :reference_search_not_implemented ->
         # Logger.debug("Reference search not implemented for #{updated_content.__struct__}. Nothing else gets updated.")
         []
@@ -106,33 +90,6 @@ defmodule ArgosAggregation.ElasticSearchIndexer do
 
   defp update_referencing_data(false, _updated_content) do
     []
-  end
-
-  defp search_referencing_docs(%Gazetteer.Place{} = place) do
-    search_for_subdocument(:spatial_topic_id, place.core_fields.id)
-  end
-  defp search_referencing_docs(%Chronontology.TemporalConcept{} = temporal) do
-    search_for_subdocument(:temporal_topic_id, temporal.core_fields.id)
-  end
-  defp search_referencing_docs(%Thesauri.Concept{} = concept) do
-    search_for_subdocument(:general_topic_id, concept.core_fields.id)
-  end
-  defp search_referencing_docs(_unknown_obj) do
-    :reference_search_not_implemented
-  end
-
-  def search_for_subdocument(doc_type, doc_id) do
-    query = Poison.encode!(%{
-      query: %{
-        query_string: %{
-          query: "#{doc_id}",
-            fields: ["#{doc_type}"]
-          }
-        }
-      }
-    )
-    "#{@base_url}/_search"
-    |> HTTPoison.post(query, @headers)
   end
 
   defp update_reference(%{"_source" => parent }) do

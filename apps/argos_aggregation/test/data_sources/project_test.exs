@@ -9,7 +9,7 @@ defmodule ArgosAggregation.ProjectTest do
     Thesauri,
     Chronontology,
     Project,
-    ElasticSearchIndexer,
+    ElasticSearch.Indexer,
     TestHelpers,
     CoreFields
   }
@@ -174,14 +174,14 @@ defmodule ArgosAggregation.ProjectTest do
     test "updating referenced thesauri concept updates project" do
       ths_data = Thesauri.DataProvider.get_by_id("_ab3a94b2")
 
-      ths_indexing = ElasticSearchIndexer.index(ths_data)
+      ths_indexing = Indexer.index(ths_data)
 
       assert("created" == ths_indexing.upsert_response["result"])
 
       project_indexing =
         @example_project_params
         |> Project.ProjectParser.parse_project()
-        |> ElasticSearchIndexer.index()
+        |> Indexer.index()
 
       assert("created" == project_indexing.upsert_response["result"])
 
@@ -200,7 +200,7 @@ defmodule ArgosAggregation.ProjectTest do
                 old_title ++ [%{"text" => "Test name", "lang" => "de"}]
               end)
           end)
-        |> ElasticSearchIndexer.index()
+        |> Indexer.index()
 
       assert("updated" == ths_indexing.upsert_response["result"])
 
@@ -218,14 +218,14 @@ defmodule ArgosAggregation.ProjectTest do
     test "updating referenced gazetteer place updates bibliographic record" do
       gaz_data = Gazetteer.DataProvider.get_by_id("2072406")
 
-      gaz_indexing = ElasticSearchIndexer.index(gaz_data)
+      gaz_indexing = Indexer.index(gaz_data)
 
       assert("created" == gaz_indexing.upsert_response["result"])
 
       project_indexing =
         @example_project_params
         |> Project.ProjectParser.parse_project()
-        |> ElasticSearchIndexer.index()
+        |> Indexer.index()
 
       assert("created" == project_indexing.upsert_response["result"])
 
@@ -244,7 +244,7 @@ defmodule ArgosAggregation.ProjectTest do
                 old_title ++ [%{"text" => "Test name", "lang" => "de"}]
               end)
           end)
-        |> ElasticSearchIndexer.index()
+        |> Indexer.index()
 
       assert("updated" == gaz_indexing.upsert_response["result"])
 
@@ -261,14 +261,14 @@ defmodule ArgosAggregation.ProjectTest do
     test "updating referenced chronontology data updates bibliographic record" do
       chron_data = Chronontology.DataProvider.get_by_id("mSrGeypeMHjw")
 
-      chron_indexing = ElasticSearchIndexer.index(chron_data)
+      chron_indexing = Indexer.index(chron_data)
 
       assert("created" == chron_indexing.upsert_response["result"])
 
       project_indexing =
         @example_project_params
         |> Project.ProjectParser.parse_project()
-        |> ElasticSearchIndexer.index()
+        |> Indexer.index()
 
       assert("created" == project_indexing.upsert_response["result"])
 
@@ -287,7 +287,7 @@ defmodule ArgosAggregation.ProjectTest do
                 old_title ++ [%{"text" => "Test name", "lang" => "de"}]
               end)
           end)
-        |> ElasticSearchIndexer.index()
+        |> Indexer.index()
 
       assert("updated" == chron_indexing.upsert_response["result"])
 

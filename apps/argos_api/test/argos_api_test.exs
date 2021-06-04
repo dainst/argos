@@ -130,7 +130,7 @@ defmodule ArgosAPITest do
 
     @example_project_params
     |> ArgosAggregation.Project.ProjectParser.parse_project()
-    |> ArgosAggregation.ElasticSearchIndexer.index()
+    |> ArgosAggregation.ElasticSearch.Indexer.index()
 
     TestHelpers.refresh_index()
 

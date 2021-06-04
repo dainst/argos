@@ -5,7 +5,7 @@ defmodule ArgosAggregation.BibliographyTest do
   doctest(ArgosAggregation.Bibliography)
 
   alias ArgosAggregation.{
-    Gazetteer, Thesauri, Bibliography, Bibliography.BibliographicRecord, ElasticSearchIndexer, CoreFields, TestHelpers
+    Gazetteer, Thesauri, Bibliography, Bibliography.BibliographicRecord, ElasticSearch.Indexer, CoreFields, TestHelpers
   }
 
   @zenon_data %{
@@ -170,14 +170,14 @@ defmodule ArgosAggregation.BibliographyTest do
 
       ths_data = Thesauri.DataProvider.get_by_id("_031c59e9")
 
-      ths_indexing = ElasticSearchIndexer.index(ths_data)
+      ths_indexing = Indexer.index(ths_data)
 
       assert("created" == ths_indexing.upsert_response["result"])
 
       biblio_indexing =
         @zenon_data
         |> Bibliography.BibliographyParser.parse_record()
-        |> ElasticSearchIndexer.index()
+        |> Indexer.index()
 
       assert("created" == biblio_indexing.upsert_response["result"])
 
@@ -196,7 +196,7 @@ defmodule ArgosAggregation.BibliographyTest do
                 old_title ++ [%{"text" => "Test name", "lang" => "de"}]
               end)
           end)
-        |> ElasticSearchIndexer.index()
+        |> Indexer.index()
 
       assert("updated" == ths_indexing.upsert_response["result"])
 
@@ -214,14 +214,14 @@ defmodule ArgosAggregation.BibliographyTest do
     test "updating referenced gazetteer place updates bibliographic record" do
       gaz_data = Gazetteer.DataProvider.get_by_id("2338718")
 
-      gaz_indexing = ElasticSearchIndexer.index(gaz_data)
+      gaz_indexing = Indexer.index(gaz_data)
 
       assert("created" == gaz_indexing.upsert_response["result"])
 
       biblio_indexing =
         @zenon_data
         |> Bibliography.BibliographyParser.parse_record()
-        |> ElasticSearchIndexer.index()
+        |> Indexer.index()
 
       assert("created" == biblio_indexing.upsert_response["result"])
 
@@ -240,7 +240,7 @@ defmodule ArgosAggregation.BibliographyTest do
                 old_title ++ [%{"text" => "Test name", "lang" => "de"}]
               end)
           end)
-        |> ElasticSearchIndexer.index()
+        |> Indexer.index()
 
       assert("updated" == gaz_indexing.upsert_response["result"])
 

@@ -63,13 +63,13 @@ defmodule ArgosAggregation.Gazetteer do
     end
 
     defp get_by_id_locally(id) do
-      case ArgosAggregation.ElasticSearchIndexer.get_doc("place_#{id}") do
+      case ArgosAggregation.ElasticSearch.DataProvider.get_doc("place_#{id}") do
         {:error, 404} ->
           case get_by_id_from_source(id) do
             {:error, _} = error->
               error
             place ->
-              ArgosAggregation.ElasticSearchIndexer.index(place)
+              ArgosAggregation.ElasticSearch.Indexer.index(place)
               place
           end
         {:ok, place} ->
@@ -209,7 +209,7 @@ defmodule ArgosAggregation.Gazetteer do
 
   defmodule Harvester do
     use GenServer
-    alias ArgosAggregation.ElasticSearchIndexer
+    alias ArgosAggregation.ElasticSearch.Indexer
 
     @interval Application.get_env(:argos_aggregation, :projects_harvest_interval)
     defp get_timezone() do
@@ -246,12 +246,12 @@ defmodule ArgosAggregation.Gazetteer do
     end
     def run_harvest() do
       DataProvider.get_all()
-      |> Enum.each(&ElasticSearchIndexer.index/1)
+      |> Enum.each(&Indexer.index/1)
     end
 
     def run_harvest(%Date{} = date) do
       DataProvider.get_by_date(date)
-      |> Enum.each(&ElasticSearchIndexer.index/1)
+      |> Enum.each(&Indexer.index/1)
     end
   end
 end

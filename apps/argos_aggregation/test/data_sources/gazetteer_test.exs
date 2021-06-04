@@ -63,7 +63,7 @@ defmodule ArgosAggregation.GazetteerTest do
     test "place can be added to index" do
       place = DataProvider.get_by_id("2048575")
 
-      indexing_response = ArgosAggregation.ElasticSearchIndexer.index(place)
+      indexing_response = ArgosAggregation.ElasticSearch.Indexer.index(place)
 
       assert %{
         upsert_response: %{"_id" => "place_2048575", "result" => "created"}
@@ -85,7 +85,7 @@ defmodule ArgosAggregation.GazetteerTest do
                 old_title ++ [%{"text" => "Test name", "lang" => "de"}]
               end)
           end)
-      |> ArgosAggregation.ElasticSearchIndexer.index()
+      |> ArgosAggregation.ElasticSearch.Indexer.index()
 
       # Now reload both locally and from iDAI.gazetteer.
       {:ok, place_from_index} =
@@ -108,7 +108,7 @@ defmodule ArgosAggregation.GazetteerTest do
 
       TestHelpers.refresh_index()
 
-      assert {:ok, _place_from_index} = ArgosAggregation.ElasticSearchIndexer.get_doc(place.core_fields.id)
+      assert {:ok, _place_from_index} = ArgosAggregation.ElasticSearch.Indexer.get_doc(place.core_fields.id)
     end
   end
 end

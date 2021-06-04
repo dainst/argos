@@ -299,7 +299,7 @@ defmodule ArgosAggregation.Bibliography do
   defmodule Harvester do
 
     use GenServer
-    alias ArgosAggregation.ElasticSearchIndexer
+    alias ArgosAggregation.ElasticSearch.Indexer
 
     @interval Application.get_env(:argos_aggregation, :bibliography_harvest_interval)
     # TODO Noch nicht refactored!
@@ -334,13 +334,13 @@ defmodule ArgosAggregation.Bibliography do
     end
     def run_harvest() do
       DataProvider.get_all()
-      |> Enum.map(&Task.async(fn -> ElasticSearchIndexer.index(&1) end))
+      |> Enum.map(&Task.async(fn -> Indexer.index(&1) end))
       |> Enum.map(&Task.await/1)
     end
 
     def run_harvest(%DateTime{} = datetime) do
       DataProvider.get_by_date(datetime)
-      |> Enum.map(&Task.async(fn -> ElasticSearchIndexer.index(&1) end))
+      |> Enum.map(&Task.async(fn -> Indexer.index(&1) end))
       |> Enum.map(&Task.await/1)
     end
   end

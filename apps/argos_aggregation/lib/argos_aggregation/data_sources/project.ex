@@ -274,7 +274,7 @@ defmodule ArgosAggregation.Project do
 
   defmodule Harvester do
     use GenServer
-    alias ArgosAggregation.ElasticSearchIndexer
+    alias ArgosAggregation.ElasticSearch.Indexer
 
     @interval Application.get_env(:argos_aggregation, :projects_harvest_interval)
     # TODO Noch nicht refactored!
@@ -311,12 +311,12 @@ defmodule ArgosAggregation.Project do
 
     def run_harvest() do
       DataProvider.get_all()
-      |> Enum.each(&ElasticSearchIndexer.index/1)
+      |> Enum.each(&Indexer.index/1)
     end
 
     def run_harvest(%DateTime{} = datetime) do
       DataProvider.get_by_date(datetime)
-      |> Enum.each(&ElasticSearchIndexer.index/1)
+      |> Enum.each(&Indexer.index/1)
     end
   end
 end
