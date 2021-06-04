@@ -208,7 +208,7 @@ defmodule ArgosAPITest do
 
     test "basic search yields result" do
       %{resp_body: body } =
-        conn(:get, "/search", %{q: "*"})
+        conn(:get, "/search?q=*")
         |> ArgosAPI.Router.call(%{})
 
       %{"total" => total} =
@@ -217,6 +217,22 @@ defmodule ArgosAPITest do
 
       # 1 project, 2 places
       assert total == 3
+    end
+
+    test "document is accessable through endpoint" do
+      %{resp_body: body } =
+        conn(:get, "/doc/project_1")
+        |> ArgosAPI.Router.call(%{})
+
+      assert %{"core_fields" => %{"id" => "project_1" }} = Poison.decode!(body)
+    end
+
+    test "invalid document id yields 404" do
+      %{status: status } =
+        conn(:get, "/doc/non_existing")
+        |> ArgosAPI.Router.call(%{})
+
+      assert status == 404
     end
   end
 end
