@@ -70,6 +70,10 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
     {:ok, data}
   end
 
+  defp handle_result(error) do
+    error
+  end
+
   defp parse_search_response({:ok, es_response}) do
     results =
       case es_response do

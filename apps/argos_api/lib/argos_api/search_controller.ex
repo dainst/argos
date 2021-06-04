@@ -14,8 +14,8 @@ defmodule ArgosAPI.SearchController do
     case result do
       {:ok, val} ->
         send_resp(conn, 200, Poison.encode!(val))
-      {:error, val} ->
-        send_resp(conn, 400, Poison.encode!(val))
+      {:error, _} ->
+        send_resp(conn, 500, "Internal error encountered.")
     end
   end
 
