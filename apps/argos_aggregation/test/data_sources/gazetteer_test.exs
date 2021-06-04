@@ -108,7 +108,7 @@ defmodule ArgosAggregation.GazetteerTest do
 
       TestHelpers.refresh_index()
 
-      assert {:ok, _place_from_index} = ArgosAggregation.ElasticSearch.Indexer.get_doc(place.core_fields.id)
+      assert {:ok, _place_from_index} = ArgosAggregation.ElasticSearch.DataProvider.get_doc(place.core_fields.id)
     end
   end
 end
