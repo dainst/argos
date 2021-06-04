@@ -26,36 +26,12 @@ defmodule ArgosAPI.SearchController do
   end
 
   defp build_query(params) do
-    parsed_params =
-      {:ok, %{"q" => Map.get(params, "q", "*")}}
-      |> parse_positive_number(params, "size", "50")
-      |> parse_positive_number(params, "from", "0")
-      |> parse_filters(params, "filter")
-      |> parse_filters(params, "!filter")
-
-    case parsed_params do
-      {:ok, %{"q" => q, "size" => size, "from" => from, "filter" => filters, "!filter" => must_not }} ->
-        {
-        :ok,
-          %{
-          query: %{
-            bool: %{
-              must: %{
-                query_string: %{
-                  query: q
-                }
-              },
-              filter: filters,
-              must_not: must_not
-            }
-          },
-          size: size,
-          from: from,
-          aggs: ArgosAggregation.ElasticSearch.Aggregations.aggregation_definitions()
-        }
-      }
-        error -> error
-    end
+    {:ok, %{"q" => Map.get(params, "q", "*")}}
+    |> parse_positive_number(params, "size", "50")
+    |> parse_positive_number(params, "from", "0")
+    |> parse_filters(params, "filter")
+    |> parse_filters(params, "!filter")
+    |> finalize_query()
   end
 
   defp parse_positive_number({:ok, query}, params, name, default_value) do
@@ -69,7 +45,6 @@ defmodule ArgosAPI.SearchController do
           {:error, "Invalid size parameter '#{params[name]}'."}
       end
   end
-
   defp parse_positive_number({:error, _} = error, _, _, _) do
     error
   end
@@ -97,7 +72,6 @@ defmodule ArgosAPI.SearchController do
           ]
       end
 
-
     parsing_result
     |> Enum.filter(&match?({:error, _}, &1))
     |> List.first()
@@ -106,8 +80,31 @@ defmodule ArgosAPI.SearchController do
       {:error, msg} -> {:error, msg}
     end
   end
-
   defp parse_filters({:error, _} = error, _, _) do
+    error
+  end
+
+  defp finalize_query({:ok, %{"q" => q, "size" => size, "from" => from, "filter" => filters, "!filter" => must_not }}) do
+    query =
+      %{
+        query: %{
+          bool: %{
+            must: %{
+              query_string: %{
+                query: q
+              }
+            },
+            filter: filters,
+            must_not: must_not
+          }
+        },
+        size: size,
+        from: from,
+        aggs: ArgosAggregation.ElasticSearch.Aggregations.aggregation_definitions()
+      }
+    { :ok, query }
+  end
+  defp finalize_query(error) do
     error
   end
 end
