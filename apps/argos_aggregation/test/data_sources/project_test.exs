@@ -153,6 +153,9 @@ defmodule ArgosAggregation.ProjectTest do
         {:ok, record} =
           id
           |> Project.DataProvider.get_by_id()
+          |> case do
+            {:ok, params} -> params
+          end
           |> Project.Project.create()
 
         assert %Project.Project{core_fields: %CoreFields{source_id: ^id}} = record
@@ -166,13 +169,13 @@ defmodule ArgosAggregation.ProjectTest do
       assert Enum.count(records) == 10
 
       records
-      |> Enum.each(fn record ->
+      |> Enum.each(fn {:ok, record} ->
         assert {:ok, %Project.Project{}} = Project.Project.create(record)
       end)
     end
 
     test "updating referenced thesauri concept updates project" do
-      ths_data = Thesauri.DataProvider.get_by_id("_ab3a94b2")
+      {:ok, ths_data} = Thesauri.DataProvider.get_by_id("_ab3a94b2")
 
       ths_indexing = Indexer.index(ths_data)
 
@@ -181,6 +184,9 @@ defmodule ArgosAggregation.ProjectTest do
       project_indexing =
         @example_project_params
         |> Project.ProjectParser.parse_project()
+        |> case do
+          {:ok, project} -> project
+        end
         |> Indexer.index()
 
       assert("created" == project_indexing.upsert_response["result"])
@@ -216,7 +222,7 @@ defmodule ArgosAggregation.ProjectTest do
     end
 
     test "updating referenced gazetteer place updates bibliographic record" do
-      gaz_data = Gazetteer.DataProvider.get_by_id("2072406")
+      {:ok, gaz_data} = Gazetteer.DataProvider.get_by_id("2072406")
 
       gaz_indexing = Indexer.index(gaz_data)
 
@@ -224,7 +230,9 @@ defmodule ArgosAggregation.ProjectTest do
 
       project_indexing =
         @example_project_params
-        |> Project.ProjectParser.parse_project()
+        |> Project.ProjectParser.parse_project()|> case do
+          {:ok, project} -> project
+        end
         |> Indexer.index()
 
       assert("created" == project_indexing.upsert_response["result"])
@@ -259,7 +267,7 @@ defmodule ArgosAggregation.ProjectTest do
     end
 
     test "updating referenced chronontology data updates bibliographic record" do
-      chron_data = Chronontology.DataProvider.get_by_id("mSrGeypeMHjw")
+      {:ok, chron_data} = Chronontology.DataProvider.get_by_id("mSrGeypeMHjw")
 
       chron_indexing = Indexer.index(chron_data)
 
@@ -268,6 +276,9 @@ defmodule ArgosAggregation.ProjectTest do
       project_indexing =
         @example_project_params
         |> Project.ProjectParser.parse_project()
+        |> case do
+          {:ok, project} -> project
+        end
         |> Indexer.index()
 
       assert("created" == project_indexing.upsert_response["result"])

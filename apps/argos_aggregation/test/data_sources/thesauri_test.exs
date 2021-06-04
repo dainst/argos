@@ -18,6 +18,9 @@ defmodule ArgosAggregation.ThesauriTest do
     {:ok, concept} =
       id
       |> DataProvider.get_by_id()
+      |> case do
+        {:ok, params} -> params
+      end
       |> Concept.create()
 
     assert %Concept{core_fields: %CoreFields{source_id: ^id}} = concept

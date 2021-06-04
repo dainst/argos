@@ -48,15 +48,18 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
     |> HTTPoison.post(query, @headers)
   end
 
-  defp extract_doc_from_response(%{"found" => false}) do
+  defp extract_doc_from_response({:ok, %{"found" => false}}) do
     {:error, 404}
   end
-  defp extract_doc_from_response(%{"_source" => data}) do
+  defp extract_doc_from_response({:ok, %{"_source" => data}}) do
     {:ok, data}
+  end
+  defp extract_doc_from_response(error) do
+    error
   end
 
   defp parse_response({:ok, %HTTPoison.Response{body: body}}) do
-    Poison.decode!(body)
+    Poison.decode(body)
   end
 
   defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do

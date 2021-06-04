@@ -17,6 +17,9 @@ defmodule ArgosAggregation.ChronontologyTest do
     {:ok, tc} =
       id
       |> DataProvider.get_by_id()
+      |> case do
+        {:ok, params} -> params
+      end
       |> TemporalConcept.create()
 
     assert %TemporalConcept{core_fields: %CoreFields{source_id: ^id}} = tc

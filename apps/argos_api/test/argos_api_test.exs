@@ -130,6 +130,9 @@ defmodule ArgosAPITest do
 
     @example_project_params
     |> ArgosAggregation.Project.ProjectParser.parse_project()
+    |> case do
+      {:ok, params} -> params
+    end
     |> ArgosAggregation.ElasticSearch.Indexer.index()
 
     TestHelpers.refresh_index()

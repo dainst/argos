@@ -75,12 +75,15 @@ defmodule ArgosAggregation.Thesauri do
         |> SweetXml.parse()
         |> xml_to_labels(id)
 
-      %{
-        "core_fields" => %{
-          "source_id" => id,
-          "type" => "concept",
-          "uri" => "#{@base_url}/#{id}",
-          "title" => labels
+      {
+        :ok,
+        %{
+          "core_fields" => %{
+            "source_id" => id,
+            "type" => "concept",
+            "uri" => "#{@base_url}/#{id}",
+            "title" => labels
+          }
         }
       }
     end

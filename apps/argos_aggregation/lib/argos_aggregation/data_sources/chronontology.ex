@@ -105,10 +105,13 @@ defmodule ArgosAggregation.Chronontology do
         ]
       }
 
-      %{
-        "core_fields" => core_fields,
-        "beginning" => beginning,
-        "ending" => ending
+      {
+        :ok,
+        %{
+          "core_fields" => core_fields,
+          "beginning" => beginning,
+          "ending" => ending
+        }
       }
     end
 

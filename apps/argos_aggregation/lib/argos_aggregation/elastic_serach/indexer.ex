@@ -95,13 +95,21 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
   defp update_reference(%{"_source" => parent }) do
     case parent["core_fields"] do
       %{"type" => "project"} = core_fields ->
-        Project.DataProvider.get_by_id(core_fields["source_id"])
-        |> index()
+        case Project.DataProvider.get_by_id(core_fields["source_id"]) do
+          {:ok, project} ->
+            index(project)
+          error ->
+            error
+        end
       %{"type" => "biblio"} = core_fields ->
-        Bibliography.DataProvider.get_by_id(core_fields["source_id"])
-        |> index()
-      not_implemented ->
-        msg = "Updating reference for type #{not_implemented["type"]} not implemented."
+        case Bibliography.DataProvider.get_by_id(core_fields["source_id"]) do
+          {:ok, biblio} ->
+            index(biblio)
+          error ->
+            error
+        end
+      unhandled_reference ->
+        msg = "Updating reference for type #{unhandled_reference["type"]} not implemented."
         Logger.error(msg)
         {:error, msg}
     end

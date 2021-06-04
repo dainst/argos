@@ -150,7 +150,7 @@ defmodule ArgosAggregation.BibliographyTest do
       assert Enum.count(records) == 10
 
       records
-      |> Enum.each(fn(record) ->
+      |> Enum.each(fn({:ok, record}) ->
         assert {:ok, %BibliographicRecord{}} = BibliographicRecord.create(record)
       end)
     end
@@ -161,6 +161,9 @@ defmodule ArgosAggregation.BibliographyTest do
       {:ok, record } =
         id
         |> Bibliography.DataProvider.get_by_id()
+        |> case do
+          {:ok, params} -> params
+        end
         |> Bibliography.BibliographicRecord.create()
 
         assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
@@ -168,7 +171,7 @@ defmodule ArgosAggregation.BibliographyTest do
 
     test "updating referenced thesauri concept updates bibliographic record" do
 
-      ths_data = Thesauri.DataProvider.get_by_id("_031c59e9")
+      {:ok, ths_data} = Thesauri.DataProvider.get_by_id("_031c59e9")
 
       ths_indexing = Indexer.index(ths_data)
 
@@ -177,6 +180,9 @@ defmodule ArgosAggregation.BibliographyTest do
       biblio_indexing =
         @zenon_data
         |> Bibliography.BibliographyParser.parse_record()
+        |> case do
+          {:ok, params} -> params
+        end
         |> Indexer.index()
 
       assert("created" == biblio_indexing.upsert_response["result"])
@@ -212,7 +218,7 @@ defmodule ArgosAggregation.BibliographyTest do
 
 
     test "updating referenced gazetteer place updates bibliographic record" do
-      gaz_data = Gazetteer.DataProvider.get_by_id("2338718")
+      {:ok, gaz_data} = Gazetteer.DataProvider.get_by_id("2338718")
 
       gaz_indexing = Indexer.index(gaz_data)
 
@@ -221,6 +227,9 @@ defmodule ArgosAggregation.BibliographyTest do
       biblio_indexing =
         @zenon_data
         |> Bibliography.BibliographyParser.parse_record()
+        |> case do
+          {:ok, params} -> params
+        end
         |> Indexer.index()
 
       assert("created" == biblio_indexing.upsert_response["result"])

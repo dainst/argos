@@ -18,6 +18,9 @@ defmodule ArgosAggregation.GazetteerTest do
     {:ok, place} =
       id
       |> DataProvider.get_by_id()
+      |> case do
+        {:ok, params} -> params
+      end
       |> Place.create()
 
     assert %Place{ core_fields: %CoreFields{source_id: ^id}} = place
@@ -31,7 +34,7 @@ defmodule ArgosAggregation.GazetteerTest do
     assert Enum.count(records) == 10
 
     records
-    |> Enum.each(fn(record) ->
+    |> Enum.each(fn({:ok, record}) ->
       assert {:ok, %Place{}} = Place.create(record)
     end)
   end
@@ -44,7 +47,7 @@ defmodule ArgosAggregation.GazetteerTest do
     assert Enum.count(records) == 10
 
     records
-    |> Enum.each(fn(record) ->
+    |> Enum.each(fn({:ok, record}) ->
       assert {:ok, %Place{}} = Place.create(record)
     end)
   end
@@ -61,7 +64,7 @@ defmodule ArgosAggregation.GazetteerTest do
     end
 
     test "place can be added to index" do
-      place = DataProvider.get_by_id("2048575")
+      {:ok, place} = DataProvider.get_by_id("2048575")
 
       indexing_response = ArgosAggregation.ElasticSearch.Indexer.index(place)
 
@@ -75,6 +78,9 @@ defmodule ArgosAggregation.GazetteerTest do
 
       # First, load from gazetteer, manually add another title variant and push to index.
       DataProvider.get_by_id(id)
+      |> case do
+        {:ok, params} -> params
+      end
       |> Map.update!(
           "core_fields",
           fn (old_core) ->
@@ -91,10 +97,16 @@ defmodule ArgosAggregation.GazetteerTest do
       {:ok, place_from_index} =
         id
         |> DataProvider.get_by_id(false)
+        |> case do
+          {:ok, params} -> params
+        end
         |> Place.create()
       {:ok, place_from_gazetteer} =
         id
         |> DataProvider.get_by_id()
+        |> case do
+          {:ok, params} -> params
+        end
         |> Place.create()
 
       # Finally compare the title field length.
@@ -104,6 +116,9 @@ defmodule ArgosAggregation.GazetteerTest do
     test "if place was requested to be loaded locally, but was missing in the index, it is also automatically indexed" do
       {:ok, place } =
         DataProvider.get_by_id("2048575", false)
+        |> case do
+          {:ok, params} -> params
+        end
         |> Place.create()
 
       TestHelpers.refresh_index()

@@ -64,16 +64,16 @@ defmodule ArgosAggregation.Gazetteer do
 
     defp get_by_id_locally(id) do
       case ArgosAggregation.ElasticSearch.DataProvider.get_doc("place_#{id}") do
+        {:ok, _} = place ->
+          place
         {:error, 404} ->
           case get_by_id_from_source(id) do
-            {:error, _} = error->
-              error
-            place ->
+            {:ok, place} = res ->
               ArgosAggregation.ElasticSearch.Indexer.index(place)
-              place
+              res
+            error->
+              error
           end
-        {:ok, place} ->
-           place
       end
     end
 
@@ -146,17 +146,18 @@ defmodule ArgosAggregation.Gazetteer do
 
   defmodule PlaceParser do
     def parse_place(gazetteer_data) do
-
       core_fields = %{
         "type" => "place",
         "source_id" => gazetteer_data["gazId"],
         "uri" => gazetteer_data["@id"],
         "title" => parse_names([gazetteer_data["prefName"]] ++ Map.get(gazetteer_data, "names", []))
       }
-
-      %{
-        "core_fields" => core_fields,
-        "geometry" => parse_geometries_as_geo_json(gazetteer_data["prefLocation"])
+      {
+        :ok,
+        %{
+          "core_fields" => core_fields,
+          "geometry" => parse_geometries_as_geo_json(gazetteer_data["prefLocation"])
+        }
       }
     end
 

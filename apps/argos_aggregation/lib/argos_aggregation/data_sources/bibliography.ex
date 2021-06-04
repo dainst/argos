@@ -210,8 +210,11 @@ defmodule ArgosAggregation.Bibliography do
         "institutions" => parse_institutions(record),
       }
 
-      %{
-        "core_fields" => core_fields
+      {
+        :ok,
+        %{
+          "core_fields" => core_fields
+        }
       }
     end
 
@@ -266,14 +269,14 @@ defmodule ArgosAggregation.Bibliography do
     defp parse_place(data) do
       "https://gazetteer.dainst.org/place/" <> gaz_id = data["uri"]
       case Gazetteer.DataProvider.get_by_id(gaz_id, false) do
+        {:ok, place} ->
+          %{
+            "resource" => place
+          }
         {:error, msg} = error ->
           Logger.error("Received error for #{data["uri"]}:")
           Logger.error(msg)
           error
-        place ->
-          %{
-            "resource" => place
-          }
       end
     end
 
@@ -284,14 +287,14 @@ defmodule ArgosAggregation.Bibliography do
     defp parse_concept(data) do
       "http://thesauri.dainst.org/" <> ths_id = data["uri"]
       case Thesauri.DataProvider.get_by_id(ths_id) do
-        {:error, msg} = error ->
-          Logger.error("Received error for #{data["uri"]}:")
-          Logger.error(msg)
-          error
-        concept ->
+        {:ok, concept} ->
           %{
             "resource" => concept
           }
+        {:error, msg} = _error ->
+          Logger.error("Received error for #{data["uri"]}:")
+          Logger.error(msg)
+          nil
       end
     end
   end
@@ -334,12 +337,34 @@ defmodule ArgosAggregation.Bibliography do
     end
     def run_harvest() do
       DataProvider.get_all()
+      |> Stream.map(fn(val) ->
+        case val do
+          {:ok, data} ->
+            data
+          {:error, msg} ->
+            Logger.error("Error while harvesting:")
+            Logger.error(msg)
+            nil
+        end
+      end)
+      |> Stream.reject(fn(val) -> is_nil(val) end)
       |> Enum.map(&Task.async(fn -> Indexer.index(&1) end))
       |> Enum.map(&Task.await/1)
     end
 
     def run_harvest(%DateTime{} = datetime) do
       DataProvider.get_by_date(datetime)
+      |> Stream.map(fn(val) ->
+        case val do
+          {:ok, data} ->
+            data
+          {:error, msg} ->
+            Logger.error("Error while harvesting:")
+            Logger.error(msg)
+            nil
+        end
+      end)
+      |> Stream.reject(fn(val) -> is_nil(val) end)
       |> Enum.map(&Task.async(fn -> Indexer.index(&1) end))
       |> Enum.map(&Task.await/1)
     end

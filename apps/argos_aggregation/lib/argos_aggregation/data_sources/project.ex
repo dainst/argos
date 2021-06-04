@@ -152,8 +152,11 @@ defmodule ArgosAggregation.Project do
         "organisations" => organisations
       }
 
-      %{
-        "core_fields" => core_fields
+      {
+        :ok,
+        %{
+          "core_fields" => core_fields
+        }
       }
     end
 
@@ -202,31 +205,52 @@ defmodule ArgosAggregation.Project do
         grouped
         |> Map.get("gazetteer", [])
         |> Enum.map(fn res ->
-          %{
-            "topic_context_note" => parse_translations(res["descriptions"]),
-            "resource" => Gazetteer.DataProvider.get_by_id(res["res_id"], false)
-          }
+          case Gazetteer.DataProvider.get_by_id(res["res_id"], false) do
+            {:ok, place} ->
+              %{
+                "topic_context_note" => parse_translations(res["descriptions"]),
+                "resource" => place
+              }
+            {:error, msg} ->
+              Logger.error(msg)
+              nil
+          end
         end)
+        |> Enum.reject(fn(val) -> is_nil(val) end)
 
       general_topics =
         grouped
         |> Map.get("thesaurus", [])
         |> Enum.map(fn res ->
-          %{
-            "topic_context_note" => parse_translations(res["descriptions"]),
-            "resource" => Thesauri.DataProvider.get_by_id(res["res_id"])
-          }
+          case Thesauri.DataProvider.get_by_id(res["res_id"]) do
+            {:ok, concept} ->
+              %{
+                "topic_context_note" => parse_translations(res["descriptions"]),
+                "resource" => concept
+              }
+            {:error, msg} ->
+              Logger.error(msg)
+              nil
+          end
         end)
+        |> Enum.reject(fn(val) -> is_nil(val) end)
 
       temporal_topics =
         grouped
         |> Map.get("chronontology", [])
         |> Enum.map(fn res ->
-          %{
-            "topic_context_note" => parse_translations(res["descriptions"]),
-            "resource" => Chronontology.DataProvider.get_by_id(res["res_id"])
-          }
+          case Chronontology.DataProvider.get_by_id(res["res_id"]) do
+            {:ok, tt} ->
+              %{
+                "topic_context_note" => parse_translations(res["descriptions"]),
+                "resource" => tt
+              }
+            {:error, msg} ->
+              Logger.error(msg)
+              nil
+          end
         end)
+        |> Enum.reject(fn(val) -> is_nil(val) end)
 
       {spatial_topics, general_topics, temporal_topics}
     end
@@ -311,11 +335,33 @@ defmodule ArgosAggregation.Project do
 
     def run_harvest() do
       DataProvider.get_all()
+      |> Stream.map(fn(val) ->
+        case val do
+          {:ok, data} ->
+            data
+          {:error, msg} ->
+            Logger.error("Error while harvesting:")
+            Logger.error(msg)
+            nil
+        end
+      end)
+      |> Stream.reject(fn(val) -> is_nil(val) end)
       |> Enum.each(&Indexer.index/1)
     end
 
     def run_harvest(%DateTime{} = datetime) do
       DataProvider.get_by_date(datetime)
+      |> Stream.map(fn(val) ->
+        case val do
+          {:ok, data} ->
+            data
+          {:error, msg} ->
+            Logger.error("Error while harvesting:")
+            Logger.error(msg)
+            nil
+        end
+      end)
+      |> Stream.reject(fn(val) -> is_nil(val) end)
       |> Enum.each(&Indexer.index/1)
     end
   end
