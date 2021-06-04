@@ -1,9 +1,7 @@
 defmodule ArgosAPI.SearchController do
-
-  @elasticsearch_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
   import Plug.Conn
 
-  alias ArgosAPI.SearchAggregations
+  alias ArgosAggregation.ElasticSearch.DataProvider
 
   def search(conn) do
     query =
@@ -11,10 +9,7 @@ defmodule ArgosAPI.SearchController do
       |> build_query
       |> Poison.encode!
 
-    result =
-      "#{@elasticsearch_url}/_search"
-      |> HTTPoison.post(query, [{"Content-Type", "application/json"}])
-      |> handle_result()
+    result = DataProvider.search(query)
 
     case result do
       {:ok, val} ->
@@ -74,23 +69,8 @@ defmodule ArgosAPI.SearchController do
       },
       size: size,
       from: from,
-      aggs: SearchAggregations.aggregation_definitions()
+      aggs: ArgosAggregation.ElasticSearch.Aggregations.aggregation_definitions()
     }
-  end
-
-  defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
-    data =
-      body
-      |> Poison.decode()
-      |> transform_elasticsearch_response()
-    {:ok, data}
-  end
-
-  defp handle_result({:ok, %HTTPoison.Response{status_code: 400, body: body}}) do
-    {:ok, error} =
-      body
-      |> Poison.decode()
-    {:error, error}
   end
 
   defp parse_filters([]) do
@@ -103,31 +83,5 @@ defmodule ArgosAPI.SearchController do
     |> Enum.map(fn [key, val] ->
       %{"term" => %{key => val}}
     end)
-  end
-
-  defp transform_elasticsearch_response({:ok, es_response}) do
-    results =
-      case es_response do
-        %{"hits" => %{"hits" => list}} ->
-          list
-          |> Enum.map(fn(hit) ->
-            Map.merge(%{"_id" => hit["_id"]}, hit["_source"])
-          end)
-        _ ->
-          []
-      end
-
-    filters =
-      es_response["aggregations"]
-      |> SearchAggregations.reshape_search_result_aggregations()
-
-    total =
-      es_response["hits"]["total"]["value"]
-
-    %{
-      results: results,
-      filters: filters,
-      total: total
-    }
   end
 end

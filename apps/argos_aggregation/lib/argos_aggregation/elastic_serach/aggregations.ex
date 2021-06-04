@@ -1,4 +1,4 @@
-defmodule ArgosAPI.SearchAggregations do
+defmodule ArgosAggregation.ElasticSearch.Aggregations do
   require Logger
 
   def aggregation_definitions() do

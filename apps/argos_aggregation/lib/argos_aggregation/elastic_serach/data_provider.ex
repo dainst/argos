@@ -5,7 +5,7 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
   @headers [{"Content-Type", "application/json"}]
 
   alias ArgosAggregation.{
-    Chronontology, Gazetteer, Thesauri
+    Chronontology, Gazetteer, Thesauri, ElasticSearch.Aggregations
   }
 
   def get_doc(doc_id) do
@@ -28,7 +28,13 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
     :reference_search_not_implemented
   end
 
-  def search_field(field_name, term) do
+  def search(query) do
+    "#{@base_url}/_search"
+      |> HTTPoison.post(query, [{"Content-Type", "application/json"}])
+      |> handle_result()
+  end
+
+  defp search_field(field_name, term) do
     query = Poison.encode!(%{
       query: %{
         query_string: %{
@@ -53,4 +59,37 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
     Poison.decode!(body)
   end
 
+  defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
+    data =
+      body
+      |> Poison.decode()
+      |> parse_search_response()
+    {:ok, data}
+  end
+
+  defp parse_search_response({:ok, es_response}) do
+    results =
+      case es_response do
+        %{"hits" => %{"hits" => list}} ->
+          list
+          |> Enum.map(fn(hit) ->
+            Map.merge(%{"_id" => hit["_id"]}, hit["_source"])
+          end)
+        _ ->
+          []
+      end
+
+    filters =
+      es_response["aggregations"]
+      |> Aggregations.reshape_search_result_aggregations()
+
+    total =
+      es_response["hits"]["total"]["value"]
+
+    %{
+      results: results,
+      filters: filters,
+      total: total
+    }
+  end
 end
