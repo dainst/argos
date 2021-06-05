@@ -14,7 +14,7 @@ defmodule ArgosAggregation.Chronontology do
 
     def changeset(temporal_concept, params \\ %{}) do
       temporal_concept
-      |> cast(params, [:beginning, :ending])
+      |> cast(params, [:beginning])
       |> cast_embed(:core_fields)
       |> validate_required([:core_fields])
     end
@@ -33,7 +33,18 @@ defmodule ArgosAggregation.Chronontology do
     require Logger
 
     def get_all() do
-      []
+      response =
+        HTTPoison.get("#{@base_url}/data/period")
+        |> parse_response()
+
+      case response do
+        {:ok, data} ->
+          for v <- data["results"] do
+            parse_period_data(v)
+          end
+        error ->
+          error
+      end
     end
 
     def get_by_id(id) do
@@ -49,8 +60,19 @@ defmodule ArgosAggregation.Chronontology do
       end
     end
 
-    def get_by_date(%Date{} = _date) do
-      []
+    def get_by_date(%Date{} = date) do
+      response =
+        HTTPoison.get("#{@base_url}/data/period?q=modified.date:[#{Date.to_iso8601(date)}%20TO%20*]&fq=resource.provenance:Chronontology")
+        |> parse_response()
+
+      case response do
+        {:ok, data} ->
+          for v <- data["results"] do
+            parse_period_data(v)
+          end
+        error ->
+          error
+      end
     end
 
     defp parse_response({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
