@@ -28,6 +28,10 @@ Seed project data
 ```bash
 mix seed.projects
 ```
+### Testing
+```bash
+mix test
+```
 
 ### Troubleshooting
 

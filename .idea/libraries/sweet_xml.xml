@@ -1,0 +1,21 @@
+<component name="libraryTable">
+  <library name="sweet_xml" type="mix">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/sweet_xml/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/sweet_xml/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/consolidated" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/sweet_xml/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/consolidated" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/sweet_xml/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/consolidated" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/sweet_xml/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/consolidated" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/sweet_xml/lib" />
+      <root url="file://$PROJECT_DIR$/deps/sweet_xml/lib" />
+      <root url="file://$PROJECT_DIR$/deps/sweet_xml/lib" />
+    </SOURCES>
+  </library>
+</component>
