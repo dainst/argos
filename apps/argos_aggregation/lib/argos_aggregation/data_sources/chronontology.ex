@@ -171,7 +171,7 @@ defmodule ArgosAggregation.Chronontology do
         "description" => [
           %{
             "lang" => NaturalLanguageDetector.get_language_key(data["resource"]["description"]),
-            "text" => data["resource"]["description"]
+            "text" => data["resource"]["description"] || ""
           }
         ]
       }
