@@ -122,7 +122,7 @@ defmodule ArgosAggregation.Chronontology do
     end
 
     defp parse_period_data(data) do
-      # TODO: Es gibt potenziell mehrere timespan, wie damit umgehen?
+      # Zukunft: Es gibt potenziell mehrere timespan, wie damit umgehen?
       beginning =
         case data["resource"]["hasTimespan"] do
           [%{"begin" => %{"at" => at}}] ->
@@ -178,7 +178,7 @@ defmodule ArgosAggregation.Chronontology do
           ""
       end
     end
-    
+
 
     defp parse_names(chronontology_data) do
       chronontology_data
@@ -190,42 +190,6 @@ defmodule ArgosAggregation.Chronontology do
       end)
       |> List.flatten()
     end
-
-    # def fetch!(query, offset, limit) do
-    #   params = %{q: query, size: limit, from: offset}
-
-    #   HTTPoison.get!(base_url(), [], [{:params, params}])
-    #   |> response_unwrap
-    # end
-
-    # def fetch!(query) do
-    #   HTTPoison.get!(base_url(), [], [{:params, %{q: query}}])
-    #   |> response_unwrap
-    # end
-
-    # def fetch_by_id!(%{id: id}) do
-    #   %{"results" => results} = HTTPoison.get!(base_url(), [], [{:params, %{q: id}}]) |> response_unwrap
-    #   results
-    # end
-
-    # def fetch_total!(query) do
-    #   case fetch!(query, 0, 0) do
-    #     %{"total" => total} -> total
-    #     _ -> raise "Unexpected response without a total."
-    #   end
-    # end
-
-    # defp base_url do
-    #   Application.get_env(:argos, :chronontology_url) <> "/period"
-    # end
-
-    # defp response_unwrap(%HTTPoison.Response{status_code: 200, body: body}) do
-    #   Poison.decode!(body)
-    # end
-
-    # defp response_unwrap(%HTTPoison.Response{status_code: code, request: %{url: url}}) do
-    #   raise "Chronontology fetch returned unexpected '#{code}' on GET '#{url}'"
-    # end
   end
 
   defmodule Harvester do
