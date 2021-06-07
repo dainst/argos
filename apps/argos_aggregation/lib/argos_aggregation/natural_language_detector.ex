@@ -33,7 +33,7 @@ defmodule ArgosAggregation.NaturalLanguageDetector do
   end
 
   def get_language_key(_no_string, _) do
-    #Logger.warning("Received a non-string!")
+    Logger.warning("Received a non-string!")
     ""
   end
 

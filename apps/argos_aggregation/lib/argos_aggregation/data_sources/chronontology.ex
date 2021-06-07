@@ -85,22 +85,6 @@ defmodule ArgosAggregation.Chronontology do
           Logger.info("Finished search.")
         end
       )
-
-      # response =
-      #   HTTPoison.get("#{@base_url}/data/period?q=#{query}&size=100&from=#{index*100}")
-      #   |> parse_response()
-
-      # case response do
-      #   {:ok, data} ->
-      #     for v <- data["results"] do
-      #       parse_period_data(v)
-      #     end
-      #     if length(data["results"]) >= 100 do
-      #         get_batches_from(query,index+1)
-      #     end
-      #   error ->
-      #     error
-      # end
     end
 
     defp process_batch_query(params) do
@@ -146,7 +130,7 @@ defmodule ArgosAggregation.Chronontology do
           [%{"begin" => %{"notBefore" => notBefore}}] ->
             notBefore
           _ ->
-            #Logger.warning("Found no begin date for period #{data["resource"]["id"]}")
+            Logger.warning("Found no begin date for period #{data["resource"]["id"]}")
             ""
         end
 
@@ -157,7 +141,7 @@ defmodule ArgosAggregation.Chronontology do
           [%{"end" => %{"notAfter" => notAfter}}] ->
             notAfter
           _ ->
-            #Logger.warning("Found no end date for period #{data["resource"]["id"]}")
+            Logger.warning("Found no end date for period #{data["resource"]["id"]}")
             ""
         end
 
