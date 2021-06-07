@@ -33,7 +33,7 @@ defmodule ArgosAggregation.Chronontology do
     require Logger
 
     def get_all() do
-      get_batches_from("*",0)
+      get_batches(%{})
     end
 
     def get_by_id(id) do
@@ -50,25 +50,78 @@ defmodule ArgosAggregation.Chronontology do
     end
 
     def get_by_date(%Date{} = date) do
-      get_batches_from("modified.date:[#{Date.to_iso8601(date)}%20TO%20*]",0)
+      get_batches(%{"q"=>"modified.date:[#{Date.to_iso8601(date)} TO *]"})
     end
 
-    def get_batches_from(query, index) do
-      response =
-        HTTPoison.get("#{@base_url}/data/period?q=#{query}&size=100&from=#{index*100}")
-        |> parse_response()
+    def get_batches(query_params) do
+      Stream.resource(
+        fn () ->
+          final_params =
+            query_params
+            |> Map.put("from", 0)
+            |> Map.put("size", 100)
 
-      case response do
-        {:ok, data} ->
-          for v <- data["results"] do
-            parse_period_data(v)
+          Logger.info("Running chronontology batch query with for #{@base_url}/data/period?#{URI.encode_query(final_params)}")
+
+          final_params
+        end,
+        fn (params) ->
+          case process_batch_query(params) do
+            {:error, reason} ->
+              Logger.error("Error while processing batch. #{reason}")
+              {:halt, params}
+            [] ->
+              {:halt, params}
+            record_list ->
+              Logger.info("Retrieving from #{params["from"]}.")
+              {
+                record_list,
+                params
+                |> Map.update!("from", fn (old) -> old + 100 end)
+              }
           end
-          if length(data["results"]) >= 100 do
-              get_batches_from(query,index+1)
-          end
-        error ->
-          error
+        end,
+        fn (_params) ->
+          Logger.info("Finished search.")
+        end
+      )
+
+      # response =
+      #   HTTPoison.get("#{@base_url}/data/period?q=#{query}&size=100&from=#{index*100}")
+      #   |> parse_response()
+
+      # case response do
+      #   {:ok, data} ->
+      #     for v <- data["results"] do
+      #       parse_period_data(v)
+      #     end
+      #     if length(data["results"]) >= 100 do
+      #         get_batches_from(query,index+1)
+      #     end
+      #   error ->
+      #     error
+      # end
+    end
+
+    defp process_batch_query(params) do
+      result =
+        params
+        |> get_list()
+
+      case result do
+        {:ok, %{"results" => results}} ->
+          results
+          |> Enum.map(&Task.async(fn -> parse_period_data(&1) end))
+          |> Enum.map(&Task.await(&1, 1000 * 60))
+        {:error, reason} ->
+          {:error, reason}
       end
+    end
+
+    def get_list(params) do
+      "#{@base_url}/data/period?#{URI.encode_query(params)}"
+      |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+      |> parse_response()
     end
 
     defp parse_response({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
@@ -93,7 +146,7 @@ defmodule ArgosAggregation.Chronontology do
           [%{"begin" => %{"notBefore" => notBefore}}] ->
             notBefore
           _ ->
-            Logger.warning("Found no begin date for period #{data["resource"]["id"]}")
+            #Logger.warning("Found no begin date for period #{data["resource"]["id"]}")
             ""
         end
 
@@ -104,7 +157,7 @@ defmodule ArgosAggregation.Chronontology do
           [%{"end" => %{"notAfter" => notAfter}}] ->
             notAfter
           _ ->
-            Logger.warning("Found no end date for period #{data["resource"]["id"]}")
+            #Logger.warning("Found no end date for period #{data["resource"]["id"]}")
             ""
         end
 
