@@ -72,10 +72,10 @@ defmodule ArgosAggregation.Chronontology do
               {:halt, params}
             [] ->
               {:halt, params}
-            record_list ->
+            result_list ->
               Logger.info("Retrieving from #{params["from"]}.")
               {
-                record_list,
+                result_list,
                 params
                 |> Map.update!("from", fn (old) -> old + 100 end)
               }
