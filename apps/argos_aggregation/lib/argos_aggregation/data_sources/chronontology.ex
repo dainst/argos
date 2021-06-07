@@ -14,7 +14,7 @@ defmodule ArgosAggregation.Chronontology do
 
     def changeset(temporal_concept, params \\ %{}) do
       temporal_concept
-      |> cast(params, [:beginning])
+      |> cast(params, [:beginning, :ending])
       |> cast_embed(:core_fields)
       |> validate_required([:core_fields])
     end
@@ -126,9 +126,9 @@ defmodule ArgosAggregation.Chronontology do
       beginning =
         case data["resource"]["hasTimespan"] do
           [%{"begin" => %{"at" => at}}] ->
-            at
+            parse_any_to_numeric(at)
           [%{"begin" => %{"notBefore" => notBefore}}] ->
-            notBefore
+            parse_any_to_numeric(notBefore)
           _ ->
             Logger.warning("Found no begin date for period #{data["resource"]["id"]}")
             ""
@@ -137,9 +137,9 @@ defmodule ArgosAggregation.Chronontology do
       ending =
         case data["resource"]["hasTimespan"] do
           [%{"end" => %{"at" => at}}] ->
-            at
+            parse_any_to_numeric(at)
           [%{"end" => %{"notAfter" => notAfter}}] ->
-            notAfter
+            parse_any_to_numeric(notAfter)
           _ ->
             Logger.warning("Found no end date for period #{data["resource"]["id"]}")
             ""
@@ -169,6 +169,16 @@ defmodule ArgosAggregation.Chronontology do
         }
       }
     end
+
+    def parse_any_to_numeric(string) do
+      case Integer.parse(string) do
+        {_val, _remainder} ->
+          string
+        :error ->
+          ""
+      end
+    end
+    
 
     defp parse_names(chronontology_data) do
       chronontology_data
