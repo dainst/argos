@@ -33,18 +33,7 @@ defmodule ArgosAggregation.Chronontology do
     require Logger
 
     def get_all() do
-      response =
-        HTTPoison.get("#{@base_url}/data/period")
-        |> parse_response()
-
-      case response do
-        {:ok, data} ->
-          for v <- data["results"] do
-            parse_period_data(v)
-          end
-        error ->
-          error
-      end
+      get_batches_from("*",0)
     end
 
     def get_by_id(id) do
@@ -61,14 +50,21 @@ defmodule ArgosAggregation.Chronontology do
     end
 
     def get_by_date(%Date{} = date) do
+      get_batches_from("modified.date:[#{Date.to_iso8601(date)}%20TO%20*]",0)
+    end
+
+    def get_batches_from(query, index) do
       response =
-        HTTPoison.get("#{@base_url}/data/period?q=modified.date:[#{Date.to_iso8601(date)}%20TO%20*]&fq=resource.provenance:Chronontology")
+        HTTPoison.get("#{@base_url}/data/period?q=#{query}&size=100&from=#{index*100}")
         |> parse_response()
 
       case response do
         {:ok, data} ->
           for v <- data["results"] do
             parse_period_data(v)
+          end
+          if length(data["results"]) >= 100 do
+              get_batches_from(query,index+1)
           end
         error ->
           error
