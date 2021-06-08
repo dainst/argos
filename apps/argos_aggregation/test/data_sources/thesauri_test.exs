@@ -26,6 +26,19 @@ defmodule ArgosAggregation.ThesauriTest do
     assert %Concept{core_fields: %CoreFields{source_id: ^id}} = concept
   end
 
+  @tag timeout: :infinity
+  test "get all yields list of concepts" do
+    records =
+      DataProvider.get_all()
+      |> Enum.take(200000)
+
+    assert Enum.count(records) == 10
+    records
+    |> Enum.each(fn({:ok, record}) ->
+      assert {:ok, %Concept{}} = Concept.create(record)
+    end)
+  end
+
   test "get by id with invalid id yields 404" do
     invalid_id = "i-am-non-existant"
 
