@@ -5,7 +5,7 @@ defmodule ArgosAggregation.Application do
 
   use Application
 
-  @elasticsearch_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
+  @elasticsearch_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
   @active_harvesters Application.get_env(:argos_aggregation, :active_harvesters)
 
   require Logger

@@ -10,10 +10,10 @@ import Config
 config :argos_aggregation,
   await_index: false,
   active_harvesters: [
-  ]
+  ],
+  index_name: "argos_testing"
 
 config :argos_api,
-  await_index: false,
-  index_name: "argos_testing"
+  await_index: false
 
 config :logger, level: :info
