@@ -27,3 +27,5 @@ erl_crash.dump
 /tmp
 
 .vscode/launch.json
+apps/argos_aggregation/.elixir_ls/**
+apps/argos_api/.elixir_ls/**

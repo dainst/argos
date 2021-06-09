@@ -30,7 +30,7 @@ defmodule ArgosAggregation.ThesauriTest do
   test "get all yields list of concepts" do
     records =
       DataProvider.get_all()
-      |> Enum.take(200000)
+      |> Enum.take(10)
 
     assert Enum.count(records) == 10
     records

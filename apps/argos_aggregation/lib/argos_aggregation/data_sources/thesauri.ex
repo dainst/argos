@@ -33,10 +33,7 @@ defmodule ArgosAggregation.Thesauri do
     def get_all() do
       "#{@base_url}/hierarchy.rdf?depth=0"
       |> stream_read_hirarchy()
-      |> Stream.flat_map(fn xml ->
-        xpath(xml, ~x"//rdf:Description"l)
-        |> Enum.map(&parse_single_doc(&1))
-      end)
+      |> Stream.map(&parse_single_doc(&1))
     end
 
     defp stream_read_hirarchy(url) do
@@ -52,15 +49,11 @@ defmodule ArgosAggregation.Thesauri do
             |> xpath(~x"//@rdf:about"l)
             |> MapSet.new
             |> MapSet.to_list
-          %{roots: roots, data: xml}
+          roots
         end,
         #next_fun
         fn (root_data) ->
           case root_data do
-            # first case get a map with the first roots and the first xml data
-            %{roots: roots, data: data} ->
-              {[data], roots}
-
             # last case roots are empty
             nil ->
               Logger.info("stopped becaus of nil")
@@ -70,7 +63,7 @@ defmodule ArgosAggregation.Thesauri do
               {:halt, root_data}
             # process roots until all are empty
             roots ->
-              load_next_root_elements(roots)
+              load_next_nodes(roots)
           end
         end,
         #end_fun
@@ -80,36 +73,36 @@ defmodule ArgosAggregation.Thesauri do
       )
     end
 
-    defp load_next_root_elements([ head | tail ]) do
+    defp load_next_nodes([ head | tail ]) do
       # load all childs of next
       {:ok, xml} =
-        "#{head}.rdf?depth=0"
+        "#{head}.rdf"
         |> HTTPoison.get
         |> fetch_response
 
       # extract the new root ids
       new_roots =
         xml
-        |> xpath(~x"//@rdf:about"l)
+        |> xpath(~x"//skos:narrower/@rdf:resource"l)
 
-      broader =
+      # extract current element as list
+      element =
         xml
-        |> xpath(~x"//skos:broader/@rdf:resource"l)
-
+        |> xpath(~x(//rdf:Description[@rdf:about="#{head}"])l)
       # add the root ids to the current ones
       # remove parente nodes preventing circles
       roots =
-        ((new_roots ++ tail) -- broader) -- [head]
-        |> MapSet.new
+        (new_roots ++ tail) -- [head]
+        |> MapSet.new # makes sure values are unique, no double
         |> MapSet.to_list
 
-      {[xml], roots}
+      {element, roots}
     end
 
     defp parse_single_doc(doc) do
       id =
         doc
-        |> SweetXml.xpath(~x"//@rdf:about"s)
+        |> xpath(~x"//@rdf:about"s)
         |> get_resource_id_from_uri()
 
       {:ok, doc} |> assemble_concept(id)
