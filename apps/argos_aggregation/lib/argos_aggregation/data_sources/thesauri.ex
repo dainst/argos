@@ -108,8 +108,8 @@ defmodule ArgosAggregation.Thesauri do
       {:ok, doc} |> assemble_concept(id)
     end
 
-    def get_resource_id_from_uri("#{@base_url}/" <> id ), do: id
-    def get_resource_id_from_uri(error), do: error
+    defp get_resource_id_from_uri("#{@base_url}/" <> id ), do: id
+    defp get_resource_id_from_uri(error), do: error
 
 
     @doc """
@@ -135,16 +135,11 @@ defmodule ArgosAggregation.Thesauri do
     end
     defp fetch_response({:error, error}), do: {:error, error.reason()}
 
-    defp parse_xml({:ok, data}), do: SweetXml.parse(data)
-    defp parse_xml(error), do: error
-
     defp assemble_concept({:ok, xml}, id) do
-      labels =
-          xml
-          |> xml_to_labels(id)
-
       concept =
-         create_field_map(labels, id)
+        xml
+        |> xml_to_labels(id)
+        |> create_field_map(id)
 
       { :ok, concept }
     end
@@ -167,22 +162,12 @@ defmodule ArgosAggregation.Thesauri do
     defp xml_to_labels(xml, id) do
       xml
       |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skos:prefLabel)l)
-      |> Enum.map(fn pref_label ->
-        %{
-          "lang" => xpath(pref_label, ~x(./@xml:lang)s),
-          "text" => xpath(pref_label, ~x(./text(\))s)
-        }
-      end)
+      |> Enum.map(&read_labels(&1))
       |> case do
         [] ->
           xml
           |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skosxl:literalForm)l)
-          |> Enum.map(fn pref_label ->
-            %{
-              "lang" => xpath(pref_label, ~x(./@xml:lang)s),
-              "text" => xpath(pref_label, ~x(./text(\))s)
-            }
-          end)
+          |> Enum.map(&read_labels(&1))
 
         val ->
           val
@@ -196,7 +181,16 @@ defmodule ArgosAggregation.Thesauri do
           val
       end
     end
+
+    defp read_labels (pref_label) do
+      %{
+        "lang" => xpath(pref_label, ~x(./@xml:lang)s),
+        "text" => xpath(pref_label, ~x(./text(\))s)
+      }
+    end
   end
+
+
 
   defmodule Harvester do
     # STUB
