@@ -33,7 +33,11 @@ defmodule ArgosAggregation.Thesauri do
     def get_all() do
       "#{@base_url}/hierarchy.rdf?depth=0"
       |> stream_read_hirarchy()
-      |> Stream.map(&parse_single_doc(&1))
+      |> Stream.flat_map(fn elements ->
+        elements
+        |> xpath(~x"//rdf:Description"l)
+        |> Enum.map(&parse_single_doc(&1))
+      end)
     end
 
     defp stream_read_hirarchy(url) do
@@ -59,10 +63,11 @@ defmodule ArgosAggregation.Thesauri do
               Logger.info("stopped becaus of nil")
               {:halt, root_data}
             [] ->
-              Logger.info("stopped becaus of empty list")
+              Logger.info("stopped because of empty list")
               {:halt, root_data}
             # process roots until all are empty
             roots ->
+              IO.inspect(roots)
               load_next_nodes(roots)
           end
         end,
@@ -73,30 +78,21 @@ defmodule ArgosAggregation.Thesauri do
       )
     end
 
+    defp get_hierarchy_url(id) do
+      "#{@base_url}/hierarchy/#{id}.rdf?dir=down"
+    end
+
     defp load_next_nodes([ head | tail ]) do
-      # load all childs of next
+      # load complet hirarchy of next
+      Logger.info("Load next master branch #{head}")
       {:ok, xml} =
-        "#{head}.rdf"
-        |> HTTPoison.get
+        head
+        |> get_resource_id_from_uri
+        |> get_hierarchy_url
+        |> HTTPoison.get([], [timeout: 50_000, recv_timeout: 50_000])
         |> fetch_response
 
-      # extract the new root ids
-      new_roots =
-        xml
-        |> xpath(~x"//skos:narrower/@rdf:resource"l)
-
-      # extract current element as list
-      element =
-        xml
-        |> xpath(~x(//rdf:Description[@rdf:about="#{head}"])l)
-      # add the root ids to the current ones
-      # remove parente nodes preventing circles
-      roots =
-        (new_roots ++ tail) -- [head]
-        |> MapSet.new # makes sure values are unique, no double
-        |> MapSet.to_list
-
-      {element, roots}
+      {[xml], tail}
     end
 
     defp parse_single_doc(doc) do
@@ -108,8 +104,9 @@ defmodule ArgosAggregation.Thesauri do
       {:ok, doc} |> assemble_concept(id)
     end
 
-    defp get_resource_id_from_uri("#{@base_url}/" <> id ), do: id
-    defp get_resource_id_from_uri(error), do: error
+    def get_resource_id_from_uri("#{@base_url}/" <> id ), do: id
+    def get_resource_id_from_uri(charlist) when is_list(charlist), do: charlist |> to_string |> get_resource_id_from_uri
+    def get_resource_id_from_uri(error), do: {:error, error}
 
 
     @doc """
