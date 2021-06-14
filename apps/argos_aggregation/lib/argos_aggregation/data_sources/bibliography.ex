@@ -286,7 +286,7 @@ defmodule ArgosAggregation.Bibliography do
 
     defp parse_concept(data) do
       "http://thesauri.dainst.org/" <> ths_id = data["uri"]
-      case Thesauri.DataProvider.get_by_id(ths_id) do
+      case Thesauri.DataProvider.get_by_id(ths_id, false) do
         {:ok, concept} ->
           %{
             "resource" => concept

@@ -222,7 +222,7 @@ defmodule ArgosAggregation.Project do
         grouped
         |> Map.get("thesaurus", [])
         |> Enum.map(fn res ->
-          case Thesauri.DataProvider.get_by_id(res["res_id"]) do
+          case Thesauri.DataProvider.get_by_id(res["res_id"], false) do
             {:ok, concept} ->
               %{
                 "topic_context_note" => parse_translations(res["descriptions"]),
