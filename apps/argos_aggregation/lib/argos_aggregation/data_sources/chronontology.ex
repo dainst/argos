@@ -175,14 +175,13 @@ defmodule ArgosAggregation.Chronontology do
         "source_id" => data["resource"]["id"],
         "uri" => "#{@base_url}/period/#{data["resource"]["id"]}",
         "title" => parse_names(data["resource"]["names"]),
-        "description" => if(data["resource"]["description"], do: [
+        "description" => if(data["resource"]["description"]!=nil, do: [
           %{
             "lang" => NaturalLanguageDetector.get_language_key(data["resource"]["description"]),
             "text" => data["resource"]["description"]
           }
         ], else: [])
       }
-
       {
         :ok,
         %{
