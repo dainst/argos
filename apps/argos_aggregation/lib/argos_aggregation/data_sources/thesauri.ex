@@ -89,7 +89,7 @@ defmodule ArgosAggregation.Thesauri do
         head
         |> get_resource_id_from_uri
         |> get_hierarchy_url
-        |> HTTPoison.get([], [timeout: 50_000, recv_timeout: 50_000])
+        |> HTTPoison.get([], [timeout: 50_000, recv_timeout: 50_000]) # assemblage of the trees takes time, preventing timeout
         |> fetch_response
 
       {[xml], tail}
