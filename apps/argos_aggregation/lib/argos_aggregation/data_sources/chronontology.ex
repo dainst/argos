@@ -1,3 +1,5 @@
+require Logger
+
 defmodule ArgosAggregation.Chronontology do
   defmodule TemporalConcept do
     use ArgosAggregation.Schema
@@ -51,6 +53,9 @@ defmodule ArgosAggregation.Chronontology do
 
     def get_by_date(%Date{} = date) do
       get_batches(%{"q"=>"modified.date:[#{Date.to_iso8601(date)} TO *]"})
+    end
+    def get_by_date(%DateTime{} = date) do
+      get_batches(%{"q"=>"modified.date:[#{DateTime.to_iso8601(date)} TO *]"})
     end
 
     def get_batches(query_params) do
@@ -193,98 +198,70 @@ defmodule ArgosAggregation.Chronontology do
   end
 
   defmodule Harvester do
-    # require Logger
-    # @batch_size 100
+    use GenServer
+    alias ArgosAggregation.ElasticSearch.Indexer
 
-    # def harvest!(%Date{} = lastModified) do
-    #   query = build_query_string(lastModified)
+    @interval Application.get_env(:argos_aggregation, :temporal_concepts_harvest_interval)
+    defp get_timezone() do
+      "Etc/UTC"
+    end
 
-    #   total = ChronontologyClient.fetch_total!(query)
-    #   offsets = Enum.filter(0..total, fn i -> rem(i, @batch_size) == 0 end)
+    def init(state) do
+      state = Map.put(state, :last_run, DateTime.now!(get_timezone()))
 
-    #   Enum.map(offsets, &harvest_batch!(query, &1, @batch_size))
-    #   total
-    # end
+      Logger.info("Starting chronontology harvester with an interval of #{@interval}ms.")
 
-    # defp build_query_string(%Date{} = date) do
-    #   date_s = Date.to_iso8601(date)
-    #   "(modified.date:>=#{date_s}) OR (created.date:>=#{date_s})"
-    # end
+      Process.send(self(), :run, [])
+      {:ok, state}
+    end
 
-    # defp harvest_batch!(query, offset, batch_size) do
-    #   ChronontologyClient.fetch!(query, offset, batch_size)
-    #   |> save_resources!
-    # end
+    def start_link(_opts) do
+      GenServer.start_link(__MODULE__, %{})
+    end
 
-    # defp save_resources!(%{"results" => results}) do
-    #   Enum.map(results, &save_resource!(&1))
-    # end
+    def handle_info(:run, state) do # TODO: Übernommen, warum info und nicht cast/call?
 
-    # defp save_resources!(_) do
-    #   raise "Unexpected response without field 'results'"
-    # end
+      now = DateTime.now!(get_timezone())
+      run_harvest(state.last_run)
 
-    # defp save_resource!(%{"resource" => %{"id" => id}} = result) do
-    #   id = "chronontology-#{id}"
-    #   ElasticsearchClient.save!(result["resource"], id)
-    # end
+      state = %{state | last_run: now}
+      schedule_next_harvest()
+      {:noreply, state}
+    end
 
-    # defp save_resource!(_) do
-    #   raise "Unable to save malformed resource."
-    # end
+    defp schedule_next_harvest() do
+      Process.send_after(self(), :run, @interval)
+    end
+    def run_harvest() do
+      DataProvider.get_all()
+      |> Stream.map(fn(val) ->
+        case val do
+          {:ok, data} ->
+            data
+          {:error, msg} ->
+            Logger.error("Error while harvesting:")
+            Logger.error(msg)
+            nil
+        end
+      end)
+      |> Stream.reject(fn(val) -> is_nil(val) end)
+      |> Enum.each(&Indexer.index/1)
+    end
 
-    # def start_link(_opts) do
-    #   GenServer.start_link(__MODULE__, %{})
-    # end
-
-    # def init(state) do
-    #   state = Map.put(state, :last_run, Date.utc_today())
-    #   Process.send(self(), :run, [])
-    #   {:ok, state}
-    # end
-
-    # def handle_info(:run, state) do
-    #   # Schedules a harvesting of chronontology datasets and sets the state.last_run
-    #   # field to the date just before the harvesting started. Note that the chronontology
-    #   # API does only support Date, not time granularity via an the Elasticsearch Range
-    #   # query in a QueryString. This means that modified documents will be picked up by
-    #   # the harvester more than once, if they changed on the date of a harvesting run.
-    #   today = Date.utc_today()
-    #   result = run_harvest(state.last_run)
-
-    #   # A new harvest is scheduled regardless of the status of the last one
-    #   schedule_next_harvest()
-
-    #   # On error, do not update the state.last_run field, so that documents not
-    #   # picked up in one run, might be picket up later.
-    #   case result do
-    #     {:ok, _} -> {:noreply, %{state | last_run: today}}
-    #     {:error, _} -> {:noreply, state}
-    #   end
-    # end
-
-    # def run_harvest(%Date{} = date) do
-    #   # Gets all chronontology documents changed since the provided date and puts them
-    #   # in our index.
-    #   Logger.debug("Starting harvest for documents changed since: #{date}")
-
-    #   try do
-    #     total = ChronontologyHarvester.harvest!(date)
-    #     Logger.debug("Successfully indexd #{total} documents changed since: #{date}")
-    #     {:ok, nil}
-    #   rescue
-    #     e in RuntimeError ->
-    #       Logger.error(e.message)
-    #       {:error, e.message}
-    #   end
-    # end
-
-    # defp schedule_next_harvest() do
-    #   Process.send_after(self(), :run, interval())
-    # end
-
-    # defp interval do
-    #   Application.get_env(:argos, :chronontology_harvest_interval)
-    # end
+    def run_harvest(%DateTime{} = datetime) do
+      DataProvider.get_by_date(datetime)
+      |> Stream.map(fn(val) ->
+        case val do
+          {:ok, data} ->
+            data
+          {:error, msg} ->
+            Logger.error("Error while harvesting:")
+            Logger.error(msg)
+            nil
+        end
+      end)
+      |> Stream.reject(fn(val) -> is_nil(val) end)
+      |> Enum.each(&Indexer.index/1)
+    end
   end
 end

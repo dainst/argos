@@ -22,6 +22,7 @@ config :argos_aggregation,
   bibliography_harvest_interval: 1000 * 60 * 30, # 30 minutes
 
   chronontology_url: "https://chronontology.dainst.org",
+  temporal_concepts_harvest_interval: 1000 * 60 * 30, # 30 minutes
   gazetteer_url: "https://gazetteer.dainst.org",
   thesauri_url: "http://thesauri.dainst.org",
   active_harvesters: [
