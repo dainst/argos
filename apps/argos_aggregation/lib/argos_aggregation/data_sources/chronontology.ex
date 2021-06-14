@@ -175,13 +175,16 @@ defmodule ArgosAggregation.Chronontology do
       }
     end
 
-    def parse_any_to_numeric(string) do
+    def parse_any_to_numeric(string: string) do
       case Integer.parse(string) do
         {_val, _remainder} ->
           string
         :error ->
           ""
       end
+    end
+    def parse_any_to_numeric(_) do
+      ""
     end
 
 
