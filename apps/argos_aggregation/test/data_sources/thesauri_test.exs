@@ -39,6 +39,19 @@ defmodule ArgosAggregation.ThesauriTest do
     end)
   end
 
+  test "get by date yields concept as result" do
+    records  =
+      DataProvider.get_by_date(~D[2021-01-01])
+      |> Enum.take(10)
+
+    assert Enum.count(records) == 10
+
+    records
+    |> Enum.each(fn({:ok, record}) ->
+      assert {:ok, %Concept{}} = Concept.create(record)
+    end)
+  end
+
   test "get by id with invalid id yields 404" do
     invalid_id = "i-am-non-existant"
 
