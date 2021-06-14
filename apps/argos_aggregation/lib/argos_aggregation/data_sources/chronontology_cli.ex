@@ -27,7 +27,7 @@ defmodule ArgosAggregation.ChronontologyCLI do
   end
 
   def handle_arguments({:ok, date, _offset}) do
-    ArgosAggregation.Project.Harvester.run_harvest(date)
+    ArgosAggregation.Chronontology.Harvester.run_harvest(date)
   end
 
   def handle_arguments({:error, reason}) do

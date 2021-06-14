@@ -45,7 +45,9 @@ defmodule Argos.MixProject do
         "run --eval 'ArgosAggregation.ProjectCLI.run()' -- --script"
       ],
       "seed.chronontology": [
-        "run --eval 'ArgosAggregation.ChronontologyCLI.run()' -- --script"
+        "run --eval 'ArgosAggregation.ChronontologyCLI.run(
+          DateTime.utc_now() |> DateTime.add(-60 * 60 * 24 * #{300}) |> DateTime.to_iso8601()
+        )' -- --script"
       ],
       "seed.bibliography": [
         "run --eval 'ArgosAggregation.BibliographyCLI.run(
