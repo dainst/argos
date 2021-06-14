@@ -52,7 +52,7 @@ defmodule ArgosAggregation.GazetteerTest do
     end)
   end
 
-  describe "elastic search tests" do
+  describe "elastic search integration tests" do
 
     setup %{} do
       TestHelpers.create_index()

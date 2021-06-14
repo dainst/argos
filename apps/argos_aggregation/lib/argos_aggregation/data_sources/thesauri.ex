@@ -1,4 +1,6 @@
 defmodule ArgosAggregation.Thesauri do
+  require Logger
+
   defmodule Concept do
     use ArgosAggregation.Schema
 
@@ -157,29 +159,26 @@ defmodule ArgosAggregation.Thesauri do
     end
 
     defp xml_to_labels(xml, id) do
-      xml
-      |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skos:prefLabel)l)
-      |> Enum.map(&read_labels(&1))
-      |> case do
-        [] ->
-          xml
-          |> xpath(~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skosxl:literalForm)l)
-          |> Enum.map(&read_labels(&1))
-
-        val ->
-          val
-      end
-      |> case do
-        [] ->
-          Logger.warning("No labels found for concept #{@base_url}/#{id}.")
-          []
-
-        val ->
-          val
+      case read_path(xml, ~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skos:prefLabel)l) do
+        [] -> xml_to_labels(xml, id, :skosxl)
+        val -> val
       end
     end
 
-    defp read_labels (pref_label) do
+    defp xml_to_labels(xml, id, :skosxl) do
+      case read_path(xml, ~x(//rdf:Description[@rdf:about="#{@base_url}/#{id}"]/skosxl:literalForm)l) do
+        [] -> Logger.warning("No labels found for concept #{@base_url}/#{id}.")
+        val -> val
+      end
+    end
+
+    defp read_path(xml, path) do
+      xml
+      |> xpath(path)
+      |> Enum.map(&read_labels(&1))
+    end
+
+    defp read_labels(pref_label) do
       %{
         "lang" => xpath(pref_label, ~x(./@xml:lang)s),
         "text" => xpath(pref_label, ~x(./text(\))s)
@@ -190,6 +189,51 @@ defmodule ArgosAggregation.Thesauri do
 
 
   defmodule Harvester do
-    # STUB
+    use GenServer
+    alias ArgosAggregation.ElasticSearch.Indexer
+
+    @interval Application.get_env(:argos_aggregation, :projects_harvest_interval)
+    defp get_timezone() do
+      "Etc/UTC"
+    end
+
+    def init(state) do
+      state = Map.put(state, :last_run, DateTime.now!(get_timezone()))
+
+      Logger.info("Starting thesaurus harvester with an interval of #{@interval}ms.")
+
+      Process.send(self(), :run, [])
+      {:ok, state}
+    end
+
+    def start_link(_opts) do
+      GenServer.start_link(__MODULE__, %{})
+    end
+
+    def handle_info(:run, state) do
+      now =
+        DateTime.now!(get_timezone())
+        |> DateTime.to_date()
+
+      run_harvest(state.last_run)
+
+      state = %{state | last_run: now}
+      schedule_next_harvest()
+      {:noreply, state}
+    end
+
+    defp schedule_next_harvest() do
+      Process.send_after(self(), :run, @interval)
+    end
+
+    def run_harvest() do
+      DataProvider.get_all()
+      |> Enum.each(&Indexer.index/1)
+    end
+
+    def run_harvest(%Date{} = date) do
+      DataProvider.get_by_date(date)
+      |> Enum.each(&Indexer.index/1)
+    end
   end
 end
