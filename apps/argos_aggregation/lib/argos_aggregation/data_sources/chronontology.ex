@@ -38,10 +38,6 @@ defmodule ArgosAggregation.Chronontology do
       get_batches(%{})
     end
 
-    @spec get_by_id(any) ::
-            {:error, any}
-            | {:ok,
-               %{optional(<<_::48, _::_*8>>) => binary | %{optional(<<_::24, _::_*8>>) => any}}}
     def get_by_id(id, force_reload \\ true) do
       case force_reload do
         true ->
@@ -69,7 +65,7 @@ defmodule ArgosAggregation.Chronontology do
         {:error, 404} ->
           get_by_id_from_source(id)
         {:ok, tc} ->
-          tc
+          {:ok, tc}
       end
      end
 
@@ -153,9 +149,9 @@ defmodule ArgosAggregation.Chronontology do
       beginning =
         case data["resource"]["hasTimespan"] do
           [%{"begin" => %{"at" => at}}] ->
-            parse_any_to_numeric(at)
+            parse_any_to_numeric_string(at)
           [%{"begin" => %{"notBefore" => notBefore}}] ->
-            parse_any_to_numeric(notBefore)
+            parse_any_to_numeric_string(notBefore)
           _ ->
             Logger.warning("Found no begin date for period #{data["resource"]["id"]}")
             ""
@@ -164,9 +160,9 @@ defmodule ArgosAggregation.Chronontology do
       ending =
         case data["resource"]["hasTimespan"] do
           [%{"end" => %{"at" => at}}] ->
-            parse_any_to_numeric(at)
+            parse_any_to_numeric_string(at)
           [%{"end" => %{"notAfter" => notAfter}}] ->
-            parse_any_to_numeric(notAfter)
+            parse_any_to_numeric_string(notAfter)
           _ ->
             Logger.warning("Found no end date for period #{data["resource"]["id"]}")
             ""
@@ -179,12 +175,12 @@ defmodule ArgosAggregation.Chronontology do
         "source_id" => data["resource"]["id"],
         "uri" => "#{@base_url}/period/#{data["resource"]["id"]}",
         "title" => parse_names(data["resource"]["names"]),
-        "description" => [
+        "description" => if(data["resource"]["description"], do: [
           %{
             "lang" => NaturalLanguageDetector.get_language_key(data["resource"]["description"]),
-            "text" => data["resource"]["description"] || ""
+            "text" => data["resource"]["description"]
           }
-        ]
+        ], else: [])
       }
 
       {
@@ -197,7 +193,7 @@ defmodule ArgosAggregation.Chronontology do
       }
     end
 
-    def parse_any_to_numeric(string: string) do
+    def parse_any_to_numeric_string(string) when is_bitstring(string) do
       case Integer.parse(string) do
         {_val, _remainder} ->
           string
@@ -205,10 +201,10 @@ defmodule ArgosAggregation.Chronontology do
           ""
       end
     end
-    def parse_any_to_numeric(_) do
+
+    def parse_any_to_numeric_string(_string) do
       ""
     end
-
 
     defp parse_names(chronontology_data) do
       chronontology_data
