@@ -38,7 +38,20 @@ defmodule ArgosAggregation.Chronontology do
       get_batches(%{})
     end
 
-    def get_by_id(id) do
+    @spec get_by_id(any) ::
+            {:error, any}
+            | {:ok,
+               %{optional(<<_::48, _::_*8>>) => binary | %{optional(<<_::24, _::_*8>>) => any}}}
+    def get_by_id(id, force_reload \\ true) do
+      case force_reload do
+        true ->
+          get_by_id_from_source(id)
+        false ->
+          get_by_id_locally(id)
+      end
+    end
+
+    defp get_by_id_from_source(id) do
       response =
         HTTPoison.get("#{@base_url}/data/period/#{id}")
         |> parse_response()
@@ -50,6 +63,15 @@ defmodule ArgosAggregation.Chronontology do
           error
       end
     end
+
+    defp get_by_id_locally(id) do
+      case ArgosAggregation.ElasticSearch.DataProvider.get_doc("temporal_concept_#{id}") do
+        {:error, 404} ->
+          get_by_id_from_source(id)
+        {:ok, tc} ->
+          tc
+      end
+     end
 
     def get_by_date(%Date{} = date) do
       get_batches(%{"q"=>"modified.date:[#{Date.to_iso8601(date)} TO *]"})
