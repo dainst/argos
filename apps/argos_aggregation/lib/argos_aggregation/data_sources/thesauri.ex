@@ -61,7 +61,6 @@ defmodule ArgosAggregation.Thesauri do
     end
 
     defp load_next_page(page_url) do
-      IO.inspect(page_url)
       {:ok, xml} =
         page_url
         |> read_from_url
@@ -149,7 +148,6 @@ defmodule ArgosAggregation.Thesauri do
       response =
         doc
         |> xpath(~x"//sdc:link/@rdf:resource")
-        |> IO.inspect
         |> get_resource_id_from_uri()
       case response do
         {:ok, id} -> doc |> assemble_concept(id)
