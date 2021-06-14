@@ -215,8 +215,8 @@ defmodule ArgosAPITest do
         body
         |> Poison.decode!()
 
-      # 1 project, 2 places
-      assert total == 3
+      # 1 project, 2 places, 1 concept
+      assert total == 4
     end
 
     test "document is accessable through endpoint" do
