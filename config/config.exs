@@ -9,12 +9,11 @@ import Config
 
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
-config :argos_api,
+config :argos_aggregation,
   elasticsearch_mapping_path: "priv/elasticsearch-mapping.json",
   elasticsearch_url: "http://localhost:9200",
-  index_name: "argos"
+  index_name: "argos",
 
-config :argos_aggregation,
   projects_url: "http://projects.dainst.org",
   projects_harvest_interval: 1000 * 60 * 30, # 30 minutes
 
