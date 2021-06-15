@@ -39,7 +39,16 @@ defmodule ArgosAggregation.Thesauri do
       []
     end
 
-    def get_by_id(id) do
+    def get_by_id(id, force_reload \\ true) do
+      case force_reload do
+        true ->
+          get_by_id_from_source(id)
+        false ->
+          get_by_id_locally(id)
+      end
+    end
+
+    defp get_by_id_from_source(id) do
       response =
         "#{@base_url}/#{id}.rdf"
         |> HTTPoison.get()
@@ -50,6 +59,21 @@ defmodule ArgosAggregation.Thesauri do
           parse_concept_data(data, id)
         error ->
           error
+      end
+    end
+
+    defp get_by_id_locally(id) do
+      case ArgosAggregation.ElasticSearch.DataProvider.get_doc("concept_#{id}") do
+        {:ok, _} = concept ->
+          concept
+        {:error, 404} ->
+          case get_by_id_from_source(id) do
+            {:ok, concept} = res ->
+              ArgosAggregation.ElasticSearch.Indexer.index(concept)
+              res
+            error->
+              error
+          end
       end
     end
 
