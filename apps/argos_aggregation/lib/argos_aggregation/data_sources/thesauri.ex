@@ -25,12 +25,55 @@ defmodule ArgosAggregation.Thesauri do
     end
   end
 
-  defmodule DataProvider do
+
+  defmodule DataSourceClient do
     @base_url Application.get_env(:argos_aggregation, :thesauri_url)
 
+    def request_by_date(%Date{} = date) do
+       read_from_url("#{@base_url}/search.rdf?q=&change_note_date_from=#{Date.to_iso8601(date)}")
+    end
+
+    def request_root_level() do
+      "#{@base_url}/hierarchy.rdf?depth=0"
+      |> read_from_url()
+    end
+
+    def request_node_hierarchy(id) do
+      "#{@base_url}/hierarchy/#{id}.rdf?dir=down"
+      |> read_from_url([timeout: 50_000, recv_timeout: 50_000])
+    end
+
+    def request_single_node(id) do
+      "#{@base_url}/#{id}.rdf"
+      |> read_from_url()
+    end
+
+    def read_from_url(url) do
+      url
+      |> HTTPoison.get
+      |> fetch_response
+    end
+
+    def read_from_url(url, options) when is_list(options) do
+      url
+      |> HTTPoison.get([], options)
+      |> fetch_response
+    end
+
+    defp fetch_response({:ok, %{status_code: 200, body: body}}), do: {:ok, body}
+    defp fetch_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
+      {:error, "Received unhandled status code #{code} for #{req.url}."}
+    end
+    defp fetch_response({:error, error}), do: {:error, error.reason()}
+
+  end
+
+
+  defmodule DataProvider do
     import SweetXml
     require Logger
 
+    @base_url Application.get_env(:argos_aggregation, :thesauri_url)
 
     def get_by_date(%Date{} = date) do
       date
@@ -41,7 +84,7 @@ defmodule ArgosAggregation.Thesauri do
     defp stream_pages (date) do
       Stream.resource(
         fn ->
-          case read_from_url("#{@base_url}/search.rdf?q=&change_note_date_from=#{Date.to_iso8601(date)}") do
+          case DataSourceClient.request_by_date(date) do
             {:ok, xml} -> xpath(xml, ~x(//sdc:first/@rdf:resource))
             {:error, _xml} -> :halt
           end
@@ -63,7 +106,7 @@ defmodule ArgosAggregation.Thesauri do
     defp load_next_page(page_url) do
       {:ok, xml} =
         page_url
-        |> read_from_url
+        |> DataSourceClient.read_from_url
 
       with next_page <- xpath(xml, ~x(//sdc:next/@rdf:resource)o), #load optional, nil if not exists
           descr_list <- xpath(xml, ~x(//rdf:Description[descendant::sdc:link])l),
@@ -72,8 +115,8 @@ defmodule ArgosAggregation.Thesauri do
     end
 
     def get_all() do
-      "#{@base_url}/hierarchy.rdf?depth=0"
-      |> stream_read_hirarchy()
+
+      stream_read_hirarchy()
       |> Stream.flat_map(fn elements ->
         elements
         |> xpath(~x"//rdf:Description"l)
@@ -81,13 +124,13 @@ defmodule ArgosAggregation.Thesauri do
       end)
     end
 
-    defp stream_read_hirarchy(url) do
-      Logger.info("Start reading #{url}")
+    defp stream_read_hirarchy() do
+
       Stream.resource(
         fn ->
+          Logger.info("Start reading root level")
           {:ok, xml} =
-            HTTPoison.get( url )
-            |> fetch_response
+            DataSourceClient.request_root_level()
 
           roots =
             xml
@@ -118,20 +161,13 @@ defmodule ArgosAggregation.Thesauri do
       )
     end
 
-    defp get_hierarchy_url({:ok, id}) do
-      "#{@base_url}/hierarchy/#{id}.rdf?dir=down"
-    end
-
     defp load_next_nodes([ head | tail ]) do
       # load complet hirarchy of next
       Logger.info("Load next master branch #{head}")
       {:ok, xml} =
-        head
-        |> get_resource_id_from_uri
-        |> get_hierarchy_url
-        |> HTTPoison.get([], [timeout: 50_000, recv_timeout: 50_000]) # assemblage of the trees takes time, preventing timeout
-        |> fetch_response
-
+        with {:ok, id } <- get_resource_id_from_uri(head) do
+          DataSourceClient.request_node_hierarchy(id)
+      end
       {[xml], tail}
     end
 
@@ -171,9 +207,7 @@ defmodule ArgosAggregation.Thesauri do
     - {:error, response} for all HTTP responses besides status 200.
     """
     def get_by_id(id) do
-       with {:ok, xml} <-
-          "#{@base_url}/#{id}.rdf"
-          |> read_from_url
+       with {:ok, xml} <- DataSourceClient.request_single_node(id)
            do
             xml
             |> xpath(~x(rdf:Description[@rdf:about="#{@base_url}/#{id}"]))
@@ -182,18 +216,6 @@ defmodule ArgosAggregation.Thesauri do
             error -> error
         end
     end
-
-    defp read_from_url(url) do
-      url
-      |> HTTPoison.get
-      |> fetch_response
-    end
-
-    defp fetch_response({:ok, %{status_code: 200, body: body}}), do: {:ok, body}
-    defp fetch_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
-      {:error, "Received unhandled status code #{code} for #{req.url}."}
-    end
-    defp fetch_response({:error, error}), do: {:error, error.reason()}
 
     defp assemble_concept(xml, id) do
       concept =

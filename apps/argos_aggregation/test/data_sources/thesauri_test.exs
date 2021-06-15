@@ -52,6 +52,17 @@ defmodule ArgosAggregation.ThesauriTest do
     end)
   end
 
+  test "get by tomorrow yields empty list" do
+    records  =
+      Date.utc_today()
+      |> Date.add(1)
+      |> DataProvider.get_by_date()
+      |> Enum.to_list()
+
+    assert Enum.count(records) == 0
+
+  end
+
   test "get by id with invalid id yields 404" do
     invalid_id = "i-am-non-existant"
 
