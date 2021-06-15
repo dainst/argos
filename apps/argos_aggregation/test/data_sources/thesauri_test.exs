@@ -64,7 +64,7 @@ defmodule ArgosAggregation.ThesauriTest do
     test "concept can be reloaded locally" do
       id = "_b7707545"
 
-      # First, load from gazetteer, manually add another title variant and push to index.
+      # First, load from Thesauri, manually add another title variant and push to index.
       DataProvider.get_by_id(id)
       |> case do
         {:ok, params} -> params
@@ -81,7 +81,7 @@ defmodule ArgosAggregation.ThesauriTest do
           end)
       |> ArgosAggregation.ElasticSearch.Indexer.index()
 
-      # Now reload both locally and from iDAI.gazetteer.
+      # Now reload both locally and from thesauri
       {:ok, concept_from_index} =
         id
         |> DataProvider.get_by_id(false)
@@ -89,7 +89,7 @@ defmodule ArgosAggregation.ThesauriTest do
           {:ok, params} -> params
         end
         |> Concept.create()
-      {:ok, concept_from_gazetteer} =
+      {:ok, concept_from_thesauri} =
         id
         |> DataProvider.get_by_id()
         |> case do
@@ -98,7 +98,7 @@ defmodule ArgosAggregation.ThesauriTest do
         |> Concept.create()
 
       # Finally compare the title field length.
-      assert length(concept_from_index.core_fields.title) - 1 == length(concept_from_gazetteer.core_fields.title)
+      assert length(concept_from_index.core_fields.title) - 1 == length(concept_from_thesauri.core_fields.title)
     end
 
     test "if concept was requested to be loaded locally, but was missing in the index, it is also automatically indexed" do
