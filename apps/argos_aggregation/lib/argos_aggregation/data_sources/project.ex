@@ -239,7 +239,7 @@ defmodule ArgosAggregation.Project do
         grouped
         |> Map.get("chronontology", [])
         |> Enum.map(fn res ->
-          case Chronontology.DataProvider.get_by_id(res["res_id"]) do
+          case Chronontology.DataProvider.get_by_id(res["res_id"], false) do
             {:ok, tt} ->
               %{
                 "topic_context_note" => parse_translations(res["descriptions"]),
