@@ -27,33 +27,73 @@ defmodule ArgosAggregation.Thesauri do
 
 
   defmodule DataSourceClient do
+    @doc """
+    returns all changed concepts since the given date
+    """
+    @callback request_by_date(date :: %Date{}) :: {:ok, xml :: String.t} | {:error, String.t}
+
+    @doc """
+    Returns the rdf xml structur of all root nodes i.e. hierarchy.rdf depth=0
+    """
+    @callback request_root_level() :: {:ok, xml :: String.t} | {:error, String.t}
+
+    @doc """
+    Returns the complete downwards tree hierarchy of the given node id
+    """
+    @callback request_node_hierarchy(id :: String.t) :: {:ok, xml :: String.t} | {:error, String.t}
+
+    @doc """
+    Returns just the rdf document of the given id
+    """
+    @callback request_single_node(id :: String.t) :: {:ok, xml :: String.t} | {:error, String.t}
+
+    @doc """
+    Calls the given url and returns whatever comes in the response
+    """
+    @callback read_from_url(url :: String.t) :: {:ok, xml :: String.t} | {:error, String.t}
+
+    @doc """
+    same as read_from_url but with the possibility to add some options to the reuqest
+    """
+    @callback read_from_url(url :: String.t, options :: List.t) :: {:ok, xml :: String.t} | {:error, String.t}
+  end
+
+  defmodule DataSourceClient.Http do
+    @behaviour DataSourceClient
+
     @base_url Application.get_env(:argos_aggregation, :thesauri_url)
 
+    @impl DataSourceClient
     def request_by_date(%Date{} = date) do
        read_from_url("#{@base_url}/search.rdf?q=&change_note_date_from=#{Date.to_iso8601(date)}")
     end
 
+    @impl DataSourceClient
     def request_root_level() do
       "#{@base_url}/hierarchy.rdf?depth=0"
       |> read_from_url()
     end
 
+    @impl DataSourceClient
     def request_node_hierarchy(id) do
       "#{@base_url}/hierarchy/#{id}.rdf?dir=down"
       |> read_from_url([timeout: 50_000, recv_timeout: 50_000])
     end
 
+    @impl DataSourceClient
     def request_single_node(id) do
       "#{@base_url}/#{id}.rdf"
       |> read_from_url()
     end
 
+    @impl DataSourceClient
     def read_from_url(url) do
       url
       |> HTTPoison.get
       |> fetch_response
     end
 
+    @impl DataSourceClient
     def read_from_url(url, options) when is_list(options) do
       url
       |> HTTPoison.get([], options)
@@ -75,24 +115,32 @@ defmodule ArgosAggregation.Thesauri do
 
     @base_url Application.get_env(:argos_aggregation, :thesauri_url)
 
-    def get_by_date(%Date{} = date) do
+    def get_by_date(%Date{} = date, client \\ DataSourceClient.Http) do
       date
-      |> stream_pages
-      |> Stream.map(&parse_single_doc(&1, :search))
+      |> stream_pages(client)
+      |> Stream.map(fn element ->
+        case element do
+          {:error, _err} -> element
+          _ -> parse_single_doc(element, :search)
+        end
+      end)
     end
 
-    defp stream_pages (date) do
+    defp stream_pages(date, client) do
       Stream.resource(
         fn ->
-          case DataSourceClient.request_by_date(date) do
-            {:ok, xml} -> xpath(xml, ~x(//sdc:first/@rdf:resource))
-            {:error, _xml} -> :halt
+          with {:ok, xml} <- client.request_by_date(date),
+            {:ok, xml} <- check_validity(xml)
+           do
+            xpath(xml, ~x(//sdc:first/@rdf:resource))
+           else
+            error -> {[error], nil}
           end
         end,
         fn page_url ->
           case page_url do
             nil -> {:halt, page_url}
-            page_url -> load_next_page(page_url)
+            page_url -> load_next_page(page_url, client)
           end
         end,
         fn _val ->
@@ -103,45 +151,55 @@ defmodule ArgosAggregation.Thesauri do
 
     end
 
-    defp load_next_page(page_url) do
-      {:ok, xml} =
-        page_url
-        |> DataSourceClient.read_from_url
+    defp load_next_page(page_url, client) do
 
-      with next_page <- xpath(xml, ~x(//sdc:next/@rdf:resource)o), #load optional, nil if not exists
-          descr_list <- xpath(xml, ~x(//rdf:Description[descendant::sdc:link])l),
-      do: {descr_list, next_page}
+      with {:ok, xml} <- client.read_from_url(page_url),
+          {:ok, xml} <- check_validity(xml),
+          next_page <- xpath(xml, ~x(//sdc:next/@rdf:resource)o), #load optional, nil if not exists
+          descr_list <- xpath(xml, ~x(//rdf:Description[descendant::sdc:link])l)
+      do
+        {descr_list, next_page}
+      else
+        error -> {[error], nil}
+      end
 
     end
 
-    def get_all() do
+    def get_all(client \\ DataSourceClient.Http) do
 
-      stream_read_hirarchy()
+      stream_read_hirarchy(client)
       |> Stream.flat_map(fn elements ->
-        elements
-        |> xpath(~x"//rdf:Description"l)
-        |> Enum.map(&parse_single_doc(&1))
+        case elements do
+          {:error, error} -> [elements]
+          _ ->
+            elements
+            |> xpath(~x"//rdf:Description"l)
+            |> Enum.map(&parse_single_doc(&1))
+        end
       end)
     end
 
-    defp stream_read_hirarchy() do
+    defp stream_read_hirarchy(client) do
 
       Stream.resource(
         fn ->
           Logger.info("Start reading root level")
-          {:ok, xml} =
-            DataSourceClient.request_root_level()
-
-          roots =
-            xml
-            |> xpath(~x"//@rdf:about"l)
-            |> MapSet.new
-            |> MapSet.to_list
-          roots
+            with {:ok, xml} <- client.request_root_level(),
+            {:ok, xml} <- check_validity(xml) do
+              xml
+              |> xpath(~x"//@rdf:about"l)
+              |> MapSet.new
+              |> MapSet.to_list
+            else
+              error -> error
+            end
         end,
         #next_fun
         fn (root_data) ->
           case root_data do
+            {:error, error} ->
+              Logger.error(error)
+              {[{:error, error}], nil}
             # last case roots are empty
             nil ->
               Logger.info("stopped becaus of nil")
@@ -151,7 +209,7 @@ defmodule ArgosAggregation.Thesauri do
               {:halt, root_data}
             # process roots until all are empty
             roots ->
-              load_next_nodes(roots)
+              load_next_nodes(roots, client)
           end
         end,
         #end_fun
@@ -161,14 +219,15 @@ defmodule ArgosAggregation.Thesauri do
       )
     end
 
-    defp load_next_nodes([ head | tail ]) do
+    defp load_next_nodes([ head | tail ], client) do
       # load complet hirarchy of next
       Logger.info("Load next master branch #{head}")
-      {:ok, xml} =
-        with {:ok, id } <- get_resource_id_from_uri(head) do
-          DataSourceClient.request_node_hierarchy(id)
+      with {:ok, id } <- get_resource_id_from_uri(head),
+        {:ok, xml} <- client.request_node_hierarchy(id),
+        {:ok, xml} <- check_validity(xml) do
+          {[xml], tail}
       end
-      {[xml], tail}
+
     end
 
     defp parse_single_doc(doc) do
@@ -195,6 +254,7 @@ defmodule ArgosAggregation.Thesauri do
 
 
     def get_resource_id_from_uri("#{@base_url}/search.rdf" <> _), do: {:error, :search} #wrong url
+    def get_resource_id_from_uri("#{@base_url}/hierarchy/" <> id ), do: {:ok, id}
     def get_resource_id_from_uri("#{@base_url}/" <> id ), do: {:ok, id}
     def get_resource_id_from_uri(charlist) when is_list(charlist), do: charlist |> to_string |> get_resource_id_from_uri
     def get_resource_id_from_uri(error), do: {:error, error}
@@ -206,15 +266,25 @@ defmodule ArgosAggregation.Thesauri do
     - {:ok, xml_struct} on success, where xml_struct is the RDF XML parsed by SweetXML
     - {:error, response} for all HTTP responses besides status 200.
     """
-    def get_by_id(id) do
-       with {:ok, xml} <- DataSourceClient.request_single_node(id)
-           do
+    def get_by_id(id, client \\ DataSourceClient.Http) do
+        with {:ok, xml} <- client.request_single_node(id),
+          {:ok, xml} <- check_validity(xml)
+          do
             xml
             |> xpath(~x(rdf:Description[@rdf:about="#{@base_url}/#{id}"]))
             |> assemble_concept(id)
           else
             error -> error
         end
+    end
+
+    defp check_validity(xml) do
+      try do
+       doc = xml |> parse()
+       {:ok, doc}
+      catch
+        :exit, _ -> {:error, "Malformed xml document"}
+      end
     end
 
     defp assemble_concept(xml, id) do
