@@ -12,6 +12,8 @@ defmodule ArgosAggregation.ThesauriTest do
   }
 
   alias ArgosAggregation.CoreFields
+  alias ArgosAggregation.TestHelpers
+
 
   defmodule DataSourceClient.TestEmptyReturns do
     @behaviour DataSourceClient
@@ -40,7 +42,7 @@ defmodule ArgosAggregation.ThesauriTest do
   test "get by id but get an empty return" do
     id = "_b7707545"
 
-    assert {:error, "Malformed xml document"} = DataProvider.get_by_id(id, DataSourceClient.TestEmptyReturns)
+    assert {:error, "Malformed xml document"} = DataProvider.get_by_id(id, true, %{remote: DataSourceClient.TestEmptyReturns})
   end
 
   test "get by id yields concept with requested id" do
@@ -110,5 +112,81 @@ defmodule ArgosAggregation.ThesauriTest do
       "Received unhandled status code 404 for http://thesauri.dainst.org/#{invalid_id}.rdf."
     }
     assert expected_error == error
+  end
+
+  describe "elastic search integration tests" do
+
+    setup %{} do
+      TestHelpers.create_index()
+
+      on_exit(fn ->
+        TestHelpers.remove_index()
+      end)
+      :ok
+    end
+
+    test "concept can be added to index" do
+      {:ok, concept} = DataProvider.get_by_id("_b7707545")
+
+      indexing_response = ArgosAggregation.ElasticSearch.Indexer.index(concept)
+
+      assert %{
+        upsert_response: %{"_id" => "concept__b7707545", "result" => "created"}
+      } = indexing_response
+    end
+
+    test "concept can be reloaded locally" do
+      id = "_b7707545"
+
+      # First, load from concept, manually add another label variant and push to index.
+      case DataProvider.get_by_id(id) do
+        {:ok, params} ->
+          params
+          |> Map.update!(
+            "core_fields",
+            fn (old_core) ->
+              Map.update!(
+                old_core,
+                "title",
+                fn (old_title) ->
+                  old_title ++ [%{"text" => "Test name", "lang" => "mz"}]
+                end)
+            end)
+          |> ArgosAggregation.ElasticSearch.Indexer.index()
+      end
+
+
+      # Now reload both locally and from iDAI.gazetteer.
+      {:ok, concept_from_index} =
+        id
+        |> DataProvider.get_by_id(false)
+        |> case do
+          {:ok, params} -> params
+        end
+        |> Concept.create()
+      {:ok, concept_from_thesaurus} =
+        id
+        |> DataProvider.get_by_id()
+        |> case do
+          {:ok, params} -> params
+        end
+        |> Concept.create()
+
+      # Finally compare the title field length.
+      assert length(concept_from_index.core_fields.title) - 1 == length(concept_from_thesaurus.core_fields.title)
+    end
+
+    test "if concept was requested to be loaded locally, but was missing in the index, it is also automatically indexed" do
+      {:ok, concept } =
+        DataProvider.get_by_id("_8bca4bf1", false)
+        |> case do
+          {:ok, params} -> params
+        end
+        |> Concept.create()
+
+      TestHelpers.refresh_index()
+
+      assert {:ok, _concept_from_index} = ArgosAggregation.ElasticSearch.DataProvider.get_doc(concept.core_fields.id)
+    end
   end
 end

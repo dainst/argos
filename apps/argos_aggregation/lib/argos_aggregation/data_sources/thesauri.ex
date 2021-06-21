@@ -108,10 +108,24 @@ defmodule ArgosAggregation.Thesauri do
 
   end
 
+  defmodule DataSourceClient.Local do
+    @behaviour DataSourceClient
+
+    alias ArgosAggregation.ElasticSearch
+
+    @impl DataSourceClient
+    def request_single_node(id) do
+      ElasticSearch.DataProvider.get_doc("concept_#{id}")
+    end
+
+  end
+
 
   defmodule DataProvider do
     import SweetXml
     require Logger
+
+    alias ArgosAggregation.ElasticSearch.Indexer
 
     @base_url Application.get_env(:argos_aggregation, :thesauri_url)
 
@@ -266,16 +280,37 @@ defmodule ArgosAggregation.Thesauri do
     - {:ok, xml_struct} on success, where xml_struct is the RDF XML parsed by SweetXML
     - {:error, response} for all HTTP responses besides status 200.
     """
-    def get_by_id(id, client \\ DataSourceClient.Http) do
-        with {:ok, xml} <- client.request_single_node(id),
-          {:ok, xml} <- check_validity(xml)
-          do
-            xml
-            |> xpath(~x(rdf:Description[@rdf:about="#{@base_url}/#{id}"]))
-            |> assemble_concept(id)
-          else
-            error -> error
+    def get_by_id(id, force_reload \\ true, clients \\ %{remote: DataSourceClient.Http, locally: DataSourceClient.Local}) do
+      case force_reload do
+          true ->
+            load_remote(id, clients)
+          false ->
+            load_locally(id, clients)
         end
+    end
+
+    defp load_remote(id, clients) do
+      with {:ok, xml} <- clients.remote.request_single_node(id),
+      {:ok, xml} <- check_validity(xml)
+      do
+        xml
+        |> xpath(~x(rdf:Description[@rdf:about="#{@base_url}/#{id}"]))
+        |> assemble_concept(id)
+      else
+        error -> error
+      end
+    end
+
+    defp load_locally(id, clients) do
+      case clients.locally.request_single_node(id) do
+        {:ok, _} = concept -> concept
+        {:error, 404} ->
+          with {:ok, concept} <- load_remote(id, clients),
+              %{upsert_response: %{"result" => "created"}} <- Indexer.index(concept) do
+              {:ok, concept}
+          end
+        {:error, _} = error -> error
+      end
     end
 
     defp check_validity(xml) do
