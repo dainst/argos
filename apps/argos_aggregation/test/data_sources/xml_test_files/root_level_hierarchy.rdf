@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:dct="http://purl.org/dc/terms/" xmlns:foaf="http://xmlns.com/foaf/spec/" xmlns:void="http://rdfs.org/ns/void#" xmlns:iqvoc="http://try.iqvoc.net/schema#" xmlns:skosxl="http://www.w3.org/2008/05/skos-xl#" xmlns="http://thesauri.dainst.org/" xmlns:schema="http://thesauri.dainst.org/schema#">
+  <rdf:Description rdf:about="http://thesauri.dainst.org/_fe65f286">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <skos:topConceptOf rdf:resource="http://thesauri.dainst.org/scheme"/>
+    <skosxl:prefLabel rdf:resource="http://thesauri.dainst.org/_f04f41ba"/>
+    <skos:prefLabel xml:lang="de">iDAI.welt Thesaurus</skos:prefLabel>
+    <skosxl:prefLabel rdf:resource="http://thesauri.dainst.org/_9ce9686a"/>
+    <skos:prefLabel xml:lang="en">iDAI.world thesaurus</skos:prefLabel>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://thesauri.dainst.org/_05805030">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <skos:topConceptOf rdf:resource="http://thesauri.dainst.org/scheme"/>
+    <skosxl:prefLabel rdf:resource="http://thesauri.dainst.org/_acb78e22"/>
+    <skos:prefLabel xml:lang="de">Vokabulare der DAI-Bibliotheken</skos:prefLabel>
+    <skosxl:prefLabel rdf:resource="http://thesauri.dainst.org/_aa672231"/>
+    <skos:prefLabel xml:lang="en">Vocabularies of the DAI-libraries</skos:prefLabel>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://thesauri.dainst.org/_5b453bab">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <skos:topConceptOf rdf:resource="http://thesauri.dainst.org/scheme"/>
+    <skosxl:prefLabel rdf:resource="http://thesauri.dainst.org/_ae570300"/>
+    <skos:prefLabel xml:lang="de">Vokabulare der iDAI.welt-Systeme</skos:prefLabel>
+    <skosxl:prefLabel rdf:resource="http://thesauri.dainst.org/_4aac8ec7"/>
+    <skos:prefLabel xml:lang="en">Vocabularies of the iDAI.world-systems</skos:prefLabel>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://thesauri.dainst.org/_87cff659">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <skos:topConceptOf rdf:resource="http://thesauri.dainst.org/scheme"/>
+    <skosxl:prefLabel rdf:resource="http://thesauri.dainst.org/_dfe2aaca"/>
+    <skos:prefLabel xml:lang="de">Winckelmann-Bibliographie (im Aufbau)</skos:prefLabel>
+    <skosxl:prefLabel rdf:resource="http://thesauri.dainst.org/_e97d0268"/>
+    <skos:prefLabel xml:lang="en">Winckelmann-Bibliography</skos:prefLabel>
+  </rdf:Description>
+</rdf:RDF>

@@ -8,44 +8,14 @@ defmodule ArgosAggregation.ThesauriTest do
   alias ArgosAggregation.Thesauri.{
     Concept,
     DataProvider,
-    DataSourceClient
+    ConceptParser
   }
 
   alias ArgosAggregation.CoreFields
   alias ArgosAggregation.TestHelpers
 
 
-  defmodule DataSourceClient.TestEmptyReturns do
-    @behaviour DataSourceClient
-
-    def read_from_url(_url) do
-      {:ok, ""}
-    end
-
-    def request_by_date(_date) do
-      {:ok, ""}
-    end
-
-    def request_node_hierarchy(_id) do
-      {:ok, ""}
-    end
-
-    def request_root_level() do
-      {:ok, ""}
-    end
-
-    def request_single_node(_id) do
-      {:ok, ""}
-    end
-  end
-
   describe "dataprovider tests" do
-    test "get by id but get an empty return" do
-      id = "_b7707545"
-
-      assert {:error, "Malformed xml document"} = DataProvider.get_by_id(id, true, %{remote: DataSourceClient.TestEmptyReturns})
-    end
-
     test "get by id yields concept with requested id" do
       id = "_b7707545"
 
@@ -70,10 +40,6 @@ defmodule ArgosAggregation.ThesauriTest do
       end)
     end
 
-    test "get all returning empty string yields error" do
-      assert [{:error, "Malformed xml document"}] = DataProvider.get_all(DataSourceClient.TestEmptyReturns) |> Enum.to_list()
-    end
-
     test "get by date yields concept as result" do
       records  =
         DataProvider.get_by_date(~D[2021-01-01])
@@ -85,11 +51,6 @@ defmodule ArgosAggregation.ThesauriTest do
       |> Enum.each(fn({:ok, record}) ->
         assert {:ok, %Concept{}} = Concept.create(record)
       end)
-    end
-
-    test "get by date with returned empty value yields error" do
-      assert [{:error, "Malformed xml document"}] =
-        DataProvider.get_by_date(~D[2021-01-01], DataSourceClient.TestEmptyReturns) |> Enum.to_list()
     end
 
     test "get by tomorrow yields empty list" do
@@ -189,6 +150,119 @@ defmodule ArgosAggregation.ThesauriTest do
       TestHelpers.refresh_index()
 
       assert {:ok, _concept_from_index} = ArgosAggregation.ElasticSearch.DataProvider.get_doc(concept.core_fields.id)
+    end
+  end
+
+  describe "concept parser tests" do
+    test "validator accept valid xml" do
+      body = File.read!("test/data_sources/xml_test_files/valid_rdf.xml")
+      assert {:ok,_} = ConceptParser.Utils.check_validity(body)
+    end
+
+    test "validator refutes invalid xml" do
+      body = File.read!("test/data_sources/xml_test_files/invalid_rdf.xml")
+      assert {:error, "Malformed xml document"} = ConceptParser.Utils.check_validity(body)
+    end
+
+    test "parse search result" do
+      with {:ok, body} <- File.read("test/data_sources/xml_test_files/test_valid_search_rdf.xml") do
+        url = ConceptParser.Search.load_first_page_url(body)
+        assert 'http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&page=1&q=' == url
+
+        {doc_list, next_url} = ConceptParser.Search.load_next_page_items(body)
+        assert 'http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&page=2&q=' == next_url
+
+        assert 10 = length(doc_list)
+        [doc|_] = doc_list
+
+        assert {:ok, concept} = ConceptParser.Search.parse_single_doc(doc)
+        assert %{ "core_fields" => %{ "source_id" =>  "_d00629a7",  "title" => [%{"lang" => "de", "text" => "fett"}]} } = concept
+      else
+        {:error, error} -> raise error
+      end
+    end
+
+    test "pars root level from hierarchy" do
+      roots =
+        File.read!("test/data_sources/xml_test_files/root_level_hierarchy.rdf")
+        |> ConceptParser.Hierarchy.read_root_level()
+
+      assert 4 = length(roots)
+    end
+
+    test "parse single document" do
+      with {:ok, body} <- File.read("test/data_sources/xml_test_files/valid_hierarchy.rdf") do
+        assert {:ok, doc} = ConceptParser.read_single_document(body, "_e7ad4447")
+        assert %{ "core_fields" => %{
+          "source_id" => "_e7ad4447",
+          "title" => [
+            %{"lang" => "de", "text" => "Archäologie"},
+            %{"lang" => "en", "text" => "archaeology"},
+            %{"lang" => "it", "text" => "archeologia"},
+            %{"lang" => "fr", "text" => "archéologie"},
+            %{"lang" => "uk", "text" => "Археологія"},
+            %{"lang" => "ru", "text" => "Археология"},
+            %{"lang" => "ar", "text" => "علم الآثار"}
+          ]} } = doc
+      else
+        {:error, error} -> raise error
+      end
+    end
+
+    test "parse invalid document" do
+      with {:ok, body} <- File.read("test/data_sources/xml_test_files/invalid_documents.rdf") do
+        # missing lang attribute
+        assert {:ok, doc} = ConceptParser.read_single_document(body, "_39260fea")
+        assert %{ "core_fields" => %{
+          "source_id" => "_39260fea",
+                "title" => [
+                  %{"lang" => "de", "text" => "Methoden"},
+                  %{"lang" => "", "text" => "méthodes"},
+                  %{"lang" => "en", "text" => "methods and theory"},
+                  %{"lang" => "it", "text" => "metodi"}
+                ]} } = doc
+
+        #misspelled lang attribute
+        assert {:ok, doc} = ConceptParser.read_single_document(body, "_5a1e0444")
+        assert %{ "core_fields" => %{
+          "source_id" => "_5a1e0444",
+                "title" => [
+                  %{"lang" => "de", "text" => "Sprachen"},
+                  %{"lang" => "it", "text" => "altre lingue"},
+                  %{"lang" => "", "text" => "autres langues"},
+                  %{"lang" => "en", "text" => "other languages"}
+                ]} } = doc
+
+        #missing label text
+        assert {:ok, doc} = ConceptParser.read_single_document(body, "_fe65f286")
+        assert %{ "core_fields" => %{
+                "source_id" => "_fe65f286",
+                "title" => [%{"lang" => "de", "text" => ""}, %{"lang" => "en", "text" => "iDAI.world thesaurus"}]} } = doc
+
+        #try to hit the missing id
+        descriptions = ConceptParser.Hierarchy.read_list_of_descriptions(body)
+        assert is_list(descriptions)
+        assert {:ok, doc} = List.last(descriptions)
+        assert %{ "core_fields" => %{
+          "source_id" => "", "title" => [
+            %{"lang" => "de", "text" => "Fiktionale und übernatürliche Wesen"},
+            %{"lang" => "it", "text" => "dei e figure mitologiche"},
+            %{"lang" => "fr", "text" => "dieux et personnages mythologiques"},
+            %{"lang" => "en", "text" => "gods and mythological figurs"}]} } = doc
+      else
+        {:error, error} -> raise error
+      end
+    end
+
+    test "parse hierarchy result" do
+      with {:ok, body} <- File.read("test/data_sources/xml_test_files/valid_hierarchy.rdf") do
+        descriptions = ConceptParser.Hierarchy.read_list_of_descriptions(body)
+        assert is_list(descriptions)
+        [{:ok, concept}|_] = descriptions
+        assert %{ "core_fields" => %{ "source_id" => "_b189d13f", "title" => [%{"lang" => "de", "text" => "Afrikanische Archäologie"}]} } = concept
+      else
+        {:error, error} -> raise error
+      end
     end
   end
 end

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+      <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:dct="http://purl.org/dc/terms/" xmlns:foaf="http://xmlns.com/foaf/spec/" xmlns:void="http://rdfs.org/ns/void#" xmlns:iqvoc="http://try.iqvoc.net/schema#" xmlns:skosxl="http://www.w3.org/2008/05/skos-xl#" xmlns="http://thesauri.dainst.org/" xmlns:schema="http://thesauri.dainst.org/schema#" xmlns:search="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#" xmlns:sdc="http://sindice.com/vocab/search#">
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;q=">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Query"/>
+          <sdc:totalResults rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">463</sdc:totalResults>
+          <sdc:itemsPerPage rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">60</sdc:itemsPerPage>
+          <sdc:searchTerms></sdc:searchTerms>
+          <sdc:first rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q="/>
+          <sdc:last rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=8&amp;q="/>
+          <sdc:result rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result1"/>
+          <sdc:result rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result2"/>
+          <sdc:result rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result3"/>
+          <sdc:result rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result4"/>
+          <sdc:result rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result5"/>
+          <sdc:result rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result6"/>
+          <sdc:result rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result7"/>
+          <sdc:result rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result8"/>
+          <sdc:result rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result9"/>
+          <sdc:result rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result10"/>
+        </rdf:Description>
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Page"/>
+          <sdc:startIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</sdc:startIndex>
+          <sdc:next rdf:resource="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=2&amp;q="/>
+        </rdf:Description>
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result1">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Result"/>
+          <sdc:link rdf:resource="http://thesauri.dainst.org/_d00629a7"/>
+          <skosxl:xllabel xml:lang="de">fett</skosxl:xllabel>
+        </rdf:Description>
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result2">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Result"/>
+          <sdc:link rdf:resource="http://thesauri.dainst.org/_1743cbaa"/>
+          <skosxl:xllabel xml:lang="de">oval</skosxl:xllabel>
+        </rdf:Description>
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result3">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Result"/>
+          <sdc:link rdf:resource="http://thesauri.dainst.org/_1f2bd282"/>
+          <skosxl:xllabel xml:lang="de">hell</skosxl:xllabel>
+        </rdf:Description>
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result4">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Result"/>
+          <sdc:link rdf:resource="http://thesauri.dainst.org/_2b8d8be5"/>
+          <skosxl:xllabel xml:lang="de">Teig</skosxl:xllabel>
+        </rdf:Description>
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result5">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Result"/>
+          <sdc:link rdf:resource="http://thesauri.dainst.org/_3aac0b99"/>
+          <skosxl:xllabel xml:lang="de">Leim</skosxl:xllabel>
+        </rdf:Description>
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result6">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Result"/>
+          <sdc:link rdf:resource="http://thesauri.dainst.org/_7b67e35b"/>
+          <skosxl:xllabel xml:lang="de">Leim</skosxl:xllabel>
+        </rdf:Description>
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result7">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Result"/>
+          <sdc:link rdf:resource="http://thesauri.dainst.org/_e027c2a8"/>
+          <skosxl:xllabel xml:lang="de">Mark</skosxl:xllabel>
+        </rdf:Description>
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result8">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Result"/>
+          <sdc:link rdf:resource="http://thesauri.dainst.org/_4cf58b5e"/>
+          <skosxl:xllabel xml:lang="de">Saat</skosxl:xllabel>
+        </rdf:Description>
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result9">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Result"/>
+          <sdc:link rdf:resource="http://thesauri.dainst.org/_25709ee2"/>
+          <skosxl:xllabel xml:lang="de">Erze</skosxl:xllabel>
+        </rdf:Description>
+        <rdf:Description rdf:about="http://thesauri.dainst.org/search.rdf?change_note_date_from=2021-01-01&amp;page=1&amp;q=#result10">
+          <rdf:type rdf:resource="http://sindice.com/vocab/search#Result"/>
+          <sdc:link rdf:resource="http://thesauri.dainst.org/_bf13ee51"/>
+          <skosxl:xllabel xml:lang="de">Grau</skosxl:xllabel>
+        </rdf:Description>
+      </rdf:RDF>
