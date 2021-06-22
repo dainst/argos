@@ -127,7 +127,7 @@ defmodule ArgosAggregation.Thesauri do
 
     def get_all() do
       with {:ok, xml} <- DataSourceClient.Http.request_root_level() do
-        stream_read_hirarchy(xml)
+        stream_read_hierarchy(xml)
         |> Stream.flat_map(fn elements ->
           case elements do
             {:error, _} -> [elements]
@@ -137,7 +137,7 @@ defmodule ArgosAggregation.Thesauri do
       end
     end
 
-    defp stream_read_hirarchy(xml) do
+    defp stream_read_hierarchy(xml) do
       Stream.resource(
         fn ->
           Logger.info("Start reading root level")
