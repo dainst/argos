@@ -167,7 +167,7 @@ defmodule ArgosAggregation.Thesauri do
     end
 
     defp load_next_nodes([ head | tail ]) do
-      # load complet hirarchy of next
+      # load complet hierarchy of next
       Logger.info("Load next master branch #{head}")
       with {:ok, id } <- ConceptParser.Utils.get_resource_id_from_uri(head),
         {:ok, xml} <- DataSourceClient.Http.request_node_hierarchy(id),
