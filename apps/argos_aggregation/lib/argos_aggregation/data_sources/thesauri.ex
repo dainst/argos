@@ -26,8 +26,6 @@ defmodule ArgosAggregation.Thesauri do
   end
 
 
-
-
   defmodule DataSourceClient.Http do
     @base_url Application.get_env(:argos_aggregation, :thesauri_url)
 
@@ -304,6 +302,12 @@ defmodule ArgosAggregation.Thesauri do
     end
 
     defmodule Search do
+
+      @doc """
+      read first page url
+
+      returns url | error
+      """
       def load_first_page_url(xml) do
         case Utils.check_validity(xml) do
           {:ok, xml} -> xpath(xml, ~x(//sdc:first/@rdf:resource))
@@ -311,6 +315,11 @@ defmodule ArgosAggregation.Thesauri do
         end
       end
 
+      @doc """
+      reads all the description items of this page and the url of the next page
+
+      returns {[data], url} | {[error], nil}
+      """
       def load_next_page_items(xml) do
         case Utils.check_validity(xml) do
          {:ok, xml } ->
@@ -321,6 +330,16 @@ defmodule ArgosAggregation.Thesauri do
         end
       end
 
+      @doc """
+      parses a single
+      <rdf:Description>
+        <sdc:link rdf:resource="thesaurus/_id">
+        </sdc:link>
+      </rdf:Description>
+      doc from a search result page
+
+      returns {:ok, %Concept{}}
+      """
       def parse_single_doc(doc) do
         response =
           doc
@@ -335,6 +354,11 @@ defmodule ArgosAggregation.Thesauri do
     end
 
     defmodule Hierarchy do
+      @doc """
+      reads from a root level hierarchy the root level urls and returns them in a unique list
+
+      returns [unique urls] | error
+      """
       def read_root_level(xml) do
         case Utils.check_validity(xml) do
           {:ok, xml} ->
@@ -346,13 +370,21 @@ defmodule ArgosAggregation.Thesauri do
         end
       end
 
+      @doc """
+      creates a List of [ <rdf:Descriptions> ... ] from a hierarchy
+      """
       def read_list_of_descriptions(xml) do
         xml
         |> xpath(~x"//rdf:Description"l)
         |> Enum.map(&parse_single_doc(&1))
       end
 
-      def parse_single_doc(doc) do
+      @doc """
+      parses a single <rdf:Description rdf:about="thesaurus/_id"></rdf:Description> doc from a hierarchy
+
+      returns {:ok, %Concept{}}
+      """
+      defp parse_single_doc(doc) do
         {:ok, id} =
           doc
           |> xpath(~x"//@rdf:about"s)
@@ -362,6 +394,14 @@ defmodule ArgosAggregation.Thesauri do
       end
     end
 
+    @doc """
+    read_single_document will extract the concept information
+    identified by the given id from the given xml
+
+    it expects the information to be in a proper rdf document
+    <rdf:Description rdf:about="thesaurus/_12355"> ...
+    </rdf:Description>
+    """
     def read_single_document(xml, id) do
       case Utils.check_validity(xml) do
         {:ok, xml} -> xml
