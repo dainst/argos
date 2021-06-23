@@ -8,7 +8,8 @@ defmodule ArgosAggregation.ThesauriTest do
   alias ArgosAggregation.Thesauri.{
     Concept,
     DataProvider,
-    ConceptParser
+    ConceptParser,
+    Harvester
   }
 
   alias ArgosAggregation.CoreFields
@@ -150,6 +151,14 @@ defmodule ArgosAggregation.ThesauriTest do
       TestHelpers.refresh_index()
 
       assert {:ok, _concept_from_index} = ArgosAggregation.ElasticSearch.DataProvider.get_doc(concept.core_fields.id)
+    end
+
+    test "harvester index by date" do
+      result =
+        Date.utc_today()
+        |> Date.add(-7)
+        |> Harvester.run_harvest
+      assert :ok = result
     end
   end
 

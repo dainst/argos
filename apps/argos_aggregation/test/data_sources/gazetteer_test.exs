@@ -5,7 +5,7 @@ defmodule ArgosAggregation.GazetteerTest do
   doctest ArgosAggregation.Gazetteer
 
   alias ArgosAggregation.Gazetteer.{
-    Place, DataProvider
+    Place, DataProvider, Harvester
   }
 
   alias ArgosAggregation.CoreFields
@@ -43,7 +43,7 @@ defmodule ArgosAggregation.GazetteerTest do
     records  =
       DataProvider.get_by_date(~D[2021-01-01])
       |> Enum.take(10)
-
+    IO.inspect(records)
     assert Enum.count(records) == 10
 
     records
@@ -124,6 +124,14 @@ defmodule ArgosAggregation.GazetteerTest do
       TestHelpers.refresh_index()
 
       assert {:ok, _place_from_index} = ArgosAggregation.ElasticSearch.DataProvider.get_doc(place.core_fields.id)
+    end
+
+    test "harvester index by date" do
+      result =
+        Date.utc_today()
+        |> Date.add(-7)
+        |> Harvester.run_harvest
+      assert :ok = result
     end
   end
 end

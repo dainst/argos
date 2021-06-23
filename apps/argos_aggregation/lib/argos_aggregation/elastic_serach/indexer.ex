@@ -32,9 +32,6 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
     end
 
   end
-  def index({:ok, %{"core_fields" => _} = core }) do
-    index(core)
-  end
 
   defp validate(%{"core_fields" => %{"type" => "place"}} = params) do
     Gazetteer.Place.create(params)

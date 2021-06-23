@@ -409,12 +409,23 @@ defmodule ArgosAggregation.Thesauri do
 
     def run_harvest() do
       DataProvider.get_all()
-      |> Enum.each(&Indexer.index/1)
+      |> Enum.each(&index_concept/1)
     end
 
     def run_harvest(%Date{} = date) do
       DataProvider.get_by_date(date)
-      |> Enum.each(&Indexer.index/1)
+      |> Enum.each(&index_concept/1)
     end
+
+    defp index_concept({:ok, concept}) do
+      Indexer.index(concept)
+    end
+    defp index_concept({:error, err}) do
+      Logger.error(err)
+    end
+    defp index_concept(error) do
+      Logger.error(error)
+    end
+
   end
 end
