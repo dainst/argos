@@ -175,6 +175,10 @@ defmodule ArgosAggregation.Thesauri do
         {:ok, xml} <- DataSourceClient.Http.request_node_hierarchy(id),
         {:ok, xml} <- ConceptParser.Utils.check_validity(xml) do
           {[xml], tail}
+      else
+        error ->
+          Logger.error(error)
+          {[error], nil}
       end
     end
 
