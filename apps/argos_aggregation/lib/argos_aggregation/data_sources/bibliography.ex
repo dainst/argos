@@ -164,6 +164,7 @@ defmodule ArgosAggregation.Bibliography do
 
   defmodule BibliographyParser do
     @base_url Application.get_env(:argos_aggregation, :bibliography_url)
+    @field_type Application.get_env(:argos_aggregation, :bibliography_type)
 
     def parse_record(record) do
 
@@ -192,9 +193,8 @@ defmodule ArgosAggregation.Bibliography do
               true
           end
         end)
-
       core_fields = %{
-        "type" => "biblio",
+        "type" => @field_type,
         "source_id" => record["id"],
         "uri" => "#{@base_url}/Record/#{record["id"]}",
         "title" => [

@@ -25,6 +25,7 @@ defmodule ArgosAggregation.Thesauri do
 
   defmodule DataProvider do
     @base_url Application.get_env(:argos_aggregation, :thesauri_url)
+    @field_type Application.get_env(:argos_aggregation, :thesauri_type)
 
     import SweetXml
     require Logger
@@ -104,7 +105,7 @@ defmodule ArgosAggregation.Thesauri do
         %{
           "core_fields" => %{
             "source_id" => id,
-            "type" => "concept",
+            "type" => @field_type,
             "uri" => "#{@base_url}/#{id}",
             "title" => labels
           }

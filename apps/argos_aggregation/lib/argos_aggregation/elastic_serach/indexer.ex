@@ -3,9 +3,13 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
   alias ArgosAggregation.{
     Chronontology, Gazetteer, Thesauri, Project, Bibliography, CoreFields
   }
-
   @base_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
   @headers [{"Content-Type", "application/json"}]
+  @gazetteer_type Application.get_env(:argos_aggregation, :gazetteer_type)
+  @thesauri_type Application.get_env(:argos_aggregation, :thesauri_type)
+  @chronontology_type Application.get_env(:argos_aggregation, :chronontology_type)
+  @project_type Application.get_env(:argos_aggregation, :project_type)
+  @bibliography_type Application.get_env(:argos_aggregation, :bibliography_type)
 
   def index(data) do
     validation = validate(data)
@@ -33,19 +37,19 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
 
   end
 
-  defp validate(%{"core_fields" => %{"type" => "place"}} = params) do
+  defp validate(%{"core_fields" => %{"type" => @gazetteer_type}} = params) do
     Gazetteer.Place.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => "concept"}} = params) do
+  defp validate(%{"core_fields" => %{"type" => @thesauri_type}} = params) do
     Thesauri.Concept.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => "temporal_concept"}} = params) do
+  defp validate(%{"core_fields" => %{"type" => @chronontology_type}} = params) do
     Chronontology.TemporalConcept.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => "project"}} = params) do
+  defp validate(%{"core_fields" => %{"type" => @project_type}} = params) do
     Project.Project.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => "biblio"}} = params) do
+  defp validate(%{"core_fields" => %{"type" => @bibliography_type}} = params) do
     Bibliography.BibliographicRecord.create(params)
   end
 
@@ -94,14 +98,14 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
 
   defp update_reference(%{"_source" => parent }) do
     case parent["core_fields"] do
-      %{"type" => "project"} = core_fields ->
+      %{"type" => @project_type} = core_fields ->
         case Project.DataProvider.get_by_id(core_fields["source_id"]) do
           {:ok, project} ->
             index(project)
           error ->
             error
         end
-      %{"type" => "biblio"} = core_fields ->
+      %{"type" => @bibliography_type} = core_fields ->
         case Bibliography.DataProvider.get_by_id(core_fields["source_id"]) do
           {:ok, biblio} ->
             index(biblio)
