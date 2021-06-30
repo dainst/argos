@@ -36,7 +36,7 @@ defmodule Argos.MixProject do
     seed_days_ago = 3
     [
       "update-mapping": [
-        "run --eval 'ArgosAPI.Release.update_mapping()' -- --script"
+        "run --eval 'ArgosAggregation.Release.update_mapping()' -- --script"
       ],
       seed: [
         "seed.projects", "seed.bibliography"

@@ -18,4 +18,14 @@ defmodule ArgosAggregation.Release do
     HTTPoison.start()
     ArgosAggregation.BibliographyCLI.run()
   end
+
+  def update_mapping() do
+    HTTPoison.start()
+    ArgosAggregation.Application.update_mapping()
+  end
+
+  def clear_index() do
+    HTTPoison.start()
+    ArgosAggregation.Application.delete_index()
+  end
 end

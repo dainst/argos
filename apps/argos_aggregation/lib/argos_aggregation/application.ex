@@ -7,6 +7,7 @@ defmodule ArgosAggregation.Application do
 
   @elasticsearch_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
   @active_harvesters Application.get_env(:argos_aggregation, :active_harvesters)
+  @elasticsearch_mapping_path Application.get_env(:argos_aggregation, :elasticsearch_mapping_path)
 
   require Logger
 
@@ -22,17 +23,55 @@ defmodule ArgosAggregation.Application do
     false
   end
 
-  defp await_index() do
-    delay = 1000 * 30
+  def update_mapping() do
+    Logger.info("update mapping")
+    delete_index()
+    put_index()
+    put_mapping()
+  end
 
-    case HTTPoison.get("#{@elasticsearch_url}") do
+  def put_index() do
+    "#{@elasticsearch_url}"
+    |> HTTPoison.put()
+  end
+
+  def delete_index() do
+    "#{@elasticsearch_url}"
+    |> HTTPoison.delete()
+  end
+
+
+  def put_mapping() do
+    mapping = File.read!(@elasticsearch_mapping_path)
+    "#{@elasticsearch_url}/_mapping"
+    |> HTTPoison.put(mapping, [{"Content-Type", "application/json"}])
+  end
+
+
+  defp initialize_index() do
+    case HTTPoison.get(@elasticsearch_url) do
+      error when error in [
+        {:error, %HTTPoison.Error{id: nil, reason: :closed}},
+        {:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}
+      ] ->
+        delay = 1000 * 5
+        Logger.warning("No connection to Elasticsearch at #{@elasticsearch_url}. Rescheduling initialization in #{delay}ms...")
+        :timer.sleep(delay)
+        initialize_index()
+
+      {:ok, %HTTPoison.Response{body: body, status_code: 404}} ->
+        case Poison.decode!(body) do
+          %{"error" => %{"root_cause" => [%{"type" => "index_not_found_exception"}]}} ->
+            Logger.info("Index not setup at #{@elasticsearch_url}, creating index and putting mapping...")
+            put_index()
+            put_mapping()
+        end
+
       {:ok, %HTTPoison.Response{status_code: 200}} ->
         Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
-        :ok
-      _ ->
-        Logger.info("Waiting for Elasticsearch index at #{@elasticsearch_url}.")
-        :timer.sleep(delay)
-        await_index()
+      {:error, %HTTPoison.Error{id: nil, reason: :nxdomain}} ->
+        Logger.error("nxdomain error")
+        raise "nxdomain"
     end
   end
 
@@ -43,7 +82,7 @@ defmodule ArgosAggregation.Application do
 
   def start(_type, _args) do
     if Application.get_env(:argos_aggregation, :await_index, true) do
-      await_index()
+      initialize_index()
     end
 
     children =
