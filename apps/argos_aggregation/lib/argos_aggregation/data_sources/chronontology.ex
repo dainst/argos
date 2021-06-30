@@ -127,7 +127,7 @@ defmodule ArgosAggregation.Chronontology do
 
     def get_list(params) do
       "#{@base_url}/data/period?#{URI.encode_query(params)}"
-      |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+      |> HTTPoison.get()
       |> parse_response()
     end
 

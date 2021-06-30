@@ -51,7 +51,7 @@ defmodule ArgosAggregation.Gazetteer do
     defp get_by_id_from_source(id) do
       response =
         "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true"
-        |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()], follow_redirect: true)
+        |> HTTPoison.get([], follow_redirect: true)
         |> parse_response()
 
       case response do
@@ -129,7 +129,8 @@ defmodule ArgosAggregation.Gazetteer do
 
     defp run_search(params) do
       "#{@base_url}/search.json?shortLanguageCodes=true&#{URI.encode_query(params)}"
-      |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+      #|> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+      |> HTTPoison.get()
       |> parse_response()
     end
 

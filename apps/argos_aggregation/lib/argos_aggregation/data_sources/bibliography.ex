@@ -147,7 +147,7 @@ defmodule ArgosAggregation.Bibliography do
 
     def get_record_list(params) do
       "#{@base_url}/api/v1/search?#{URI.encode_query(params)}"
-      |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+      |> HTTPoison.get()
       |> parse_response()
     end
 
