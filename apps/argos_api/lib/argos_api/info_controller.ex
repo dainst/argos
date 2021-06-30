@@ -5,8 +5,8 @@ defmodule ArgosAPI.InfoController do
   def get(conn) do
     argos_vsn = List.to_string(Application.spec(:argos_api, :vsn))
 
-    %{"hits" => %{"total" => %{"value" => count_docs }}} =
-      "#{@elasticsearch_url}/_search?q=*&_source=false"
+    %{"_all" => %{"total" => %{"docs" => %{"count" => count_docs }}}} =
+      "#{@elasticsearch_url}/_stats"
       |> HTTPoison.get([{"Content-Type", "application/json"}])
       |> handle_result()
 
