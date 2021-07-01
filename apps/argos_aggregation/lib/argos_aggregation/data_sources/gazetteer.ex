@@ -145,7 +145,7 @@ defmodule ArgosAggregation.Gazetteer do
   end
 
   defmodule PlaceParser do
-    @field_type Application.get_env(:argos_aggregation, :gazetteer_type)
+    @field_type Application.get_env(:argos_aggregation, :gazetteer_type_key)
     def parse_place(gazetteer_data) do
       core_fields = %{
         "type" => @field_type,

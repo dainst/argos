@@ -29,7 +29,7 @@ defmodule ArgosAggregation.Chronontology do
 
   defmodule DataProvider do
     @base_url Application.get_env(:argos_aggregation, :chronontology_url)
-    @field_type Application.get_env(:argos_aggregation, :chronontology_type)
+    @field_type Application.get_env(:argos_aggregation, :chronontology_type_key)
 
     alias ArgosAggregation.NaturalLanguageDetector
 

@@ -5,11 +5,11 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
   }
   @base_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
   @headers [{"Content-Type", "application/json"}]
-  @gazetteer_type Application.get_env(:argos_aggregation, :gazetteer_type)
-  @thesauri_type Application.get_env(:argos_aggregation, :thesauri_type)
-  @chronontology_type Application.get_env(:argos_aggregation, :chronontology_type)
-  @project_type Application.get_env(:argos_aggregation, :project_type)
-  @bibliography_type Application.get_env(:argos_aggregation, :bibliography_type)
+  @gazetteer_type_key Application.get_env(:argos_aggregation, :gazetteer_type_key)
+  @thesauri_type_key Application.get_env(:argos_aggregation, :thesauri_type_key)
+  @chronontology_type_key Application.get_env(:argos_aggregation, :chronontology_type_key)
+  @project_type_key Application.get_env(:argos_aggregation, :project_type_key)
+  @bibliography_type_key Application.get_env(:argos_aggregation, :bibliography_type_key)
 
   def index(data) do
     validation = validate(data)
@@ -37,19 +37,19 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
 
   end
 
-  defp validate(%{"core_fields" => %{"type" => @gazetteer_type}} = params) do
+  defp validate(%{"core_fields" => %{"type" => @gazetteer_type_key}} = params) do
     Gazetteer.Place.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => @thesauri_type}} = params) do
+  defp validate(%{"core_fields" => %{"type" => @thesauri_type_key}} = params) do
     Thesauri.Concept.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => @chronontology_type}} = params) do
+  defp validate(%{"core_fields" => %{"type" => @chronontology_type_key}} = params) do
     Chronontology.TemporalConcept.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => @project_type}} = params) do
+  defp validate(%{"core_fields" => %{"type" => @project_type_key}} = params) do
     Project.Project.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => @bibliography_type}} = params) do
+  defp validate(%{"core_fields" => %{"type" => @bibliography_type_key}} = params) do
     Bibliography.BibliographicRecord.create(params)
   end
 
@@ -98,14 +98,14 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
 
   defp update_reference(%{"_source" => parent }) do
     case parent["core_fields"] do
-      %{"type" => @project_type} = core_fields ->
+      %{"type" => @project_type_key} = core_fields ->
         case Project.DataProvider.get_by_id(core_fields["source_id"]) do
           {:ok, project} ->
             index(project)
           error ->
             error
         end
-      %{"type" => @bibliography_type} = core_fields ->
+      %{"type" => @bibliography_type_key} = core_fields ->
         case Bibliography.DataProvider.get_by_id(core_fields["source_id"]) do
           {:ok, biblio} ->
             index(biblio)

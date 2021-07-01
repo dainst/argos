@@ -129,7 +129,7 @@ defmodule ArgosAggregation.Project do
 
   defmodule ProjectParser do
     @base_url Application.get_env(:argos_aggregation, :projects_url)
-    @field_type Application.get_env(:argos_aggregation, :project_type)
+    @field_type Application.get_env(:argos_aggregation, :project_type_key)
 
     def parse_project(data) do
       external_links = parse_external_links(data["images"], data["external_links"])

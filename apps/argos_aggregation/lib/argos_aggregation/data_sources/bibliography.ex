@@ -164,7 +164,7 @@ defmodule ArgosAggregation.Bibliography do
 
   defmodule BibliographyParser do
     @base_url Application.get_env(:argos_aggregation, :bibliography_url)
-    @field_type Application.get_env(:argos_aggregation, :bibliography_type)
+    @field_type Application.get_env(:argos_aggregation, :bibliography_type_key)
 
     def parse_record(record) do
 
