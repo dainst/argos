@@ -26,7 +26,6 @@ config :argos_aggregation,
   chronontology_type_key: "temporal_concept",
   temporal_concepts_harvest_interval: 1000 * 60 * 30, # 30 minutes
 
-
   gazetteer_url: "https://gazetteer.dainst.org",
   gazetteer_type_key: "place",
 
