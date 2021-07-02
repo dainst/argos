@@ -29,6 +29,7 @@ defmodule ArgosAggregation.Chronontology do
 
   defmodule DataProvider do
     @base_url Application.get_env(:argos_aggregation, :chronontology_url)
+    @field_type Application.get_env(:argos_aggregation, :chronontology_type_key)
 
     alias ArgosAggregation.NaturalLanguageDetector
 
@@ -171,7 +172,7 @@ defmodule ArgosAggregation.Chronontology do
       # TODO Gazetteer Place spatiallyPartOfRegion and hasCoreArea? https://chronontology.dainst.org/period/X5lOSI8YQFiL
 
       core_fields = %{
-        "type" => "temporal_concept",
+        "type" => @field_type,
         "source_id" => data["resource"]["id"],
         "uri" => "#{@base_url}/period/#{data["resource"]["id"]}",
         "title" => parse_names(data["resource"]["names"]),

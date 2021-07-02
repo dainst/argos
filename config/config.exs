@@ -27,7 +27,13 @@ config :argos_aggregation,
   active_harvesters: [
     ArgosAggregation.Project.Harvester,
     ArgosAggregation.Bibliography.Harvester
-  ]
+  ],
+
+  bibliography_type_key: "biblio",
+  chronontology_type_key: "temporal_concept",
+  gazetteer_type_key: "place",
+  project_type_key: "project",
+  thesauri_type_key: "concept"
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
