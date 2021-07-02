@@ -18,7 +18,7 @@ config :argos_aggregation,
   projects_harvest_interval: 1000 * 60 * 30, # 30 minutes
 
   bibliography_url: "https://zenon.dainst.org",
-  bibliography_harvest_interval: 1000 * 60 * 30, # 30 minutes
+  bibliography_harvest_interval: 1000 * 60 * 60 * 24, # Once a day (that is also zenon's update interval)
 
   chronontology_url: "https://chronontology.dainst.org",
   temporal_concepts_harvest_interval: 1000 * 60 * 30, # 30 minutes
