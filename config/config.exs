@@ -16,24 +16,27 @@ config :argos_aggregation,
 
   projects_url: "http://projects.dainst.org",
   projects_harvest_interval: 1000 * 60 * 30, # 30 minutes
+  project_type_key: "project",
 
   bibliography_url: "https://zenon.dainst.org",
   bibliography_harvest_interval: 1000 * 60 * 60 * 24, # Once a day (that is also zenon's update interval)
+  bibliography_type_key: "biblio",
 
   chronontology_url: "https://chronontology.dainst.org",
+  chronontology_type_key: "temporal_concept",
   temporal_concepts_harvest_interval: 1000 * 60 * 30, # 30 minutes
+
+
   gazetteer_url: "https://gazetteer.dainst.org",
+  gazetteer_type_key: "place",
+
   thesauri_url: "http://thesauri.dainst.org",
+  thesauri_type_key: "concept",
+
   active_harvesters: [
     ArgosAggregation.Project.Harvester,
     ArgosAggregation.Bibliography.Harvester
   ],
-
-  bibliography_type_key: "biblio",
-  chronontology_type_key: "temporal_concept",
-  gazetteer_type_key: "place",
-  project_type_key: "project",
-  thesauri_type_key: "concept"
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
