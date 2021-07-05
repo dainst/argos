@@ -7,7 +7,7 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
   @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
   @headers [{"Content-Type", "application/json"}]
 
-  def index(%{"core_fields" => _} = data) do
+  def index(data) do
     validation = validate(data)
 
     case validation do
