@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:dct="http://purl.org/dc/terms/" xmlns:foaf="http://xmlns.com/foaf/spec/" xmlns:void="http://rdfs.org/ns/void#" xmlns:iqvoc="http://try.iqvoc.net/schema#" xmlns:skosxl="http://www.w3.org/2008/05/skos-xl#" xmlns="http://thesauri.dainst.org/" xmlns:schema="http://thesauri.dainst.org/schema#">
+  
+  <!-- missing lang label -->
+  <rdf:Description rdf:about="http://thesauri.dainst.org/_39260fea">
+    <skos:prefLabel xml:lang="de">Methoden</skos:prefLabel>
+    <skos:prefLabel xml:lang="">méthodes</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">methods and theory</skos:prefLabel>
+    <skos:prefLabel xml:lang="it">metodi</skos:prefLabel>
+  </rdf:Description>
+
+  <!-- wrong attribute name lange instead of lang -->
+  <rdf:Description rdf:about="http://thesauri.dainst.org/_5a1e0444">
+    <skos:prefLabel xml:lang="de">Sprachen</skos:prefLabel>
+    <skos:prefLabel xml:lang="it">altre lingue</skos:prefLabel>
+    <skos:prefLabel xml:lange="fr">autres langues</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">other languages</skos:prefLabel>
+  </rdf:Description>
+
+  <!-- valid -->
+  <rdf:Description rdf:about="http://thesauri.dainst.org/_dfdb34ff">
+    <skos:prefLabel xml:lang="de">Konzepte</skos:prefLabel>
+  </rdf:Description>
+
+  <!--Missing preflabel text -->
+  <rdf:Description rdf:about="http://thesauri.dainst.org/_fe65f286">
+    <skos:prefLabel xml:lang="de"></skos:prefLabel>
+    <skos:prefLabel xml:lang="en">iDAI.world thesaurus</skos:prefLabel>
+  </rdf:Description>
+
+  <!-- Missing ID-->
+  <rdf:Description rdf:about="http://thesauri.dainst.org/">
+    <skos:prefLabel xml:lang="de">Fiktionale und übernatürliche Wesen</skos:prefLabel>
+    <skos:prefLabel xml:lang="it">dei e figure mitologiche</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">dieux et personnages mythologiques</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">gods and mythological figurs</skos:prefLabel>
+  </rdf:Description>
+  </rdf:RDF>

@@ -249,12 +249,22 @@ defmodule ArgosAggregation.Gazetteer do
     end
     def run_harvest() do
       DataProvider.get_all()
-      |> Enum.each(&Indexer.index/1)
+      |> Enum.each(&index_place/1)
     end
 
     def run_harvest(%Date{} = date) do
       DataProvider.get_by_date(date)
-      |> Enum.each(&Indexer.index/1)
+      |> Enum.each(&index_place/1)
+    end
+
+    defp index_place({:ok, place}) do
+      Indexer.index(place)
+    end
+    defp index_place({:error, err}) do
+      Logger.error(err)
+    end
+    defp index_place(error) do
+      Logger.error(error)
     end
   end
 end
