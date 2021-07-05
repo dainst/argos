@@ -1,6 +1,7 @@
 defmodule ArgosAggregation.NaturalLanguageDetector do
 
   require Logger
+  require Tongue
 
   def get_language_key(string, threshold \\ 0.9)
   def get_language_key(string, threshold) when is_binary(string) do
