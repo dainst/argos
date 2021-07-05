@@ -28,7 +28,6 @@ defmodule ArgosAggregation.Thesauri do
 
   defmodule DataSourceClient.Http do
     @base_url Application.get_env(:argos_aggregation, :thesauri_url)
-    @field_type Application.get_env(:argos_aggregation, :thesauri_type_key)
 
     def request_by_date(%Date{} = date) do
        read_from_url("#{@base_url}/search.rdf?q=&change_note_date_from=#{Date.to_iso8601(date)}")
@@ -199,23 +198,15 @@ defmodule ArgosAggregation.Thesauri do
     end
 
     defp get_by_id_from_source(id) do
-      response =
-        "#{@base_url}/#{id}.rdf"
-        |> HTTPoison.get()
-        |> parse_response()
-
-      case response do
-        {:ok, data} ->
-          parse_concept_data(data, id)
-        error ->
-          error
+      case DataSourceClient.Http.request_single_node(id) do
+        {:ok, xml} -> ConceptParser.read_single_document(xml, id)
+        error -> error
       end
     end
 
     defp get_by_id_locally(id) do
-      case ArgosAggregation.ElasticSearch.DataProvider.get_doc("concept_#{id}") do
-        {:ok, _} = concept ->
-          concept
+      case DataSourceClient.Local.request_single_node(id) do
+        {:ok, _} = concept -> concept
         {:error, 404} ->
           case get_by_id_from_source(id) do
             {:ok, concept} = res ->
@@ -227,9 +218,7 @@ defmodule ArgosAggregation.Thesauri do
       end
     end
 
-    def get_by_date(%Date{} = _date) do
-      []
-    end
+
   end
 
 
@@ -240,6 +229,7 @@ defmodule ArgosAggregation.Thesauri do
 
     defmodule Factory do
       @base_url Application.get_env(:argos_aggregation, :thesauri_url)
+      @field_type Application.get_env(:argos_aggregation, :thesauri_type_key)
       require Logger
 
       def assemble_concept(xml, id) do
