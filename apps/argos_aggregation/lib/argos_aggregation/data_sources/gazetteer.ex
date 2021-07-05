@@ -51,7 +51,7 @@ defmodule ArgosAggregation.Gazetteer do
     defp get_by_id_from_source(id) do
       response =
         "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true"
-        |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()], follow_redirect: true)
+        |> HTTPoison.get([], follow_redirect: true)
         |> parse_response()
 
       case response do
@@ -129,7 +129,8 @@ defmodule ArgosAggregation.Gazetteer do
 
     defp run_search(params) do
       "#{@base_url}/search.json?shortLanguageCodes=true&#{URI.encode_query(params)}"
-      |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+      #|> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+      |> HTTPoison.get()
       |> parse_response()
     end
 
@@ -145,9 +146,10 @@ defmodule ArgosAggregation.Gazetteer do
   end
 
   defmodule PlaceParser do
+    @field_type Application.get_env(:argos_aggregation, :gazetteer_type_key)
     def parse_place(gazetteer_data) do
       core_fields = %{
-        "type" => "place",
+        "type" => @field_type,
         "source_id" => gazetteer_data["gazId"],
         "uri" => gazetteer_data["@id"],
         "title" => parse_names([gazetteer_data["prefName"]] ++ Map.get(gazetteer_data, "names", []))

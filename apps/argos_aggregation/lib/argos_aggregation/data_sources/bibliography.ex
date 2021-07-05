@@ -147,7 +147,7 @@ defmodule ArgosAggregation.Bibliography do
 
     def get_record_list(params) do
       "#{@base_url}/api/v1/search?#{URI.encode_query(params)}"
-      |> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
+      |> HTTPoison.get()
       |> parse_response()
     end
 
@@ -164,6 +164,7 @@ defmodule ArgosAggregation.Bibliography do
 
   defmodule BibliographyParser do
     @base_url Application.get_env(:argos_aggregation, :bibliography_url)
+    @field_type Application.get_env(:argos_aggregation, :bibliography_type_key)
 
     def parse_record(record) do
 
@@ -192,9 +193,8 @@ defmodule ArgosAggregation.Bibliography do
               true
           end
         end)
-
       core_fields = %{
-        "type" => "biblio",
+        "type" => @field_type,
         "source_id" => record["id"],
         "uri" => "#{@base_url}/Record/#{record["id"]}",
         "title" => [
@@ -286,7 +286,7 @@ defmodule ArgosAggregation.Bibliography do
 
     defp parse_concept(data) do
       "http://thesauri.dainst.org/" <> ths_id = data["uri"]
-      case Thesauri.DataProvider.get_by_id(ths_id) do
+      case Thesauri.DataProvider.get_by_id(ths_id, false) do
         {:ok, concept} ->
           %{
             "resource" => concept

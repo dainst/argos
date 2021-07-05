@@ -1,3 +1,5 @@
+require Logger
+
 defmodule ArgosAggregation.Chronontology do
   defmodule TemporalConcept do
     use ArgosAggregation.Schema
@@ -27,16 +29,26 @@ defmodule ArgosAggregation.Chronontology do
 
   defmodule DataProvider do
     @base_url Application.get_env(:argos_aggregation, :chronontology_url)
+    @field_type Application.get_env(:argos_aggregation, :chronontology_type_key)
 
     alias ArgosAggregation.NaturalLanguageDetector
 
     require Logger
 
     def get_all() do
-      []
+      get_batches(%{})
     end
 
-    def get_by_id(id) do
+    def get_by_id(id, force_reload \\ true) do
+      case force_reload do
+        true ->
+          get_by_id_from_source(id)
+        false ->
+          get_by_id_locally(id)
+      end
+    end
+
+    defp get_by_id_from_source(id) do
       response =
         HTTPoison.get("#{@base_url}/data/period/#{id}")
         |> parse_response()
@@ -49,8 +61,75 @@ defmodule ArgosAggregation.Chronontology do
       end
     end
 
-    def get_by_date(%Date{} = _date) do
-      []
+    defp get_by_id_locally(id) do
+      case ArgosAggregation.ElasticSearch.DataProvider.get_doc("temporal_concept_#{id}") do
+        {:error, 404} ->
+          get_by_id_from_source(id)
+        {:ok, tc} ->
+          {:ok, tc}
+      end
+     end
+
+    def get_by_date(%Date{} = date) do
+      get_batches(%{"q"=>"modified.date:[#{Date.to_iso8601(date)} TO *]"})
+    end
+    def get_by_date(%DateTime{} = date) do
+      get_batches(%{"q"=>"modified.date:[#{DateTime.to_iso8601(date)} TO *]"})
+    end
+
+    def get_batches(query_params) do
+      Stream.resource(
+        fn () ->
+          final_params =
+            query_params
+            |> Map.put("from", 0)
+            |> Map.put("size", 100)
+
+          Logger.info("Running chronontology batch query with for #{@base_url}/data/period?#{URI.encode_query(final_params)}")
+
+          final_params
+        end,
+        fn (params) ->
+          case process_batch_query(params) do
+            {:error, reason} ->
+              Logger.error("Error while processing batch. #{reason}")
+              {:halt, params}
+            [] ->
+              {:halt, params}
+            result_list ->
+              Logger.info("Retrieving from #{params["from"]}.")
+              {
+                result_list,
+                params
+                |> Map.update!("from", fn (old) -> old + 100 end)
+              }
+          end
+        end,
+        fn (_params) ->
+          Logger.info("Finished search.")
+        end
+      )
+    end
+
+    defp process_batch_query(params) do
+      result =
+        params
+        |> get_list()
+
+      case result do
+        {:ok, %{"results" => results}} ->
+          results
+          |> Enum.map(&Task.async(fn -> parse_period_data(&1) end))
+          |> Enum.map(&Task.await(&1, 1000 * 60))
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+
+    def get_list(params) do
+      "#{@base_url}/data/period?#{URI.encode_query(params)}"
+      |> HTTPoison.get()
+      |> parse_response()
     end
 
     defp parse_response({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
@@ -67,13 +146,13 @@ defmodule ArgosAggregation.Chronontology do
     end
 
     defp parse_period_data(data) do
-      # TODO: Es gibt potenziell mehrere timespan, wie damit umgehen?
+      # Zukunft: Es gibt potenziell mehrere timespan, wie damit umgehen?
       beginning =
         case data["resource"]["hasTimespan"] do
           [%{"begin" => %{"at" => at}}] ->
-            at
+            parse_any_to_numeric_string(at)
           [%{"begin" => %{"notBefore" => notBefore}}] ->
-            notBefore
+            parse_any_to_numeric_string(notBefore)
           _ ->
             Logger.warning("Found no begin date for period #{data["resource"]["id"]}")
             ""
@@ -82,9 +161,9 @@ defmodule ArgosAggregation.Chronontology do
       ending =
         case data["resource"]["hasTimespan"] do
           [%{"end" => %{"at" => at}}] ->
-            at
+            parse_any_to_numeric_string(at)
           [%{"end" => %{"notAfter" => notAfter}}] ->
-            notAfter
+            parse_any_to_numeric_string(notAfter)
           _ ->
             Logger.warning("Found no end date for period #{data["resource"]["id"]}")
             ""
@@ -93,18 +172,17 @@ defmodule ArgosAggregation.Chronontology do
       # TODO Gazetteer Place spatiallyPartOfRegion and hasCoreArea? https://chronontology.dainst.org/period/X5lOSI8YQFiL
 
       core_fields = %{
-        "type" => "temporal_concept",
+        "type" => @field_type,
         "source_id" => data["resource"]["id"],
         "uri" => "#{@base_url}/period/#{data["resource"]["id"]}",
         "title" => parse_names(data["resource"]["names"]),
-        "description" => [
+        "description" => if(data["resource"]["description"]!=nil, do: [
           %{
             "lang" => NaturalLanguageDetector.get_language_key(data["resource"]["description"]),
             "text" => data["resource"]["description"]
           }
-        ]
+        ], else: [])
       }
-
       {
         :ok,
         %{
@@ -113,6 +191,19 @@ defmodule ArgosAggregation.Chronontology do
           "ending" => ending
         }
       }
+    end
+
+    def parse_any_to_numeric_string(string) when is_bitstring(string) do
+      case Integer.parse(string) do
+        {_val, _remainder} ->
+          string
+        :error ->
+          ""
+      end
+    end
+
+    def parse_any_to_numeric_string(_string) do
+      ""
     end
 
     defp parse_names(chronontology_data) do
@@ -125,137 +216,73 @@ defmodule ArgosAggregation.Chronontology do
       end)
       |> List.flatten()
     end
-
-    # def fetch!(query, offset, limit) do
-    #   params = %{q: query, size: limit, from: offset}
-
-    #   HTTPoison.get!(base_url(), [], [{:params, params}])
-    #   |> response_unwrap
-    # end
-
-    # def fetch!(query) do
-    #   HTTPoison.get!(base_url(), [], [{:params, %{q: query}}])
-    #   |> response_unwrap
-    # end
-
-    # def fetch_by_id!(%{id: id}) do
-    #   %{"results" => results} = HTTPoison.get!(base_url(), [], [{:params, %{q: id}}]) |> response_unwrap
-    #   results
-    # end
-
-    # def fetch_total!(query) do
-    #   case fetch!(query, 0, 0) do
-    #     %{"total" => total} -> total
-    #     _ -> raise "Unexpected response without a total."
-    #   end
-    # end
-
-    # defp base_url do
-    #   Application.get_env(:argos, :chronontology_url) <> "/period"
-    # end
-
-    # defp response_unwrap(%HTTPoison.Response{status_code: 200, body: body}) do
-    #   Poison.decode!(body)
-    # end
-
-    # defp response_unwrap(%HTTPoison.Response{status_code: code, request: %{url: url}}) do
-    #   raise "Chronontology fetch returned unexpected '#{code}' on GET '#{url}'"
-    # end
   end
 
   defmodule Harvester do
-    # require Logger
-    # @batch_size 100
+    use GenServer
+    alias ArgosAggregation.ElasticSearch.Indexer
 
-    # def harvest!(%Date{} = lastModified) do
-    #   query = build_query_string(lastModified)
+    @interval Application.get_env(:argos_aggregation, :temporal_concepts_harvest_interval)
+    defp get_timezone() do
+      "Etc/UTC"
+    end
 
-    #   total = ChronontologyClient.fetch_total!(query)
-    #   offsets = Enum.filter(0..total, fn i -> rem(i, @batch_size) == 0 end)
+    def init(state) do
+      state = Map.put(state, :last_run, DateTime.now!(get_timezone()))
 
-    #   Enum.map(offsets, &harvest_batch!(query, &1, @batch_size))
-    #   total
-    # end
+      Logger.info("Starting chronontology harvester with an interval of #{@interval}ms.")
 
-    # defp build_query_string(%Date{} = date) do
-    #   date_s = Date.to_iso8601(date)
-    #   "(modified.date:>=#{date_s}) OR (created.date:>=#{date_s})"
-    # end
+      Process.send(self(), :run, [])
+      {:ok, state}
+    end
 
-    # defp harvest_batch!(query, offset, batch_size) do
-    #   ChronontologyClient.fetch!(query, offset, batch_size)
-    #   |> save_resources!
-    # end
+    def start_link(_opts) do
+      GenServer.start_link(__MODULE__, %{})
+    end
 
-    # defp save_resources!(%{"results" => results}) do
-    #   Enum.map(results, &save_resource!(&1))
-    # end
+    def handle_info(:run, state) do # TODO: Übernommen, warum info und nicht cast/call?
 
-    # defp save_resources!(_) do
-    #   raise "Unexpected response without field 'results'"
-    # end
+      now = DateTime.now!(get_timezone())
+      run_harvest(state.last_run)
 
-    # defp save_resource!(%{"resource" => %{"id" => id}} = result) do
-    #   id = "chronontology-#{id}"
-    #   ElasticsearchClient.save!(result["resource"], id)
-    # end
+      state = %{state | last_run: now}
+      schedule_next_harvest()
+      {:noreply, state}
+    end
 
-    # defp save_resource!(_) do
-    #   raise "Unable to save malformed resource."
-    # end
+    defp schedule_next_harvest() do
+      Process.send_after(self(), :run, @interval)
+    end
+    def run_harvest() do
+      DataProvider.get_all()
+      |> Stream.map(fn(val) ->
+        case val do
+          {:ok, data} ->
+            data
+          {:error, msg} ->
+            Logger.error("Error while harvesting:")
+            Logger.error(msg)
+            nil
+        end
+      end)
+      |> Stream.reject(fn(val) -> is_nil(val) end)
+      |> Enum.each(&Indexer.index/1)
+    end
 
-    # def start_link(_opts) do
-    #   GenServer.start_link(__MODULE__, %{})
-    # end
-
-    # def init(state) do
-    #   state = Map.put(state, :last_run, Date.utc_today())
-    #   Process.send(self(), :run, [])
-    #   {:ok, state}
-    # end
-
-    # def handle_info(:run, state) do
-    #   # Schedules a harvesting of chronontology datasets and sets the state.last_run
-    #   # field to the date just before the harvesting started. Note that the chronontology
-    #   # API does only support Date, not time granularity via an the Elasticsearch Range
-    #   # query in a QueryString. This means that modified documents will be picked up by
-    #   # the harvester more than once, if they changed on the date of a harvesting run.
-    #   today = Date.utc_today()
-    #   result = run_harvest(state.last_run)
-
-    #   # A new harvest is scheduled regardless of the status of the last one
-    #   schedule_next_harvest()
-
-    #   # On error, do not update the state.last_run field, so that documents not
-    #   # picked up in one run, might be picket up later.
-    #   case result do
-    #     {:ok, _} -> {:noreply, %{state | last_run: today}}
-    #     {:error, _} -> {:noreply, state}
-    #   end
-    # end
-
-    # def run_harvest(%Date{} = date) do
-    #   # Gets all chronontology documents changed since the provided date and puts them
-    #   # in our index.
-    #   Logger.debug("Starting harvest for documents changed since: #{date}")
-
-    #   try do
-    #     total = ChronontologyHarvester.harvest!(date)
-    #     Logger.debug("Successfully indexd #{total} documents changed since: #{date}")
-    #     {:ok, nil}
-    #   rescue
-    #     e in RuntimeError ->
-    #       Logger.error(e.message)
-    #       {:error, e.message}
-    #   end
-    # end
-
-    # defp schedule_next_harvest() do
-    #   Process.send_after(self(), :run, interval())
-    # end
-
-    # defp interval do
-    #   Application.get_env(:argos, :chronontology_harvest_interval)
-    # end
+    def run_harvest(%DateTime{} = datetime) do
+      DataProvider.get_by_date(datetime)
+      |> Stream.map(fn(val) ->
+        case val do
+          {:ok, data} ->
+            data
+          {:error, msg} ->
+            Logger.error("Error while harvesting:")
+            Logger.error(msg)
+            nil
+        end
+      end)
+      |> Stream.reject(fn(val) -> is_nil(val) end)
+      |> Enum.each(&Indexer.index/1)
+    end
   end
 end

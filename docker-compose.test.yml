@@ -17,8 +17,6 @@ services:
   api:
     image: "dainst/argos_api:latest"
     container_name: "argos-api"
-    volumes: 
-      - "/opt/argos/elasticsearch/elasticsearch-mapping.json:/elasticsearch-mapping.json"
     labels:
       - traefik.enable=true
       - traefik.http.routers.api.rule=Host(`api.test.idai.world`)        
@@ -29,6 +27,8 @@ services:
   aggregation:
     image: "dainst/argos_aggregation:latest"
     container_name: "argos-aggregation"
+    volumes: 
+      - "/opt/argos/elasticsearch/elasticsearch-mapping.json:/elasticsearch-mapping.json"
     labels:
       - traefik.enable=false
 

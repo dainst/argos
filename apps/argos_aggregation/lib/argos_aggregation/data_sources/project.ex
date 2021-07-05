@@ -129,6 +129,7 @@ defmodule ArgosAggregation.Project do
 
   defmodule ProjectParser do
     @base_url Application.get_env(:argos_aggregation, :projects_url)
+    @field_type Application.get_env(:argos_aggregation, :project_type_key)
 
     def parse_project(data) do
       external_links = parse_external_links(data["images"], data["external_links"])
@@ -139,7 +140,7 @@ defmodule ArgosAggregation.Project do
       {persons, organisations} = parse_stakeholders(data["stakeholders"])
 
       core_fields = %{
-        "type" => "project",
+        "type" => @field_type,
         "source_id" => "#{data["id"]}",
         "uri" => "#{@base_url}/api/projects/#{data["id"]}",
         "title" => parse_translations(data["titles"]),
@@ -222,7 +223,7 @@ defmodule ArgosAggregation.Project do
         grouped
         |> Map.get("thesaurus", [])
         |> Enum.map(fn res ->
-          case Thesauri.DataProvider.get_by_id(res["res_id"]) do
+          case Thesauri.DataProvider.get_by_id(res["res_id"], false) do
             {:ok, concept} ->
               %{
                 "topic_context_note" => parse_translations(res["descriptions"]),
@@ -239,7 +240,7 @@ defmodule ArgosAggregation.Project do
         grouped
         |> Map.get("chronontology", [])
         |> Enum.map(fn res ->
-          case Chronontology.DataProvider.get_by_id(res["res_id"]) do
+          case Chronontology.DataProvider.get_by_id(res["res_id"], false) do
             {:ok, tt} ->
               %{
                 "topic_context_note" => parse_translations(res["descriptions"]),

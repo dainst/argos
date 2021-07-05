@@ -1,7 +1,7 @@
 defmodule ArgosAggregation.ElasticSearch.DataProvider do
   require Logger
 
-  @base_url "#{Application.get_env(:argos_api, :elasticsearch_url)}/#{Application.get_env(:argos_api, :index_name)}"
+  @base_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
   @headers [{"Content-Type", "application/json"}]
 
   alias ArgosAggregation.{

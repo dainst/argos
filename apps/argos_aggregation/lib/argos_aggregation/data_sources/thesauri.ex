@@ -28,6 +28,7 @@ defmodule ArgosAggregation.Thesauri do
 
   defmodule DataSourceClient.Http do
     @base_url Application.get_env(:argos_aggregation, :thesauri_url)
+    @field_type Application.get_env(:argos_aggregation, :thesauri_type_key)
 
     def request_by_date(%Date{} = date) do
        read_from_url("#{@base_url}/search.rdf?q=&change_note_date_from=#{Date.to_iso8601(date)}")
@@ -190,29 +191,44 @@ defmodule ArgosAggregation.Thesauri do
     """
     def get_by_id(id, force_reload \\ true) do
       case force_reload do
-          true ->
-            load_remote(id)
-          false ->
-            load_locally(id)
-        end
-    end
-
-    defp load_remote(id) do
-      case DataSourceClient.Http.request_single_node(id) do
-        {:ok, xml} -> ConceptParser.read_single_document(xml, id)
-        error -> error
+        true ->
+          get_by_id_from_source(id)
+        false ->
+          get_by_id_locally(id)
       end
     end
 
-    defp load_locally(id) do
-      case DataSourceClient.Local.request_single_node(id) do
-        {:ok, _} = concept -> concept
+    defp get_by_id_from_source(id) do
+      response =
+        "#{@base_url}/#{id}.rdf"
+        |> HTTPoison.get()
+        |> parse_response()
+
+      case response do
+        {:ok, data} ->
+          parse_concept_data(data, id)
+        error ->
+          error
+      end
+    end
+
+    defp get_by_id_locally(id) do
+      case ArgosAggregation.ElasticSearch.DataProvider.get_doc("concept_#{id}") do
+        {:ok, _} = concept ->
+          concept
         {:error, 404} ->
-          with {:ok, concept} <- load_remote(id),
-              %{upsert_response: %{"result" => "created"}} <- Indexer.index(concept),
-              do: {:ok, concept}
-        {:error, _} = error -> error
+          case get_by_id_from_source(id) do
+            {:ok, concept} = res ->
+              ArgosAggregation.ElasticSearch.Indexer.index(concept)
+              res
+            error->
+              error
+          end
       end
+    end
+
+    def get_by_date(%Date{} = _date) do
+      []
     end
   end
 
@@ -239,7 +255,7 @@ defmodule ArgosAggregation.Thesauri do
         %{
           "core_fields" => %{
             "source_id" => id,
-            "type" => "concept",
+            "type" => @field_type,
             "uri" => "#{@base_url}/#{id}",
             "title" => labels
           }
