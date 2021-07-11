@@ -72,7 +72,7 @@ defmodule ArgosAggregation.ThesauriTest do
 
       expected_error = {
         :error,
-        "Received unhandled status code 404."
+        "Received unhandled status code 404"
       }
       assert expected_error == error
     end
