@@ -91,6 +91,7 @@ defmodule ArgosAggregation.Application do
   end
 
   def start(_type, _args) do
+    Finch.start_link(name: ArgosFinch)
     if Application.get_env(:argos_aggregation, :await_index, true) do
       initialize_index()
     end
@@ -101,7 +102,6 @@ defmodule ArgosAggregation.Application do
       else
         @active_harvesters
       end
-    children = [{Finch, name: ArgosFinch}] ++ children
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

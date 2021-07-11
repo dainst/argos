@@ -37,6 +37,7 @@ defmodule ArgosAPI.Application do
   end
 
   def start(_type, _args) do
+    Finch.start_link(name: MyFinch)
     if Application.get_env(:argos_api, :await_index, true) do
       await_index()
     end
@@ -49,7 +50,6 @@ defmodule ArgosAPI.Application do
           {Plug.Cowboy, scheme: :http, plug: ArgosAPI.Router, options: [port: 4001]}
         ]
       end
-    children = [{Finch, name: ArgosAPIFinch}] ++ children
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
