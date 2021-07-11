@@ -9,8 +9,8 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
   }
 
   def get_doc(doc_id) do
-    "#{@base_url}/_doc/#{doc_id}"
-    |> HTTPoison.get()
+    Finch.build(:get, "#{@base_url}/_doc/#{doc_id}")
+    |> Finch.request(ArgosFinch)
     |> parse_response()
     |> extract_doc_from_response()
   end
@@ -29,8 +29,9 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
   end
 
   def run_query(query) do
-    "#{@base_url}/_search"
-    |> HTTPoison.post(query, [{"Content-Type", "application/json"}])
+
+    Finch.build(:post, "#{@base_url}/_search", [{"Content-Type", "application/json"}], query)
+    |> Finch.request(ArgosFinch)
     |> parse_response()
     |> extract_search_result_from_response()
   end
@@ -45,11 +46,11 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
         }
       }
     )
-    "#{@base_url}/_search"
-    |> HTTPoison.post(query, @headers)
+    Finch.build(:post, "#{@base_url}/_search", @headers, query)
+    |> Finch.request(ArgosFinch)
   end
 
-  defp parse_response({:ok, %HTTPoison.Response{body: body}}) do
+  defp parse_response({:ok, %Finch.Response{body: body}}) do
     Poison.decode(body)
   end
 

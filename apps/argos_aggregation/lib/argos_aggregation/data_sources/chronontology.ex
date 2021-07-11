@@ -50,7 +50,8 @@ defmodule ArgosAggregation.Chronontology do
 
     defp get_by_id_from_source(id) do
       response =
-        HTTPoison.get("#{@base_url}/data/period/#{id}")
+        Finch.build(:get, "#{@base_url}/data/period/#{id}")
+        |> Finch.request(ArgosFinch)
         |> parse_response()
 
       case response do
@@ -127,18 +128,19 @@ defmodule ArgosAggregation.Chronontology do
     end
 
     def get_list(params) do
-      "#{@base_url}/data/period?#{URI.encode_query(params)}"
-      |> HTTPoison.get()
+
+      Finch.build(:get, "#{@base_url}/data/period?#{URI.encode_query(params)}")
+      |> Finch.request(ArgosFinch)
       |> parse_response()
     end
 
-    defp parse_response({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
+    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}) do
       body
       |> Poison.decode()
     end
 
-    defp parse_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
-      {:error, "Received unhandled status code #{code} for #{req.url}."}
+    defp parse_response({:ok, %Finch.Response{status: code}}) do
+      {:error, "Received unhandled status code #{code}."}
     end
 
     defp parse_response({:error, error}) do

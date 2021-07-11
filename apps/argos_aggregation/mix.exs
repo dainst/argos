@@ -22,7 +22,7 @@ defmodule ArgosAggregation.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :tongue],
+      extra_applications: [:logger, :tongue, :finch],
       mod: {ArgosAggregation.Application, []}
     ]
   end
@@ -32,6 +32,7 @@ defmodule ArgosAggregation.MixProject do
     [
       {:poison, "~> 4.0"},
       {:httpoison, "~> 1.8"},
+      {:finch, "~> 0.7"},
       {:tzdata, "~> 1.0.4"},
       {:geo, "~> 3.3.7"},
       {:sweet_xml, "~> 0.6.6"},

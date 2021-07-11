@@ -66,8 +66,8 @@ defmodule ArgosAggregation.Project do
 
     defp get_project_list(url) do
       result =
-        url
-        |> HTTPoison.get()
+        Finch.build(:get, url)
+        |> Finch.request(ArgosFinch)
         |> handle_result()
 
       case result do
@@ -82,8 +82,8 @@ defmodule ArgosAggregation.Project do
 
     def get_by_id(id) do
       result =
-        "#{@base_url}/api/projects/#{id}"
-        |> HTTPoison.get()
+        Finch.build(:get, "#{@base_url}/api/projects/#{id}")
+        |> Finch.request(ArgosFinch)
         |> handle_result()
 
       case result do
@@ -95,7 +95,7 @@ defmodule ArgosAggregation.Project do
       end
     end
 
-    defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}} = _response) do
+    defp handle_result({:ok, %Finch.Response{status: 200, body: body}} = _response) do
       case Poison.decode(body) do
         {:ok, %{"code" => 404}} ->
           {:error, 404}
@@ -108,20 +108,20 @@ defmodule ArgosAggregation.Project do
       end
     end
 
-    defp handle_result({_, %HTTPoison.Response{status_code: 404}}) do
+    defp handle_result({_, %Finch.Response{status: 404}}) do
       {:error, 404}
     end
 
-    defp handle_result({_, %HTTPoison.Response{status_code: 400}}) do
+    defp handle_result({_, %Finch.Response{status: 400}}) do
       {:error, 400}
     end
 
-    defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}) do
+    defp handle_result({:error, %Mint.HTTPError{reason: :econnrefused}}) do
       Logger.error("No connection to #{@base_url}")
       {:error, :econnrefused}
     end
 
-    defp handle_result({:error, %HTTPoison.Error{id: nil, reason: :timeout}}) do
+    defp handle_result({:error, %Mint.HTTPError{reason: :timeout}}) do
       Logger.error("Timeout for #{@base_url}")
       {:error, :timeout}
     end

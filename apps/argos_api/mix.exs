@@ -19,7 +19,8 @@ defmodule ArgosAPI.MixProject do
   def application do
     [
       extra_applications: [
-        :logger
+        :logger,
+        :finch
       ],
       mod: {ArgosAPI.Application, []}
     ]
@@ -30,6 +31,7 @@ defmodule ArgosAPI.MixProject do
     [
       {:poison, "~> 4.0"},
       {:httpoison, "~> 1.8"},
+      {:finch, "~> 0.7"},
       {:exsync, "~> 0.2", only: :dev},
       {:plug_cowboy, "~> 2.4"},
       {:cors_plug, "~> 2.0"},

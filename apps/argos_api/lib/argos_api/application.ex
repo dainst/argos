@@ -23,9 +23,10 @@ defmodule ArgosAPI.Application do
 
   defp await_index() do
     delay = 1000 * 30
-
-    case HTTPoison.get("#{@elasticsearch_url}") do
-      {:ok, %HTTPoison.Response{status_code: 200}} ->
+    res = Finch.build(:get, "#{@elasticsearch_url}")
+    |> Finch.request(ArgosFinch)
+    case res do
+      {:ok, %Finch.Response{status: 200}} ->
         Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
         :ok
       _ ->
@@ -48,6 +49,7 @@ defmodule ArgosAPI.Application do
           {Plug.Cowboy, scheme: :http, plug: ArgosAPI.Router, options: [port: 4001]}
         ]
       end
+    children = [{Finch, name: ArgosAPIFinch}] ++ children
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
