@@ -55,7 +55,7 @@ defmodule ArgosAggregation.Thesauri do
     end
 
     def read_from_url(url, options) when is_list(options) do
-      Finch.build(:get, url)
+      Finch.build(:get, url, options)
       |> Finch.request(ArgosFinch)
       |> fetch_response
     end
