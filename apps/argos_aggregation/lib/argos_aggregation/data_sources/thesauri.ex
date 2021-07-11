@@ -40,7 +40,7 @@ defmodule ArgosAggregation.Thesauri do
 
     def request_node_hierarchy(id) do
       "#{@base_url}/hierarchy/#{id}.rdf?dir=down"
-      |> read_from_url([timeout: 50_000, recv_timeout: 50_000])
+      |> read_from_url([{"timeout", "50_000"}, {"recv_timeout", "50_000"}])
     end
 
     def request_single_node(id) do

@@ -9,12 +9,14 @@ defmodule ArgosAggregation.TestHelpers do
     case Finch.build(:put, @elasticsearch_url)
     |> Finch.request(ArgosFinch) do
       {:error, error} -> raise error
+      _-> {:ok}
 
     end
 
     case Finch.build(:put, "#{@elasticsearch_url}/_mapping", [{"Content-Type", "application/json"}], mapping)
     |> Finch.request(ArgosFinch) do
        {:error, error}-> raise error
+       _-> {:ok}
     end
 
   end
@@ -23,6 +25,7 @@ defmodule ArgosAggregation.TestHelpers do
     case Finch.build(:get, "#{@elasticsearch_url}/_refresh")
     |> Finch.request(ArgosFinch) do
       {:error, error}-> raise error
+      _-> {:ok}
    end
   end
 
@@ -31,6 +34,7 @@ defmodule ArgosAggregation.TestHelpers do
     case Finch.build(:delete, "#{@elasticsearch_url}")
     |> Finch.request(ArgosFinch) do
       {:error, error}-> raise error
+      _-> {:ok}
    end
   end
 end
