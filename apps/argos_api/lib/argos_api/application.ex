@@ -24,7 +24,7 @@ defmodule ArgosAPI.Application do
   defp await_index() do
     delay = 1000 * 30
     res = Finch.build(:get, "#{@elasticsearch_url}")
-    |> Finch.request(ArgosFinch)
+    |> Finch.request(ArgosAPIFinch)
     case res do
       {:ok, %Finch.Response{status: 200}} ->
         Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
@@ -37,7 +37,7 @@ defmodule ArgosAPI.Application do
   end
 
   def start(_type, _args) do
-    Finch.start_link(name: MyFinch)
+    Finch.start_link(name: ArgosAPIFinch)
     if Application.get_env(:argos_api, :await_index, true) do
       await_index()
     end
