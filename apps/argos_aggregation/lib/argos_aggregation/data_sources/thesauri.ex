@@ -107,7 +107,7 @@ defmodule ArgosAggregation.Thesauri do
         fn page_url ->
           case page_url do
             nil -> {:halt, page_url}
-            page_url -> load_next_page(page_url)
+            page_url -> load_next_page(page_url|>to_string())
           end
         end,
         fn _val ->
