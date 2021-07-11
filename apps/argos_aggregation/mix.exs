@@ -31,7 +31,6 @@ defmodule ArgosAggregation.MixProject do
   defp deps do
     [
       {:poison, "~> 4.0"},
-      {:httpoison, "~> 1.8"},
       {:finch, "~> 0.7"},
       {:tzdata, "~> 1.0.4"},
       {:geo, "~> 3.3.7"},

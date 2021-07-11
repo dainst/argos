@@ -30,7 +30,6 @@ defmodule ArgosAPI.MixProject do
   defp deps do
     [
       {:poison, "~> 4.0"},
-      {:httpoison, "~> 1.8"},
       {:finch, "~> 0.7"},
       {:exsync, "~> 0.2", only: :dev},
       {:plug_cowboy, "~> 2.4"},
