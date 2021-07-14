@@ -50,16 +50,16 @@ defmodule ArgosAggregation.Application do
 
 
   defp initialize_index() do
-    res =Finch.build(:put, @elasticsearch_url)
+    res =Finch.build(:get, @elasticsearch_url)
     |> Finch.request(ArgosFinch)
     case res do
       error when error in [
 
-        {:error, %Mint.HTTPError{
+        {:error, %Mint.TransportError{
           :reason => :closed,
 
         }},
-        {:error, %Mint.HTTPError{
+        {:error, %Mint.TransportError{
           :reason => :econnrefused,
 
         }}
@@ -76,7 +76,6 @@ defmodule ArgosAggregation.Application do
             put_index()
             put_mapping()
         end
-
       {:ok, %Finch.Response{status: 200}} ->
         Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
       {:error, %Mint.HTTPError{reason: :nxdomain}} ->
