@@ -30,7 +30,7 @@ defmodule ArgosAggregation.ChronontologyTest do
   test "get by id with invalid id yields 404" do
     id = "i-am-non-existant"
 
-    expected_result = {:error, "Received unhandled status code 404 for https://chronontology.dainst.org/data/period/#{id}."}
+    expected_result = {:error, "Received unhandled status code 404."}
 
     assert expected_result == DataProvider.get_by_id(id)
   end
