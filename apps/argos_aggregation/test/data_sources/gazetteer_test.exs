@@ -43,7 +43,6 @@ defmodule ArgosAggregation.GazetteerTest do
     records  =
       DataProvider.get_by_date(~D[2021-01-01])
       |> Enum.take(10)
-    IO.inspect(records)
     assert Enum.count(records) == 10
 
     records
