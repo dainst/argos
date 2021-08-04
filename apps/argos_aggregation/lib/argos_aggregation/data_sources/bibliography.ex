@@ -208,6 +208,7 @@ defmodule ArgosAggregation.Bibliography do
         "description" => parse_descriptions(record),
         "persons" => parse_persons(record),
         "institutions" => parse_institutions(record),
+        "full_record" => record
       }
 
       {
