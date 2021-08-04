@@ -150,7 +150,8 @@ defmodule ArgosAggregation.Project do
         "spatial_topics" => spatial_topics,
         "temporal_topics" => temporal_topics,
         "persons" => persons,
-        "organisations" => organisations
+        "organisations" => organisations,
+        "full_record" => data
       }
 
       {
