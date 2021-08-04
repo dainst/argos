@@ -181,7 +181,8 @@ defmodule ArgosAggregation.Chronontology do
             "lang" => NaturalLanguageDetector.get_language_key(data["resource"]["description"]),
             "text" => data["resource"]["description"]
           }
-        ], else: [])
+        ], else: []),
+        "full_record" => data
       }
       {
         :ok,
