@@ -32,14 +32,6 @@ defmodule ArgosAggregation.Bibliography do
       embeds_one(:core_fields, ArgosAggregation.CoreFields)
     end
 
-    @spec changeset(
-            {map, map}
-            | %{
-                :__struct__ => atom | %{:__changeset__ => map, optional(any) => any},
-                optional(atom) => any
-              },
-            :invalid | %{optional(:__struct__) => none, optional(atom | binary) => any}
-          ) :: Ecto.Changeset.t()
     def changeset(project, params \\ %{}) do
       project
       |> cast(params, [])
