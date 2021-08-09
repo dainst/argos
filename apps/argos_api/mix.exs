@@ -18,10 +18,7 @@ defmodule ArgosAPI.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [
-        :logger,
-        :finch
-      ],
+      extra_applications: [:logger],
       mod: {ArgosAPI.Application, []}
     ]
   end

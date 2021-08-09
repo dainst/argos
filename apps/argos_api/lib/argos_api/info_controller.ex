@@ -7,7 +7,7 @@ defmodule ArgosAPI.InfoController do
 
     %{"_all" => %{"total" => %{"docs" => %{"count" => count_docs }}}} =
       Finch.build(:get, "#{@elasticsearch_url}/_stats", [{"Content-Type", "application/json"}])
-      |> Finch.request(ArgosAPIFinch)
+      |> Finch.request(ArgosFinch)
       |> handle_result()
 
     info = %{
