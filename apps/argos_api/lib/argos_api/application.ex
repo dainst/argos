@@ -57,12 +57,6 @@ defmodule ArgosAPI.Application do
       Logger.info("Starting server...")
     end
 
-    supervisor_response = Supervisor.start_link(children, opts)
-
-    if Application.get_env(:argos_api, :await_index, true) do
-      await_index()
-    end
-
-    supervisor_response
+    Supervisor.start_link(children, opts)
   end
 end
