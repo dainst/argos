@@ -5,8 +5,6 @@ defmodule ArgosAPI.Application do
 
   use Application
 
-  @elasticsearch_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
-
   require Logger
 
   defp running_script?([head]) do
@@ -19,22 +17,6 @@ defmodule ArgosAPI.Application do
 
   defp running_script?(_) do
     false
-  end
-
-  defp await_index() do
-    delay = 1000 * 30
-    res =
-      Finch.build(:get, "#{@elasticsearch_url}")
-      |> Finch.request(ArgosAPIFinch)
-    case res do
-      {:ok, %Finch.Response{status: 200}} ->
-        Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
-        :ok
-      _ ->
-        Logger.info("Waiting for Elasticsearch index at #{@elasticsearch_url}.")
-        :timer.sleep(delay)
-        await_index()
-    end
   end
 
   def start(_type, _args) do
