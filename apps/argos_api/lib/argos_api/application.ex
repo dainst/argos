@@ -23,8 +23,9 @@ defmodule ArgosAPI.Application do
 
   defp await_index() do
     delay = 1000 * 30
-    res = Finch.build(:get, "#{@elasticsearch_url}")
-    |> Finch.request(ArgosFinch)
+    res =
+      Finch.build(:get, "#{@elasticsearch_url}")
+      |> Finch.request(ArgosAPIFinch)
     case res do
       {:ok, %Finch.Response{status: 200}} ->
         Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
@@ -37,20 +38,16 @@ defmodule ArgosAPI.Application do
   end
 
   def start(_type, _args) do
-    if Application.get_env(:argos_api, :await_index, true) do
-      await_index()
-    end
 
     children =
       if running_script?(System.argv) do
         [] # We do not want to (re)start the harvesters when running exs scripts.
       else
         [
-          {Plug.Cowboy, scheme: :http, plug: ArgosAPI.Router, options: [port: 4001]}
+          {Plug.Cowboy, scheme: :http, plug: ArgosAPI.Router, options: [port: 4001]},
+          {Finch, name: ArgosAPIFinch}
         ]
       end
-
-    children = [{Finch, name: ArgosFinch}] ++ children
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -60,6 +57,12 @@ defmodule ArgosAPI.Application do
       Logger.info("Starting server...")
     end
 
-    Supervisor.start_link(children, opts)
+    supervisor_response = Supervisor.start_link(children, opts)
+
+    if Application.get_env(:argos_api, :await_index, true) do
+      await_index()
+    end
+
+    supervisor_response
   end
 end

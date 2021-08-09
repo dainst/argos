@@ -146,7 +146,7 @@ defmodule ArgosAggregation.Bibliography do
     end
     def get_record_list(params) do
       Finch.build(:get, "#{@base_url}/api/v1/search?#{URI.encode_query(params)}")
-      |> Finch.request(ArgosFinch)
+      |> Finch.request(ArgosAggregationFinch)
       |> parse_response()
     end
 

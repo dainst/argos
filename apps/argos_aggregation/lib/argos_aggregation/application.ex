@@ -33,25 +33,25 @@ defmodule ArgosAggregation.Application do
 
   def put_index() do
     Finch.build(:put, "#{@elasticsearch_url}")
-    |> Finch.request(ArgosFinch)
+    |> Finch.request(ArgosAggregationFinch)
   end
 
   def delete_index() do
     Finch.build(:delete, "#{@elasticsearch_url}")
-    |> Finch.request(ArgosFinch)
+    |> Finch.request(ArgosAggregationFinch)
   end
 
 
   def put_mapping() do
     mapping = File.read!(@elasticsearch_mapping_path)
     Finch.build(:put, "#{@elasticsearch_url}/_mapping", [{"Content-Type", "application/json"}],mapping)
-    |> Finch.request(ArgosFinch)
+    |> Finch.request(ArgosAggregationFinch)
   end
 
 
   defp initialize_index() do
     res =Finch.build(:get, @elasticsearch_url)
-    |> Finch.request(ArgosFinch)
+    |> Finch.request(ArgosAggregationFinch)
     case res do
       error when error in [
 
@@ -90,10 +90,6 @@ defmodule ArgosAggregation.Application do
   end
 
   def start(_type, _args) do
-    if Application.get_env(:argos_aggregation, :await_index, true) do
-      initialize_index()
-    end
-
     children =
       if running_script?(System.argv) do
         [] # We do not want to (re)start the harvesters when running exs scripts.
@@ -104,7 +100,14 @@ defmodule ArgosAggregation.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ArgosAggregation.Supervisor]
+    children = [{Finch, name: ArgosAggregationFinch}] ++ children
 
-    Supervisor.start_link(children, opts)
+    supervisor_response = Supervisor.start_link(children, opts)
+
+    if Application.get_env(:argos_aggregation, :await_index, true) do
+      initialize_index()
+    end
+
+    supervisor_response
   end
 end
