@@ -90,7 +90,6 @@ defmodule ArgosAggregation.Application do
   end
 
   def start(_type, _args) do
-    Finch.start_link(name: ArgosFinch)
     if Application.get_env(:argos_aggregation, :await_index, true) do
       initialize_index()
     end
