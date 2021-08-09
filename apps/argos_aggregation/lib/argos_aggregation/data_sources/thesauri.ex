@@ -107,7 +107,11 @@ defmodule ArgosAggregation.Thesauri do
         fn page_url ->
           case page_url do
             nil -> {:halt, page_url}
-            page_url -> load_next_page(page_url|>to_string())
+            page_url ->
+              # SweetXML returns char lists instead of binary strings, Finch can only handle the latter.
+              page_url
+              |> to_string()
+              |> load_next_page()
           end
         end,
         fn _val ->
