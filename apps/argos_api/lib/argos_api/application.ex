@@ -5,8 +5,6 @@ defmodule ArgosAPI.Application do
 
   use Application
 
-  @elasticsearch_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
-
   require Logger
 
   defp running_script?([head]) do
@@ -21,33 +19,15 @@ defmodule ArgosAPI.Application do
     false
   end
 
-  defp await_index() do
-    delay = 1000 * 30
-    res = Finch.build(:get, "#{@elasticsearch_url}")
-    |> Finch.request(ArgosAPIFinch)
-    case res do
-      {:ok, %Finch.Response{status: 200}} ->
-        Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
-        :ok
-      _ ->
-        Logger.info("Waiting for Elasticsearch index at #{@elasticsearch_url}.")
-        :timer.sleep(delay)
-        await_index()
-    end
-  end
-
   def start(_type, _args) do
-    Finch.start_link(name: ArgosAPIFinch)
-    if Application.get_env(:argos_api, :await_index, true) do
-      await_index()
-    end
 
     children =
       if running_script?(System.argv) do
         [] # We do not want to (re)start the harvesters when running exs scripts.
       else
         [
-          {Plug.Cowboy, scheme: :http, plug: ArgosAPI.Router, options: [port: 4001]}
+          {Plug.Cowboy, scheme: :http, plug: ArgosAPI.Router, options: [port: 4001]},
+          {Finch, name: ArgosAPIFinch}
         ]
       end
 

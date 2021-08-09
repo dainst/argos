@@ -7,14 +7,14 @@ defmodule ArgosAggregation.TestHelpers do
   def create_index() do
     mapping = File.read!("../../#{@elasticsearch_mapping_path}")
     case Finch.build(:put, @elasticsearch_url)
-    |> Finch.request(ArgosFinch) do
+    |> Finch.request(ArgosAggregationFinch) do
       {:error, error} -> raise error
       _-> {:ok}
 
     end
 
     case Finch.build(:put, "#{@elasticsearch_url}/_mapping", [{"Content-Type", "application/json"}], mapping)
-    |> Finch.request(ArgosFinch) do
+    |> Finch.request(ArgosAggregationFinch) do
        {:error, error}-> raise error
        _-> {:ok}
     end
@@ -23,7 +23,7 @@ defmodule ArgosAggregation.TestHelpers do
 
   def refresh_index() do
     case Finch.build(:get, "#{@elasticsearch_url}/_refresh")
-    |> Finch.request(ArgosFinch) do
+    |> Finch.request(ArgosAggregationFinch) do
       {:error, error}-> raise error
       _-> {:ok}
    end
@@ -32,7 +32,7 @@ defmodule ArgosAggregation.TestHelpers do
   def remove_index() do
 
     case Finch.build(:delete, "#{@elasticsearch_url}")
-    |> Finch.request(ArgosFinch) do
+    |> Finch.request(ArgosAggregationFinch) do
       {:error, error}-> raise error
       _-> {:ok}
    end

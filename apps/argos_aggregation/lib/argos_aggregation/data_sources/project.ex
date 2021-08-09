@@ -67,7 +67,7 @@ defmodule ArgosAggregation.Project do
     defp get_project_list(url) do
       result =
         Finch.build(:get, url)
-        |> Finch.request(ArgosFinch)
+        |> Finch.request(ArgosAggregationFinch)
         |> handle_result()
 
       case result do
@@ -83,7 +83,7 @@ defmodule ArgosAggregation.Project do
     def get_by_id(id) do
       result =
         Finch.build(:get, "#{@base_url}/api/projects/#{id}")
-        |> Finch.request(ArgosFinch)
+        |> Finch.request(ArgosAggregationFinch)
         |> handle_result()
 
       case result do

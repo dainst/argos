@@ -50,13 +50,13 @@ defmodule ArgosAggregation.Thesauri do
 
     def read_from_url(url) do
       Finch.build(:get, url)
-      |> Finch.request(ArgosFinch)
+      |> Finch.request(ArgosAggregationFinch)
       |> fetch_response
     end
 
     def read_from_url(url, options) when is_list(options) do
       Finch.build(:get, url, options)
-      |> Finch.request(ArgosFinch)
+      |> Finch.request(ArgosAggregationFinch)
       |> fetch_response
     end
 
@@ -107,7 +107,11 @@ defmodule ArgosAggregation.Thesauri do
         fn page_url ->
           case page_url do
             nil -> {:halt, page_url}
-            page_url -> load_next_page(page_url|>to_string())
+            page_url ->
+              # SweetXML returns char lists instead of binary strings, Finch can only handle the latter.
+              page_url
+              |> to_string()
+              |> load_next_page()
           end
         end,
         fn _val ->
