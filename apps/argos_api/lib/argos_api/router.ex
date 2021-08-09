@@ -18,6 +18,12 @@ defmodule ArgosAPI.Router do
 
   alias ArgosAPI.Errors
 
+  get "/spec" do
+    conn
+    |> put_resp_content_type("text/plain")
+    |> Plug.Conn.send_file(200, "priv/openapi.yaml")
+  end
+
   get "/doc/:id" do
     ArgosAPI.DocumentController.get(conn)
   end
