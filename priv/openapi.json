@@ -1,0 +1,422 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "This is the API for the iDAI.world. Currently, it allows full-text querying and filtering project information.\nIn the future, it will be extended to include geo- and timespan-filtering capabilities as well as additional object types representing the different applications of the iDAI.world.",
+    "version": "0.0.3",
+    "title": "iDAI.world search",
+    "contact": {
+      "email": "dev@dainst.de"
+    }
+  },
+  "paths": {
+    "/search": {
+      "get": {
+        "summary": "Finds Projects by query string",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Query string",
+            "schema": {
+              "type": "string",
+              "default": "*"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 50
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Positive filter: Filter by value, syntax: '<filter_key>:<filter_value>'",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z_]+:.+$"
+              }
+            }
+          },
+          {
+            "name": "!filter",
+            "in": "query",
+            "description": "Negative filter: Exclude by value, syntax: '<filter_key>:<filter_value>'",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z_]+:.+$"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/doc/{id}": {
+      "get": {
+        "summary": "Get document by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.idai.world"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Project"
+            }
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Filter"
+            }
+          }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "required": [
+          "id",
+          "label"
+        ],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "ID used for /doc/{id}",
+            "example": "project-60856"
+          },
+          "id": {
+            "type": "string",
+            "example": "60856"
+          },
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "description": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "doi": {
+            "type": "string",
+            "example": "10.1594/PANGAEA.726855"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "subject": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConceptLink"
+            }
+          },
+          "spatial": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaceLink"
+            }
+          },
+          "temporal": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemporalConceptLink"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Image"
+            }
+          },
+          "stakeholders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Stakeholder"
+            }
+          },
+          "external_links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalLink"
+            }
+          }
+        }
+      },
+      "ConceptLink": {
+        "description": "A descriptive link between the host document and a concept.",
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/Concept"
+          }
+        }
+      },
+      "TemporalConceptLink": {
+        "description": "A descriptive link between the host document and a temporal concept.",
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/TemporalConcept"
+          }
+        }
+      },
+      "PlaceLink": {
+        "description": "A descriptive link between the host document and a place.",
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/Place"
+          }
+        }
+      },
+      "Concept": {
+        "description": "A thematic concept taken from a controlled vocabulary (i.e. iDAI.thesauri).",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "format": "uri"
+          },
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          }
+        }
+      },
+      "TemporalConcept": {
+        "description": "A temporal concept or named period taken from a controlled vocabulary (i.e. iDAI.chronontology).",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "format": "uri"
+          },
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "begin": {
+            "type": "integer",
+            "description": "Earliest begin year"
+          },
+          "end": {
+            "type": "integer",
+            "description": "Latest end year"
+          }
+        }
+      },
+      "Place": {
+        "description": "A named place taken from a controlled vocabulary (i.e. iDAI.gazetteer).",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "format": "uri"
+          },
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "geometry": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Geometry"
+            }
+          }
+        }
+      },
+      "Geometry": {
+        "description": "A geometry as defined by the GeoJSON standard.",
+        "externalDocs": {
+          "url": "http://geojson.org/geojson-spec.html#geometry-objects"
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "coordinates"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Point",
+              "Polygon",
+              "MultiPoint",
+              "MultiPolygon",
+              "LineString",
+              "MultiLineString"
+            ]
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {}
+          }
+        }
+      },
+      "Image": {
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "uri": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "Stakeholder": {
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "Manager",
+              "Funding",
+              "Partner",
+              "Participant"
+            ]
+          },
+          "uri": {
+            "type": "string",
+            "format": "uri"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "Person",
+              "Institution"
+            ]
+          }
+        }
+      },
+      "ExternalLink": {
+        "properties": {
+          "uri": {
+            "type": "string",
+            "format": "uri"
+          },
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "Data",
+              "Related"
+            ]
+          }
+        }
+      },
+      "Filter": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "subject"
+          },
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "example": "buildings"
+                },
+                "label": {
+                  "$ref": "#/components/schemas/TranslatedContent"
+                },
+                "count": {
+                  "type": "number",
+                  "example": 42
+                }
+              }
+            }
+          }
+        }
+      },
+      "TranslatedContent": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "lang": {
+              "type": "string",
+              "example": "en"
+            },
+            "text": {
+              "type": "string",
+              "example": "English label"
+            }
+          }
+        }
+      }
+    }
+  }
+}

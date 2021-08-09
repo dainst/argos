@@ -28,11 +28,13 @@ defmodule ArgosAPI.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:poison, "~> 4.0"},
+      {:poison, "~> 4.0", override: true},
       {:httpoison, "~> 1.8"},
       {:exsync, "~> 0.2", only: :dev},
       {:plug_cowboy, "~> 2.4"},
       {:cors_plug, "~> 2.0"},
+      {:phoenix_swagger, "~> 0.8.3"},
+      {:ex_json_schema, "~> 0.5"},
       {:argos_aggregation, in_umbrella: true}
     ]
   end

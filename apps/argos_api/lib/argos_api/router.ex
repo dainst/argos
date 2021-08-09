@@ -18,11 +18,12 @@ defmodule ArgosAPI.Router do
 
   alias ArgosAPI.Errors
 
-  get "/spec" do
+  get "/swagger/openapi.json" do
     conn
-    |> put_resp_content_type("text/plain")
-    |> Plug.Conn.send_file(200, "priv/openapi.yaml")
+    |> Plug.Conn.send_file(200, "priv/openapi.json")
   end
+
+  forward "/swagger", to: PhoenixSwagger.Plug.SwaggerUI, otp_app: :argos_api, swagger_file: "openapi.json"
 
   get "/doc/:id" do
     ArgosAPI.DocumentController.get(conn)
