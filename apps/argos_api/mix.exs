@@ -30,8 +30,7 @@ defmodule ArgosAPI.MixProject do
       {:finch, "~> 0.7"},
       {:exsync, "~> 0.2", only: :dev},
       {:plug_cowboy, "~> 2.4"},
-      {:cors_plug, "~> 2.0"},
-      {:argos_aggregation, in_umbrella: true}
+      {:cors_plug, "~> 2.0"}
     ]
   end
 end
