@@ -19,8 +19,23 @@ defmodule ArgosAPI.Router do
   alias ArgosAPI.Errors
 
   get "/swagger/openapi.json" do
-    conn
-    |> Plug.Conn.send_file(200, "priv/openapi.json")
+
+    api_spec =
+      "priv/openapi.json"
+      |> File.read!()
+      |> Poison.decode!()
+      |> Map.update!(
+        "info",
+        fn(info) ->
+          info
+          |> Map.update!(
+            "version",
+            fn(_) ->
+              List.to_string(Application.spec(:argos_api, :vsn))
+            end)
+        end)
+
+    send_resp(conn, 200, Poison.encode!(api_spec))
   end
 
   forward "/swagger", to: PhoenixSwagger.Plug.SwaggerUI, otp_app: :argos_api, swagger_file: "openapi.json"
