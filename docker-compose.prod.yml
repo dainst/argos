@@ -17,9 +17,11 @@ services:
   api:
     image: "dainst/argos_api:latest"
     container_name: "argos-api"
+    environment: 
+      - HOST=api.idai.world
     labels:
       - traefik.enable=true
-      - traefik.http.routers.api.rule=Host(`api.idai.world`)        
+      - traefik.http.routers.api.rule=Host(`api.idai.world`)
       - traefik.http.services.api.loadbalancer.server.port=4001
       - traefik.http.routers.api.tls=true
       - traefik.http.routers.api.tls.certresolver=myresolver

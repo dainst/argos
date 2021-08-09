@@ -6,6 +6,7 @@ defmodule ArgosAPI.Application do
   use Application
 
   @elasticsearch_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
+  @cowboy_port Application.get_env(:argos_api, :port)
 
   require Logger
 
@@ -45,7 +46,7 @@ defmodule ArgosAPI.Application do
         [] # We do not want to (re)start the harvesters when running exs scripts.
       else
         [
-          {Plug.Cowboy, scheme: :http, plug: ArgosAPI.Router, options: [port: 4001]}
+          {Plug.Cowboy, scheme: :http, plug: ArgosAPI.Router, options: [port: @cowboy_port]}
         ]
       end
 
