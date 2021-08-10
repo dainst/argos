@@ -72,7 +72,7 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
           |> Stream.map(fn(hit) ->
             Map.merge(%{"_id" => hit["_id"]}, hit["_source"])
           end)
-          |> Enum.map(&transform_to_sparce_doc/1)
+          |> Enum.map(&transform_to_sparse_doc/1)
         _ ->
           []
       end
@@ -94,25 +94,39 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
     }
   end
 
-  defp transform_to_sparce_doc(doc) do
+  defp transform_to_sparse_doc(doc) do
     # TODO: Cast to ecto schemas?
     # TODO: Strip full_record from doc and from topics
     doc
     |> Map.update!("core_fields", fn(core_fields) ->
       core_fields
-      |> Map.update!("spatial_topics", fn(spatial_topics) ->
-        spatial_topics
-        |> Enum.map(fn(topic) ->
-          topic
-          |> Map.update!("resource", &strip_geometry_data/1)
-        end)
-      end)
+      |> Map.update!("spatial_topics", &transform_topics_to_sparse_docs/1)
+      |> Map.update!("general_topics", &transform_topics_to_sparse_docs/1)
+      |> Map.update!("temporal_topics", &transform_topics_to_sparse_docs/1)
     end)
+    |> strip_full_record_data()
     |> strip_geometry_data() # for place documents themselves also delete the geometry
   end
 
-  defp strip_geometry_data(place) do
-    place
+  defp transform_topics_to_sparse_docs(topics) do
+    topics
+    |> Enum.map(fn(topic) ->
+      topic
+      |> Map.update!("resource", &strip_geometry_data/1)
+      |> Map.update!("resource", &strip_full_record_data/1)
+    end)
+  end
+
+  defp strip_geometry_data(doc) do
+    doc
     |> Map.delete("geometry")
+  end
+
+  defp strip_full_record_data(doc) do
+    doc
+    |> Map.update!("core_fields", fn(core_fields) ->
+      core_fields
+      |> Map.delete("full_record")
+    end)
   end
 end
