@@ -10,6 +10,7 @@ defmodule ArgosAggregation.Application do
   @elasticsearch_mapping_path Application.get_env(:argos_aggregation, :elasticsearch_mapping_path)
 
   require Logger
+  require Finch
 
   defp running_script?([head]) do
     head == "--script"
@@ -31,45 +32,53 @@ defmodule ArgosAggregation.Application do
   end
 
   def put_index() do
-    "#{@elasticsearch_url}"
-    |> HTTPoison.put()
+    Finch.build(:put, "#{@elasticsearch_url}")
+    |> Finch.request(ArgosAggregationFinchProcess)
   end
 
   def delete_index() do
-    "#{@elasticsearch_url}"
-    |> HTTPoison.delete()
+    Finch.build(:delete, "#{@elasticsearch_url}")
+    |> Finch.request(ArgosAggregationFinchProcess)
   end
 
 
   def put_mapping() do
     mapping = File.read!(@elasticsearch_mapping_path)
-    "#{@elasticsearch_url}/_mapping"
-    |> HTTPoison.put(mapping, [{"Content-Type", "application/json"}])
+    Finch.build(:put, "#{@elasticsearch_url}/_mapping", [{"Content-Type", "application/json"}],mapping)
+    |> Finch.request(ArgosAggregationFinchProcess)
   end
 
 
   defp initialize_index() do
-    case HTTPoison.get(@elasticsearch_url) do
+    res =Finch.build(:get, @elasticsearch_url)
+    |> Finch.request(ArgosAggregationFinchProcess)
+    case res do
       error when error in [
-        {:error, %HTTPoison.Error{id: nil, reason: :closed}},
-        {:error, %HTTPoison.Error{id: nil, reason: :econnrefused}}
+
+        {:error, %Mint.TransportError{
+          :reason => :closed,
+
+        }},
+        {:error, %Mint.TransportError{
+          :reason => :econnrefused,
+
+        }}
       ] ->
         delay = 1000 * 5
         Logger.warning("No connection to Elasticsearch at #{@elasticsearch_url}. Rescheduling initialization in #{delay}ms...")
         :timer.sleep(delay)
         initialize_index()
 
-      {:ok, %HTTPoison.Response{body: body, status_code: 404}} ->
+      {:ok, %Finch.Response{body: body, status: 404}} ->
         case Poison.decode!(body) do
           %{"error" => %{"root_cause" => [%{"type" => "index_not_found_exception"}]}} ->
             Logger.info("Index not setup at #{@elasticsearch_url}, creating index and putting mapping...")
             put_index()
             put_mapping()
         end
-
-      {:ok, %HTTPoison.Response{status_code: 200}} ->
+      {:ok, %Finch.Response{status: 200}} ->
         Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
-      {:error, %HTTPoison.Error{id: nil, reason: :nxdomain}} ->
+      {:error, %Mint.HTTPError{reason: :nxdomain}} ->
         Logger.error("nxdomain error")
         raise "nxdomain"
     end
@@ -81,10 +90,6 @@ defmodule ArgosAggregation.Application do
   end
 
   def start(_type, _args) do
-    if Application.get_env(:argos_aggregation, :await_index, true) do
-      initialize_index()
-    end
-
     children =
       if running_script?(System.argv) do
         [] # We do not want to (re)start the harvesters when running exs scripts.
@@ -95,7 +100,14 @@ defmodule ArgosAggregation.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ArgosAggregation.Supervisor]
+    children = [{Finch, name: ArgosAggregationFinchProcess}] ++ children
 
-    Supervisor.start_link(children, opts)
+    supervisor_response = Supervisor.start_link(children, opts)
+
+    if Application.get_env(:argos_aggregation, :await_index, true) do
+      initialize_index()
+    end
+
+    supervisor_response
   end
 end

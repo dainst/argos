@@ -6,18 +6,36 @@ defmodule ArgosAPI.TestHelpers do
 
   def create_index() do
 
-    HTTPoison.put!(@elasticsearch_url)
-
+    case Finch.build(:put, @elasticsearch_url)
+    |> Finch.request(ArgosAPIFinch) do
+      {:error, error}-> raise error
+      _-> {:ok}
+   end
     mapping = File.read!("../../#{@elasticsearch_mapping_path}")
 
-    HTTPoison.put!("#{@elasticsearch_url}/_mapping", mapping, [{"Content-Type", "application/json"}])
+
+    case Finch.build(:put, "#{@elasticsearch_url}/_mapping", [{"Content-Type", "application/json"}], mapping)
+    |> Finch.request(ArgosAPIFinch) do
+      {:error, error}-> raise error
+      _-> {:ok}
+   end
   end
 
   def refresh_index() do
-    HTTPoison.get!("#{@elasticsearch_url}/_refresh")
+
+    case Finch.build(:get, "#{@elasticsearch_url}/_refresh")
+    |> Finch.request(ArgosAPIFinch) do
+      {:error, error}-> raise error
+      _-> {:ok}
+   end
   end
 
   def remove_index() do
-    HTTPoison.delete!("#{@elasticsearch_url}")
+
+    case Finch.build(:delete, "#{@elasticsearch_url}")
+    |> Finch.request(ArgosAPIFinch) do
+      {:error, error}-> raise error
+      _-> {:ok}
+   end
   end
 end
