@@ -89,6 +89,7 @@
           {
             "name": "id",
             "in": "path",
+            "example": "biblio_000903451",
             "required": true,
             "schema": {
               "type": "string"
