@@ -38,7 +38,7 @@ defmodule ArgosAPI.Router do
     send_resp(conn, 200, Poison.encode!(api_spec))
   end
 
-  forward "/swagger", to: PhoenixSwagger.Plug.SwaggerUI, otp_app: :argos_api, swagger_file: "openapi.json"
+  forward "/swagger", to: OpenApiSpex.Plug.SwaggerUI, path: "/swagger/openapi.json"
 
   get "/doc/:id" do
     ArgosAPI.DocumentController.get(conn)

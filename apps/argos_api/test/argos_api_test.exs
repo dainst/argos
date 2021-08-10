@@ -85,28 +85,11 @@ defmodule ArgosAPITest do
   end
 
   test "swagger ui is served" do
-    %{resp_headers: resp_headers} = response =
+    response =
       conn(:get, "/swagger")
       |> ArgosAPI.Router.call(%{})
 
-    assert response.status == 302
-
-    {"location", redirect} =
-      Enum.find(resp_headers, fn(val) ->
-        case val do
-          {"location", _} ->
-            true
-          _ ->
-            false
-        end
-      end)
-
-    %{status: status, scheme: scheme} =
-      conn(:get, redirect)
-      |> ArgosAPI.Router.call(%{})
-
-    assert status == 200
-    assert scheme == :http
+    assert response.status == 200
   end
 
   describe "elastic search tests" do
