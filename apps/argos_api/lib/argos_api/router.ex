@@ -21,7 +21,7 @@ defmodule ArgosAPI.Router do
   get "/swagger/openapi.json" do
 
     api_spec =
-      "priv/openapi.json"
+      Application.app_dir(:argos_api, "priv/openapi.json")
       |> File.read!()
       |> Poison.decode!()
       |> Map.update!(
