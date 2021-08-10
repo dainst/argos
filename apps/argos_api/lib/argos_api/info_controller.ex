@@ -6,8 +6,8 @@ defmodule ArgosAPI.InfoController do
     argos_vsn = List.to_string(Application.spec(:argos_api, :vsn))
 
     %{"_all" => %{"total" => %{"docs" => %{"count" => count_docs }}}} =
-      "#{@elasticsearch_url}/_stats"
-      |> HTTPoison.get([{"Content-Type", "application/json"}])
+      Finch.build(:get, "#{@elasticsearch_url}/_stats", [{"Content-Type", "application/json"}])
+      |> Finch.request(ArgosAPIFinch)
       |> handle_result()
 
     info = %{
@@ -18,7 +18,7 @@ defmodule ArgosAPI.InfoController do
     send_resp(conn, 200, Poison.encode!(info))
   end
 
-  defp handle_result({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
+  defp handle_result({:ok, %Finch.Response{status: 200, body: body}}) do
     Poison.decode!(body)
   end
 end

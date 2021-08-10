@@ -40,7 +40,7 @@ defmodule ArgosAggregation.Thesauri do
 
     def request_node_hierarchy(id) do
       "#{@base_url}/hierarchy/#{id}.rdf?dir=down"
-      |> read_from_url([timeout: 50_000, recv_timeout: 50_000])
+      |> read_from_url([{"timeout", "50_000"}, {"recv_timeout", "50_000"}])
     end
 
     def request_single_node(id) do
@@ -49,20 +49,20 @@ defmodule ArgosAggregation.Thesauri do
     end
 
     def read_from_url(url) do
-      url
-      |> HTTPoison.get
+      Finch.build(:get, url)
+      |> Finch.request(ArgosAggregationFinchProcess)
       |> fetch_response
     end
 
     def read_from_url(url, options) when is_list(options) do
-      url
-      |> HTTPoison.get([], options)
+      Finch.build(:get, url, options)
+      |> Finch.request(ArgosAggregationFinchProcess)
       |> fetch_response
     end
 
-    defp fetch_response({:ok, %{status_code: 200, body: body}}), do: {:ok, body}
-    defp fetch_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
-      {:error, "Received unhandled status code #{code} for #{req.url}."}
+    defp fetch_response({:ok, %{status: 200, body: body}}), do: {:ok, body}
+    defp fetch_response({:ok, %Finch.Response{status: code}}) do
+      {:error, "Received unhandled status code #{code}"}
     end
     defp fetch_response({:error, error}), do: {:error, error.reason()}
 
@@ -107,7 +107,11 @@ defmodule ArgosAggregation.Thesauri do
         fn page_url ->
           case page_url do
             nil -> {:halt, page_url}
-            page_url -> load_next_page(page_url)
+            page_url ->
+              # SweetXML returns char lists instead of binary strings, Finch can only handle the latter.
+              page_url
+              |> to_string()
+              |> load_next_page()
           end
         end,
         fn _val ->

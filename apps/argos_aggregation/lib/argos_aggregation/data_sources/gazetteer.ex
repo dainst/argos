@@ -50,8 +50,8 @@ defmodule ArgosAggregation.Gazetteer do
 
     defp get_by_id_from_source(id) do
       response =
-        "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true"
-        |> HTTPoison.get([], follow_redirect: true)
+        Finch.build(:get, "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true", [{"follow_redirect", "true"}], [])
+        |> Finch.request(ArgosAggregationFinchProcess)
         |> parse_response()
 
       case response do
@@ -128,17 +128,16 @@ defmodule ArgosAggregation.Gazetteer do
     end
 
     defp run_search(params) do
-      "#{@base_url}/search.json?shortLanguageCodes=true&#{URI.encode_query(params)}"
-      #|> HTTPoison.get([ArgosAggregation.Application.get_http_user_agent_header()])
-      |> HTTPoison.get()
+      Finch.build(:get, "#{@base_url}/search.json?shortLanguageCodes=true&#{URI.encode_query(params)}")
+      |> Finch.request(ArgosAggregationFinchProcess)
       |> parse_response()
     end
 
-    defp parse_response({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
+    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}) do
       Poison.decode(body)
     end
-    defp parse_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
-      {:error, "Received unhandled status code #{code} for #{req.url}."}
+    defp parse_response({:ok, %Finch.Response{status: code}}) do
+      {:error, "Received unhandled status code #{code}."}
     end
     defp parse_response({:error, error}) do
       {:error, error}
