@@ -144,18 +144,17 @@ defmodule ArgosAggregation.Bibliography do
           {:error, reason}
       end
     end
-
     def get_record_list(params) do
-      "#{@base_url}/api/v1/search?#{URI.encode_query(params)}"
-      |> HTTPoison.get()
+      Finch.build(:get, "#{@base_url}/api/v1/search?#{URI.encode_query(params)}")
+      |> Finch.request(ArgosAggregationFinchProcess)
       |> parse_response()
     end
 
-    defp parse_response({:ok, %HTTPoison.Response{status_code: 200, body: body}}) do
+    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}) do
       { :ok, Poison.decode!(body) }
     end
-    defp parse_response({:ok, %HTTPoison.Response{status_code: code, request: req}}) do
-      { :error, "Received status code #{code} for #{req}." }
+    defp parse_response({:ok, %Finch.Response{status: code}}) do
+      { :error, "Received status code #{code}" }
     end
     defp parse_response({:error, error}) do
       { :error, error.reason() }

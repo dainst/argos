@@ -18,9 +18,7 @@ defmodule ArgosAPI.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [
-        :logger
-      ],
+      extra_applications: [:logger],
       mod: {ArgosAPI.Application, []}
     ]
   end
@@ -29,12 +27,11 @@ defmodule ArgosAPI.MixProject do
   defp deps do
     [
       {:poison, "~> 4.0", override: true},
-      {:httpoison, "~> 1.8"},
+      {:finch, "~> 0.7"},
       {:exsync, "~> 0.2", only: :dev},
       {:plug_cowboy, "~> 2.4"},
       {:cors_plug, "~> 2.0"},
-      {:open_api_spex, "~> 3.10"},
-      {:argos_aggregation, in_umbrella: true}
+      {:open_api_spex, "~> 3.10"}
     ]
   end
 end

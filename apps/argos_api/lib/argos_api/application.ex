@@ -5,7 +5,6 @@ defmodule ArgosAPI.Application do
 
   use Application
 
-  @elasticsearch_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
   @cowboy_port Application.get_env(:argos_api, :port)
 
   require Logger
@@ -22,24 +21,7 @@ defmodule ArgosAPI.Application do
     false
   end
 
-  defp await_index() do
-    delay = 1000 * 30
-
-    case HTTPoison.get("#{@elasticsearch_url}") do
-      {:ok, %HTTPoison.Response{status_code: 200}} ->
-        Logger.info("Found Elasticsearch index at #{@elasticsearch_url}.")
-        :ok
-      _ ->
-        Logger.info("Waiting for Elasticsearch index at #{@elasticsearch_url}.")
-        :timer.sleep(delay)
-        await_index()
-    end
-  end
-
   def start(_type, _args) do
-    if Application.get_env(:argos_api, :await_index, true) do
-      await_index()
-    end
 
     children =
       if running_script?(System.argv) do
@@ -47,6 +29,7 @@ defmodule ArgosAPI.Application do
       else
         [
           {Plug.Cowboy, scheme: :http, plug: ArgosAPI.Router, options: [port: @cowboy_port]}
+          {Finch, name: ArgosAPIFinch}
         ]
       end
 
