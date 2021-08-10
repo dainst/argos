@@ -33,6 +33,7 @@ defmodule ArgosAggregation.Bibliography do
     end
 
     def changeset(project, params \\ %{}) do
+
       project
       |> cast(params, [])
       |> cast_embed(:core_fields)
@@ -40,6 +41,7 @@ defmodule ArgosAggregation.Bibliography do
     end
 
     def create(params) do
+
       changeset(%BibliographicRecord{}, params)
       |> apply_action(:create)
     end
@@ -167,6 +169,19 @@ defmodule ArgosAggregation.Bibliography do
 
     def parse_record(record) do
 
+      external_links =
+        record["urls"]
+        |> Enum.map(&Task.async( fn -> parse_url(&1) end))
+        |> Enum.map(&Task.await(&1, 1000 * 60 * 5))
+        |> Enum.filter(fn val ->
+          case val do
+            {:error, _msg} ->
+              false
+            _url ->
+              true
+          end
+        end)
+
       spatial_topics =
         record["DAILinks"]["gazetteer"]
         |> Enum.map(&Task.async( fn -> parse_place(&1) end))
@@ -207,6 +222,7 @@ defmodule ArgosAggregation.Bibliography do
         "description" => parse_descriptions(record),
         "persons" => parse_persons(record),
         "institutions" => parse_institutions(record),
+        "external_links" => external_links
       }
 
       {
@@ -218,6 +234,7 @@ defmodule ArgosAggregation.Bibliography do
     end
 
     defp parse_descriptions(record) do
+
       record["summary"]
       |> Enum.map(fn(summary) ->
         %{
@@ -226,6 +243,9 @@ defmodule ArgosAggregation.Bibliography do
         }
       end)
     end
+
+
+
 
     defp parse_persons(record) do
       primary =
@@ -259,6 +279,19 @@ defmodule ArgosAggregation.Bibliography do
           "name" => name
         }
       end)
+    end
+
+    defp parse_url([]) do
+      []
+    end
+
+    defp parse_url(url) do
+      %{"url" => url["url"],
+        "type" => :website,
+        "label" => [%{
+          "lang" => NaturalLanguageDetector.get_language_key(url["desc"]),
+          "text" => url["desc"]
+        }]}
     end
 
     defp parse_place([]) do
