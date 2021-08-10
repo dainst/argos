@@ -41,7 +41,7 @@ defmodule ArgosAggregation.BibliographyTest do
 
     test "get by id yields bibliographic record" do
       id = "002023378"
-
+      external_links = [%ArgosAggregation.ExternalLink{label: [%ArgosAggregation.TranslatedContent{lang: "sv", text: "External link"}], type: :website, url: "https://nbn-resolving.org/urn:nbn:de:0048-aa.v0i2.1030.4"}]
       {:ok, record } =
         id
         |> Bibliography.DataProvider.get_by_id()
@@ -50,7 +50,7 @@ defmodule ArgosAggregation.BibliographyTest do
         end
         |> Bibliography.BibliographicRecord.create()
 
-        assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
+        assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id, external_links: ^external_links}} = record
     end
 
     test "updating referenced thesauri concept updates bibliographic record" do
