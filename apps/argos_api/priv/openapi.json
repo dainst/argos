@@ -40,9 +40,10 @@
             }
           },
           {
-            "name": "filter",
+            "name": "filter[]",
             "in": "query",
             "description": "Positive filter: Filter by value, syntax: '<filter_key>:<filter_value>'",
+            "example": "type:biblio",
             "explode": true,
             "schema": {
               "type": "array",
@@ -53,9 +54,10 @@
             }
           },
           {
-            "name": "!filter",
+            "name": "!filter[]",
             "in": "query",
             "description": "Negative filter: Exclude by value, syntax: '<filter_key>:<filter_value>'",
+            "example": "type:biblio",
             "explode": true,
             "schema": {
               "type": "array",
