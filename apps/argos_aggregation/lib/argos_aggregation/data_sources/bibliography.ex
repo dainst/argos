@@ -33,7 +33,6 @@ defmodule ArgosAggregation.Bibliography do
     end
 
     def changeset(project, params \\ %{}) do
-
       project
       |> cast(params, [])
       |> cast_embed(:core_fields)
@@ -41,7 +40,6 @@ defmodule ArgosAggregation.Bibliography do
     end
 
     def create(params) do
-
       changeset(%BibliographicRecord{}, params)
       |> apply_action(:create)
     end
@@ -234,7 +232,6 @@ defmodule ArgosAggregation.Bibliography do
     end
 
     defp parse_descriptions(record) do
-
       record["summary"]
       |> Enum.map(fn(summary) ->
         %{
@@ -243,9 +240,6 @@ defmodule ArgosAggregation.Bibliography do
         }
       end)
     end
-
-
-
 
     defp parse_persons(record) do
       primary =
