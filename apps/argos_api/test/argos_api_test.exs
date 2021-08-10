@@ -6,7 +6,6 @@ defmodule ArgosAPITest do
   alias ArgosAPI.{
     TestHelpers
   }
-  
 
   @example_json "../../priv/example_projects_params.json"
 
@@ -69,6 +68,45 @@ defmodule ArgosAPITest do
 
     assert status == 400
 
+  end
+
+  test "swagger spec is served" do
+    %{resp_body: body} = response =
+      conn(:get, "/swagger/openapi.json")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 200
+
+    %{"info" => %{"version" => version }} =
+      body
+      |> Poison.decode!()
+
+    assert version == List.to_string(Application.spec(:argos_api, :vsn))
+  end
+
+  test "swagger ui is served" do
+    %{resp_headers: resp_headers} = response =
+      conn(:get, "/swagger")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 302
+
+    {"location", redirect} =
+      Enum.find(resp_headers, fn(val) ->
+        case val do
+          {"location", _} ->
+            true
+          _ ->
+            false
+        end
+      end)
+
+    %{status: status, scheme: scheme} =
+      conn(:get, redirect)
+      |> ArgosAPI.Router.call(%{})
+
+    assert status == 200
+    assert scheme == :http
   end
 
   describe "elastic search tests" do
