@@ -51,7 +51,7 @@ defmodule ArgosAggregation.Gazetteer do
     defp get_by_id_from_source(id) do
       response =
         Finch.build(:get, "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true", [{"follow_redirect", "true"}], [])
-        |> Finch.request(ArgosAggregationFinch)
+        |> Finch.request(ArgosAggregationFinchProcess)
         |> parse_response()
 
       case response do
@@ -129,7 +129,7 @@ defmodule ArgosAggregation.Gazetteer do
 
     defp run_search(params) do
       Finch.build(:get, "#{@base_url}/search.json?shortLanguageCodes=true&#{URI.encode_query(params)}")
-      |> Finch.request(ArgosAggregationFinch)
+      |> Finch.request(ArgosAggregationFinchProcess)
       |> parse_response()
     end
 

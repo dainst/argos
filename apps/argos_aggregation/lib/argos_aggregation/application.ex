@@ -33,25 +33,25 @@ defmodule ArgosAggregation.Application do
 
   def put_index() do
     Finch.build(:put, "#{@elasticsearch_url}")
-    |> Finch.request(ArgosAggregationFinch)
+    |> Finch.request(ArgosAggregationFinchProcess)
   end
 
   def delete_index() do
     Finch.build(:delete, "#{@elasticsearch_url}")
-    |> Finch.request(ArgosAggregationFinch)
+    |> Finch.request(ArgosAggregationFinchProcess)
   end
 
 
   def put_mapping() do
     mapping = File.read!(@elasticsearch_mapping_path)
     Finch.build(:put, "#{@elasticsearch_url}/_mapping", [{"Content-Type", "application/json"}],mapping)
-    |> Finch.request(ArgosAggregationFinch)
+    |> Finch.request(ArgosAggregationFinchProcess)
   end
 
 
   defp initialize_index() do
     res =Finch.build(:get, @elasticsearch_url)
-    |> Finch.request(ArgosAggregationFinch)
+    |> Finch.request(ArgosAggregationFinchProcess)
     case res do
       error when error in [
 
@@ -100,7 +100,7 @@ defmodule ArgosAggregation.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ArgosAggregation.Supervisor]
-    children = [{Finch, name: ArgosAggregationFinch}] ++ children
+    children = [{Finch, name: ArgosAggregationFinchProcess}] ++ children
 
     supervisor_response = Supervisor.start_link(children, opts)
 

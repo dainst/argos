@@ -51,7 +51,7 @@ defmodule ArgosAggregation.Chronontology do
     defp get_by_id_from_source(id) do
       response =
         Finch.build(:get, "#{@base_url}/data/period/#{id}")
-        |> Finch.request(ArgosAggregationFinch)
+        |> Finch.request(ArgosAggregationFinchProcess)
         |> parse_response()
 
       case response do
@@ -130,7 +130,7 @@ defmodule ArgosAggregation.Chronontology do
     def get_list(params) do
 
       Finch.build(:get, "#{@base_url}/data/period?#{URI.encode_query(params)}")
-      |> Finch.request(ArgosAggregationFinch)
+      |> Finch.request(ArgosAggregationFinchProcess)
       |> parse_response()
     end
 
