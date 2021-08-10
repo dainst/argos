@@ -108,11 +108,6 @@
       }
     }
   },
-  "servers": [
-    {
-      "url": "https://api.idai.world"
-    }
-  ],
   "components": {
     "schemas": {
       "SearchResult": {
