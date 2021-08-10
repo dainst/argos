@@ -60,7 +60,7 @@ defmodule ArgosAggregation.CoreFields do
 
   def changeset(fields, params \\ %{}) do
     fields
-    |> cast(params, [:source_id, :type, :uri])
+    |> cast(params, [:source_id, :type, :uri, :full_record])
     |> create_id()
     |> cast_embed(:title, [required: true])
     |> cast_embed(:description)
