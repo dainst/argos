@@ -9,6 +9,8 @@ defmodule ArgosAggregation.BibliographyTest do
   }
 
   @example_json "../../priv/example_zenon_params.json"
+    |> File.read!()
+    |> Poison.decode!()
 
   test "get by id with invalid id yields error" do
     assert {:error, "record not-existing not found."} == Bibliography.DataProvider.get_by_id("not-existing")
@@ -53,13 +55,8 @@ defmodule ArgosAggregation.BibliographyTest do
     end
 
     test "urls in zenon data get parsed as external link" do
-      input =
-        @example_json
-        |> File.read!()
-        |> Poison.decode!()
-
       {:ok, %{core_fields: %{external_links: [%{url: linked_record_url}]}}} =
-        input
+        @example_json
         |> Bibliography.BibliographyParser.parse_record()
         |> case do
           {:ok, data} ->
@@ -67,7 +64,7 @@ defmodule ArgosAggregation.BibliographyTest do
         end
         |> BibliographicRecord.create()
 
-      %{"urls" => [%{"url" => input_url}]} = input
+      %{"urls" => [%{"url" => input_url}]} = @example_json
 
       assert input_url == linked_record_url
     end
@@ -81,15 +78,14 @@ defmodule ArgosAggregation.BibliographyTest do
       assert("created" == ths_indexing.upsert_response["result"])
 
 
-      biblio_indexing = with {:ok, file_content} <- File.read(@example_json) do
-        {:ok,data} = Poison.decode(file_content)
-        data
-          |> Bibliography.BibliographyParser.parse_record()
-          |> case do
-            {:ok, params} -> params
-          end
-          |> Indexer.index()
-      end
+      biblio_indexing =
+        @example_json
+        |> Bibliography.BibliographyParser.parse_record()
+        |> case do
+          {:ok, params} -> params
+        end
+        |> Indexer.index()
+
       assert("created" == biblio_indexing.upsert_response["result"])
 
       # Force refresh to make sure recently upserted docs are considered in search.
@@ -128,15 +124,13 @@ defmodule ArgosAggregation.BibliographyTest do
       gaz_indexing = Indexer.index(gaz_data)
 
       assert("created" == gaz_indexing.upsert_response["result"])
-      biblio_indexing = with {:ok, file_content} <- File.read(@example_json) do
-        {:ok,data} = Poison.decode(file_content)
-        data
-          |> Bibliography.BibliographyParser.parse_record()
-          |> case do
-            {:ok, params} -> params
-          end
-          |> Indexer.index()
-      end
+      biblio_indexing =
+        @example_json
+        |> Bibliography.BibliographyParser.parse_record()
+        |> case do
+          {:ok, params} -> params
+        end
+        |> Indexer.index()
 
       assert("created" == biblio_indexing.upsert_response["result"])
 
