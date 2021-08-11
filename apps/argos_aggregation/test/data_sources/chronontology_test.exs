@@ -60,6 +60,22 @@ defmodule ArgosAggregation.ChronontologyTest do
       assert {:ok, %TemporalConcept{}} = TemporalConcept.create(record)
     end)
   end
+
+  test "chronotology record's core_fields contains full_record data" do
+    id = "X5lOSI8YQFiL"
+
+    {:ok, %{core_fields: %{full_record: %{"resource" => %{"id" => record_id}}}}} =
+      DataProvider.get_by_id(id)
+      |> case do
+        {:ok, data} ->
+          data
+         end
+      |> TemporalConcept.create()
+
+    assert record_id == id
+  end
+
+
   describe "elastic search tests" do
 
     setup %{} do

@@ -47,6 +47,7 @@ defmodule ArgosAggregation.CoreFields do
     field :source_id, :string
     field :type, Ecto.Enum, values: [:place, :concept, :temporal_concept, :project, :biblio]
     field :uri, :string
+    field :full_record, :map
     embeds_many :title, TranslatedContent
     embeds_many :description, TranslatedContent
     embeds_many :spatial_topics, SpatialTopic
@@ -59,7 +60,7 @@ defmodule ArgosAggregation.CoreFields do
 
   def changeset(fields, params \\ %{}) do
     fields
-    |> cast(params, [:source_id, :type, :uri])
+    |> cast(params, [:source_id, :type, :uri, :full_record])
     |> create_id()
     |> cast_embed(:title, [required: true])
     |> cast_embed(:description)
