@@ -16,6 +16,20 @@ defmodule ArgosAggregation.BibliographyTest do
     assert {:error, "record not-existing not found."} == Bibliography.DataProvider.get_by_id("not-existing")
   end
 
+  test "bibliographyic record's core_fields contains full_record data" do
+    id = "002023378"
+
+    {:ok, %{core_fields: %{full_record: %{ "id" => record_id}}}} =
+      id
+      |> Bibliography.DataProvider.get_by_id()
+      |> case do
+        {:ok, data} ->
+          data
+         end
+      |> BibliographicRecord.create()
+
+    assert record_id == id
+  end
 
   describe "elastic search tests" do
 

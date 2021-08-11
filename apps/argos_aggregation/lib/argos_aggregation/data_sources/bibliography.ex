@@ -211,7 +211,8 @@ defmodule ArgosAggregation.Bibliography do
         "description" => parse_descriptions(record),
         "persons" => parse_persons(record),
         "institutions" => parse_institutions(record),
-        "external_links" => external_links
+        "external_links" => external_links,
+        "full_record" => record
       }
 
       {

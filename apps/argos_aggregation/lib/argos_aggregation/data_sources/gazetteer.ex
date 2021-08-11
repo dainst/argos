@@ -151,7 +151,8 @@ defmodule ArgosAggregation.Gazetteer do
         "type" => @field_type,
         "source_id" => gazetteer_data["gazId"],
         "uri" => gazetteer_data["@id"],
-        "title" => parse_names([gazetteer_data["prefName"]] ++ Map.get(gazetteer_data, "names", []))
+        "title" => parse_names([gazetteer_data["prefName"]] ++ Map.get(gazetteer_data, "names", [])),
+        "full_record" => gazetteer_data
       }
       {
         :ok,
