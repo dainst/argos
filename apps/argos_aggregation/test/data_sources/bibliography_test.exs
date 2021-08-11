@@ -49,7 +49,7 @@ defmodule ArgosAggregation.BibliographyTest do
         end
         |> Bibliography.BibliographicRecord.create()
 
-        assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
+      assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
     end
 
     test "urls in zenon data get parsed as external link" do
