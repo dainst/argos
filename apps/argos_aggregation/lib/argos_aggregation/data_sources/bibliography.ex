@@ -167,6 +167,10 @@ defmodule ArgosAggregation.Bibliography do
 
     def parse_record(record) do
 
+      external_links =
+        record["urls"]
+        |> Enum.map(&parse_url(&1))
+
       spatial_topics =
         record["DAILinks"]["gazetteer"]
         |> Enum.map(&Task.async( fn -> parse_place(&1) end))
@@ -207,6 +211,7 @@ defmodule ArgosAggregation.Bibliography do
         "description" => parse_descriptions(record),
         "persons" => parse_persons(record),
         "institutions" => parse_institutions(record),
+        "external_links" => external_links,
         "full_record" => record
       }
 
@@ -260,6 +265,16 @@ defmodule ArgosAggregation.Bibliography do
           "name" => name
         }
       end)
+    end
+
+    defp parse_url(%{"url" => url, "desc" => desc}) do
+      %{"url" => url,
+        "type" => :website,
+        "label" => case String.trim(desc)=="" do
+          true->[%{"lang" => NaturalLanguageDetector.get_language_key(desc), "text" => desc}]
+          _->[%{"lang" => NaturalLanguageDetector.get_language_key("External link"), "text" => "External link"}]
+        end
+      }
     end
 
     defp parse_place([]) do
