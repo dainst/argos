@@ -75,16 +75,18 @@
     "schemas": {
       "SearchResult": {
         "type": "object",
-        "description": "List of documents matching the given search.",
+        "description": "List of documents and useful filter suggestions matching the given search",
         "properties": {
           "results": {
             "type": "array",
+            "description": "List of search results",
             "items": {
               "$ref": "#/components/schemas/SparseDocument"
             }
           },
           "filters": {
             "type": "array",
+            "description": "List of filter suggestions",
             "items": {
               "$ref": "#/components/schemas/Filter"
             }
