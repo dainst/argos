@@ -104,22 +104,22 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
       |> Map.update!("general_topics", &transform_topics_to_sparse_docs/1)
       |> Map.update!("temporal_topics", &transform_topics_to_sparse_docs/1)
     end)
+    |> strip_to_core_fields()
     |> strip_full_record_data()
-    |> strip_geometry_data() # for place documents themselves also delete the geometry
   end
 
   defp transform_topics_to_sparse_docs(topics) do
     topics
     |> Enum.map(fn(topic) ->
       topic
-      |> Map.update!("resource", &strip_geometry_data/1)
+      |> Map.update!("resource", &strip_to_core_fields/1)
       |> Map.update!("resource", &strip_full_record_data/1)
     end)
   end
 
-  defp strip_geometry_data(doc) do
+  defp strip_to_core_fields(doc) do
     doc
-    |> Map.delete("geometry")
+    |> Map.take(["core_fields"])
   end
 
   defp strip_full_record_data(doc) do
