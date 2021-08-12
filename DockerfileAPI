@@ -14,7 +14,7 @@ ENV MIX_ENV=prod
 RUN mix do deps.get, deps.compile
 
 COPY apps/argos_api/lib /app/apps/argos_api/lib
-COPY priv priv
+COPY apps/argos_api/priv /app/apps/argos_api/priv
 
 RUN mix do compile, release api
 
