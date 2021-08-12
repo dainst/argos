@@ -1,27 +1,8 @@
 defmodule ArgosAggregation.Bibliography do
 
   alias ArgosAggregation.{
-    Thesauri, Gazetteer, TranslatedContent, NaturalLanguageDetector
+    Thesauri, Gazetteer, NaturalLanguageDetector
   }
-
-  defmodule Author do
-    @enforce_keys [:label]
-    defstruct [:label, :uri]
-    @type t() :: %__MODULE__{
-      label: TranslatedContent.t(),
-      uri: String.t()
-    }
-
-    def from_map(%{} = data) do
-      %Author{
-        label: %TranslatedContent{
-          text: data["label"]["text"],
-          lang: data["label"]["lang"]
-        },
-        uri: data["uri"]
-      }
-    end
-  end
 
   defmodule BibliographicRecord do
     use ArgosAggregation.Schema
