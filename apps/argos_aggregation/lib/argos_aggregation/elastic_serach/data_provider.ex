@@ -113,8 +113,7 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
     topics
     |> Enum.map(fn(topic) ->
       topic
-      |> Map.update!("resource", &strip_to_core_fields/1)
-      |> Map.update!("resource", &strip_full_record_data/1)
+      |> Map.update!("resource", &transform_to_sparse_doc/1)
     end)
   end
 
