@@ -6,9 +6,8 @@ defmodule ArgosAPITest do
   alias ArgosAPI.{
     TestHelpers
   }
-  
 
-  @example_json "../../priv/example_projects_params.json"
+  @example_json "../../priv/example_collection_params.json"
 
   test "invalid size yields 400 status" do
     response =
@@ -71,6 +70,59 @@ defmodule ArgosAPITest do
 
   end
 
+  test "swagger spec is served" do
+    %{resp_body: body} = response =
+      conn(:get, "/public/openapi.json")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 200
+
+    %{"info" => %{"version" => version }} =
+      body
+      |> Poison.decode!()
+
+    assert version == List.to_string(Application.spec(:argos_api, :vsn))
+  end
+
+  test "swagger ui is served" do
+    response =
+      conn(:get, "/swagger")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 200
+  end
+
+  test "urls provided by info controller resolve" do
+    %{"swagger_spec" => spec_path, "swagger_ui" => ui_path} =
+      conn(:get, "/")
+      |> ArgosAPI.Router.call(%{})
+      |> case do
+        %{resp_body: body} ->
+          body
+        end
+      |> Poison.decode!()
+
+    status =
+      Finch.build(:get, spec_path)
+      |> Finch.request(ArgosAPIFinch)
+      |> case do
+        {:ok, %{status: status}} ->
+          status
+      end
+
+    assert status == 200
+
+    status =
+      Finch.build(:get, ui_path)
+      |> Finch.request(ArgosAPIFinch)
+      |> case do
+        {:ok, %{status: status}} ->
+          status
+      end
+
+    assert status == 200
+  end
+
   describe "elastic search tests" do
 
     setup do
@@ -78,7 +130,7 @@ defmodule ArgosAPITest do
       with {:ok, file_content} <- File.read(@example_json) do
         {:ok,data} = Poison.decode(file_content)
         data
-        |> ArgosAggregation.Project.ProjectParser.parse_project()
+        |> ArgosAggregation.Collection.CollectionParser.parse_collection()
         |> case do
           {:ok, params} -> params
         end
@@ -101,16 +153,16 @@ defmodule ArgosAPITest do
         body
         |> Poison.decode!()
 
-      # 1 project, 2 places, 1 concept
+      # 1 collection, 2 places, 1 concept
       assert total == 4
     end
 
     test "document is accessable through endpoint" do
       %{resp_body: body } =
-        conn(:get, "/doc/project_1")
+        conn(:get, "/doc/collection_1")
         |> ArgosAPI.Router.call(%{})
 
-      assert %{"core_fields" => %{"id" => "project_1" }} = Poison.decode!(body)
+      assert %{"core_fields" => %{"id" => "collection_1" }} = Poison.decode!(body)
     end
 
     test "invalid document id yields 404" do

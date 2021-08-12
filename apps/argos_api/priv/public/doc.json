@@ -1,0 +1,158 @@
+{
+  "get": {
+    "summary": "Get document by id",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "example": "biblio_000903451",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {"$ref": "#/components/schemas/Collection"},
+                {"$ref": "#/components/schemas/BibliographicRecord"},
+                {"$ref": "#/components/schemas/Place"},
+                {"$ref": "#/components/schemas/Concept"},
+                {"$ref": "#/components/schemas/TemporalConcept"}
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Collection": {
+        "type": "object",
+        "required": [
+          "core_fields"
+        ],
+        "description": "Document representing a iDAI.world collection record (https://collections.idai.world). core_fields.type is 'collection'",
+        "properties": {
+          "core_fields": {
+            "$ref": "#/components/schemas/CoreFields"
+          }
+        }
+      },
+      "BibliographicRecord": {
+        "type": "object",
+        "required": [
+          "core_fields"
+        ],        
+        "description": "Document representing a iDAI.world bibliographic record (https://zenon.dainst.org). core_fields.type is 'biblio'",
+        "properties": {
+          "core_fields": {
+            "$ref": "#/components/schemas/CoreFields"
+          }
+        }
+      },
+      "Concept": {
+        "type": "object",
+        "required": [
+          "core_fields"
+        ],        
+        "description": "Document representing a iDAI.world concept (https://thesauri.dainst.org). core_fields.type is 'concept'. May be linked to other documents via 'general_topics'",
+        "properties": {
+          "core_fields": {
+            "$ref": "#/components/schemas/CoreFields"
+          }
+        }
+      },
+      "Place": {
+        "type": "object",
+        "required": [
+          "core_fields"
+        ],        
+        "description": "Document representing a iDAI.world place (https://gazetteer.dainst.org). core_fields.type is 'place'. May be linked to other documents via 'spatial_topics'",
+        "properties": {
+          "core_fields": {
+            "$ref": "#/components/schemas/CoreFields"
+          },
+          "geometry": {
+            "type": "array",
+            "description": "List of GeoJSON geometries associated with the place",
+            "items": {
+              "$ref": "#/components/schemas/Geometry"
+            }
+          }
+        }
+      },
+      "TemporalConcept": {
+        "type": "object",
+        "required": [
+          "core_fields"
+        ],        
+        "description": "Document representing a iDAI.world chronologic/period record (https://chronontology.dainst.org). core_fields.type is 'temporal_concept', . May be linked to other documents via 'temporal_topics'",
+        "properties": {
+          "core_fields": {
+            "$ref": "#/components/schemas/CoreFields",
+            "beginning": {
+              "type": "integer",
+              "description": "Starting year for the record, negative values are BCE.",
+              "example": "-1304"
+            },
+            "ending": {
+              "type": "integer",
+              "description": "Ending year for the record, negative values are BCE.",
+              "example": "45"
+            }
+          }
+        }
+      },
+      "CoreFields": {
+        "allOf": [
+          {
+            "$ref": "./search.json#/components/schemas/CoreFields"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "full_record": {
+                "type": "object",
+                "description": "JSON representation of the original dataset harvested from the document's source system."
+              }
+            }
+          }         
+        ]        
+      },
+      "Geometry":{
+        "description": "A geometry as defined by the GeoJSON standard",
+        "externalDocs":{
+          "url": "http://geojson.org/geojson-spec.html#geometry-objects"
+        },
+        "type": "object",
+        "required":["type", "coordinates"],
+        "properties": {
+
+          "type":{
+            "type": "string",
+            "description": "GeoJSON data type definition",
+            "enum":[
+              "Point",
+              "Polygon",
+              "MultiPoint",
+              "MultiPolygon",
+              "LineString",
+              "MultiLineString"
+            ]
+          }, 
+          "coordinates":{
+            "type": "array",
+            "description": "Coordinate values"
+          }
+        }
+      }
+    }
+  }
+}

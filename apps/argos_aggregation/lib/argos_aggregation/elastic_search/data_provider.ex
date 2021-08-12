@@ -69,9 +69,10 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
       case es_response do
         %{"hits" => %{"hits" => list}} ->
           list
-          |> Enum.map(fn(hit) ->
+          |> Stream.map(fn(hit) ->
             Map.merge(%{"_id" => hit["_id"]}, hit["_source"])
           end)
+          |> Enum.map(&transform_to_sparse_doc/1)
         _ ->
           []
       end
@@ -91,5 +92,41 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
         total: total
       }
     }
+  end
+
+  defp transform_to_sparse_doc(doc) do
+    # TODO: Cast to ecto schemas?
+    # The document and all linked 'topic'-documents are stripped down to their :core_fields.
+    # Additionally the :full_record data is also removed.
+    doc
+    |> Map.update!("core_fields", fn(core_fields) ->
+      core_fields
+      |> Map.update!("spatial_topics", &transform_topics_to_sparse_docs/1)
+      |> Map.update!("general_topics", &transform_topics_to_sparse_docs/1)
+      |> Map.update!("temporal_topics", &transform_topics_to_sparse_docs/1)
+    end)
+    |> strip_to_core_fields()
+    |> strip_full_record_data()
+  end
+
+  defp transform_topics_to_sparse_docs(topics) do
+    topics
+    |> Enum.map(fn(topic) ->
+      topic
+      |> Map.update!("resource", &transform_to_sparse_doc/1)
+    end)
+  end
+
+  defp strip_to_core_fields(doc) do
+    doc
+    |> Map.take(["core_fields"])
+  end
+
+  defp strip_full_record_data(doc) do
+    doc
+    |> Map.update!("core_fields", fn(core_fields) ->
+      core_fields
+      |> Map.delete("full_record")
+    end)
   end
 end

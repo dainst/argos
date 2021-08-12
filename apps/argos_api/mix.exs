@@ -26,11 +26,12 @@ defmodule ArgosAPI.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:poison, "~> 4.0"},
+      {:poison, "~> 4.0", override: true},
       {:finch, "~> 0.7"},
       {:exsync, "~> 0.2", only: :dev},
       {:plug_cowboy, "~> 2.4"},
-      {:cors_plug, "~> 2.0"}
+      {:cors_plug, "~> 2.0"},
+      {:open_api_spex, "~> 3.10"}
     ]
   end
 end

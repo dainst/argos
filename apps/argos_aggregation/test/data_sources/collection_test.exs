@@ -1,23 +1,23 @@
-defmodule ArgosAggregation.ProjectTest do
+defmodule ArgosAggregation.CollectionTest do
   use ExUnit.Case
 
   require Logger
-  doctest(ArgosAggregation.Project)
+  doctest(ArgosAggregation.Collection)
 
   alias ArgosAggregation.{
     Gazetteer,
     Thesauri,
     Chronontology,
-    Project,
+    Collection,
     ElasticSearch.Indexer,
     TestHelpers,
     CoreFields
   }
-  @example_json "../../priv/example_projects_params.json"
+  @example_json "../../priv/example_collection_params.json"
 
   test "get by id with invalid id yields error" do
-    assert {:error, 404} == Project.DataProvider.get_by_id("-1")
-    assert {:error, 400} == Project.DataProvider.get_by_id("not-a-number")
+    assert {:error, 404} == Collection.DataProvider.get_by_id("-1")
+    assert {:error, 400} == Collection.DataProvider.get_by_id("not-a-number")
   end
 
   describe "elastic search tests" do
@@ -30,49 +30,49 @@ defmodule ArgosAggregation.ProjectTest do
       :ok
     end
 
-    test "get by id yields project" do
+    test "get by id yields collection" do
       id = "1"
 
       {:ok, record} =
         id
-        |> Project.DataProvider.get_by_id()
+        |> Collection.DataProvider.get_by_id()
         |> case do
           {:ok, params} -> params
         end
-        |> Project.Project.create()
+        |> Collection.Collection.create()
 
-      assert %Project.Project{core_fields: %CoreFields{source_id: ^id}} = record
+      assert %Collection.Collection{core_fields: %CoreFields{source_id: ^id}} = record
     end
 
-    test "get all yields projects as result" do
+    test "get all yields collections as result" do
       records =
-        Project.DataProvider.get_all()
+        Collection.DataProvider.get_all()
         |> Enum.take(10)
 
       assert Enum.count(records) == 10
 
       records
       |> Enum.each(fn {:ok, record} ->
-        assert {:ok, %Project.Project{}} = Project.Project.create(record)
+        assert {:ok, %Collection.Collection{}} = Collection.Collection.create(record)
       end)
     end
 
-    test "project record's core_fields contains full_record data" do
+    test "collection record's core_fields contains full_record data" do
       id = 1
 
       {:ok, %{core_fields: %{full_record: %{"id" => record_id}}}} =
         id
-        |> Project.DataProvider.get_by_id()
+        |> Collection.DataProvider.get_by_id()
         |> case do
           {:ok, data} ->
             data
         end
-        |> Project.Project.create()
+        |> Collection.Collection.create()
 
       assert record_id == id
     end
 
-    test "updating referenced thesauri concept updates project" do
+    test "updating referenced thesauri concept updates collection" do
       {:ok, ths_data} = Thesauri.DataProvider.get_by_id("_ab3a94b2")
 
       ths_indexing = Indexer.index(ths_data)
@@ -80,16 +80,16 @@ defmodule ArgosAggregation.ProjectTest do
       assert("created" == ths_indexing.upsert_response["result"])
 
 
-      project_indexing = with {:ok, file_content} <- File.read(@example_json) do
+      collection_indexing = with {:ok, file_content} <- File.read(@example_json) do
         {:ok,data} = Poison.decode(file_content)
         data
-          |> Project.ProjectParser.parse_project()|> case do
-            {:ok, project} -> project
+          |> Collection.CollectionParser.parse_collection()|> case do
+            {:ok, collection} -> collection
           end
           |> Indexer.index()
       end
 
-      assert("created" == project_indexing.upsert_response["result"])
+      assert("created" == collection_indexing.upsert_response["result"])
 
       # Force refresh to make sure recently upserted docs are considered in search.
       TestHelpers.refresh_index()
@@ -110,15 +110,15 @@ defmodule ArgosAggregation.ProjectTest do
 
       assert("updated" == ths_indexing.upsert_response["result"])
 
-      %{upsert_response: %{"_version" => project_new_version, "_id" => project_new_id}} =
+      %{upsert_response: %{"_version" => collection_new_version, "_id" => collection_new_id}} =
         ths_indexing.referencing_docs_update_response
         |> List.first()
 
-      %{"_version" => project_old_version, "_id" => project_old_id} =
-        project_indexing.upsert_response
+      %{"_version" => collection_old_version, "_id" => collection_old_id} =
+        collection_indexing.upsert_response
 
-      assert project_old_version + 1 == project_new_version
-      assert project_new_id == project_old_id
+      assert collection_old_version + 1 == collection_new_version
+      assert collection_new_id == collection_old_id
     end
 
     test "updating referenced gazetteer place updates bibliographic record" do
@@ -127,15 +127,15 @@ defmodule ArgosAggregation.ProjectTest do
       gaz_indexing = Indexer.index(gaz_data)
 
       assert("created" == gaz_indexing.upsert_response["result"])
-      project_indexing = with {:ok, file_content} <- File.read(@example_json) do
+      collection_indexing = with {:ok, file_content} <- File.read(@example_json) do
         {:ok,data} = Poison.decode(file_content)
         data
-          |> Project.ProjectParser.parse_project()|> case do
-            {:ok, project} -> project
+          |> Collection.CollectionParser.parse_collection()|> case do
+            {:ok, collection} -> collection
           end
           |> Indexer.index()
       end
-      assert("created" == project_indexing.upsert_response["result"])
+      assert("created" == collection_indexing.upsert_response["result"])
 
       # Force refresh to make sure recently upserted docs are considered in search.
       TestHelpers.refresh_index()
@@ -156,14 +156,14 @@ defmodule ArgosAggregation.ProjectTest do
 
       assert("updated" == gaz_indexing.upsert_response["result"])
 
-      %{upsert_response: %{"_version" => project_new_version, "_id" => project_new_id}} =
+      %{upsert_response: %{"_version" => collection_new_version, "_id" => collection_new_id}} =
         gaz_indexing.referencing_docs_update_response
         |> List.first()
 
-      %{"_version" => project_old_version, "_id" => project_old_id} = project_indexing.upsert_response
+      %{"_version" => collection_old_version, "_id" => collection_old_id} = collection_indexing.upsert_response
 
-      assert project_old_version + 1 == project_new_version
-      assert project_new_id == project_old_id
+      assert collection_old_version + 1 == collection_new_version
+      assert collection_new_id == collection_old_id
     end
 
     test "updating referenced chronontology data updates bibliographic record" do
@@ -173,16 +173,16 @@ defmodule ArgosAggregation.ProjectTest do
 
       assert("created" == chron_indexing.upsert_response["result"])
 
-      project_indexing = with {:ok, file_content} <- File.read(@example_json) do
+      collection_indexing = with {:ok, file_content} <- File.read(@example_json) do
         {:ok,data} = Poison.decode(file_content)
         data
-          |> Project.ProjectParser.parse_project()|> case do
-            {:ok, project} -> project
+          |> Collection.CollectionParser.parse_collection()|> case do
+            {:ok, collection} -> collection
           end
           |> Indexer.index()
       end
 
-      assert("created" == project_indexing.upsert_response["result"])
+      assert("created" == collection_indexing.upsert_response["result"])
 
       # Force refresh to make sure recently upserted docs are considered in search.
       TestHelpers.refresh_index()
@@ -203,14 +203,14 @@ defmodule ArgosAggregation.ProjectTest do
 
       assert("updated" == chron_indexing.upsert_response["result"])
 
-      %{upsert_response: %{"_version" => project_new_version, "_id" => project_new_id}} =
+      %{upsert_response: %{"_version" => collection_new_version, "_id" => collection_new_id}} =
         chron_indexing.referencing_docs_update_response
         |> List.first()
 
-      %{"_version" => project_old_version, "_id" => project_old_id} = project_indexing.upsert_response
+      %{"_version" => collection_old_version, "_id" => collection_old_id} = collection_indexing.upsert_response
 
-      assert project_old_version + 1 == project_new_version
-      assert project_new_id == project_old_id
+      assert collection_old_version + 1 == collection_new_version
+      assert collection_new_id == collection_old_id
     end
 
   end

@@ -1,0 +1,22 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "This is the API for the iDAI.world. Currently, it allows full-text querying and filtering.\nIn the future, it will be extended to include geo- and timespan-filtering capabilities as well as additional object types representing the different applications of the iDAI.world.",
+    "version": "<WILL BE REPLACED>",
+    "title": "iDAI.world search",
+    "contact": {
+      "email": "dev@dainst.de"
+    }
+  },
+  "paths": {
+    "/": {
+      "$ref": "./info.json"
+    },
+    "/doc/{id}": {
+      "$ref": "./doc.json"
+    },
+    "/search": {
+      "$ref": "./search.json"
+    }
+  }
+}

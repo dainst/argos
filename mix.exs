@@ -39,10 +39,10 @@ defmodule Argos.MixProject do
         "run --eval 'ArgosAggregation.Release.update_mapping()' -- --script"
       ],
       seed: [
-        "seed.projects", "seed.bibliography"
+        "seed.collections", "seed.bibliography"
       ],
-      "seed.projects": [
-        "run --eval 'ArgosAggregation.ProjectCLI.run()' -- --script"
+      "seed.collections": [
+        "run --eval 'ArgosAggregation.CollectionCLI.run()' -- --script"
       ],
       "seed.chronontology": [
         "run --eval 'ArgosAggregation.ChronontologyCLI.run()' -- --script"

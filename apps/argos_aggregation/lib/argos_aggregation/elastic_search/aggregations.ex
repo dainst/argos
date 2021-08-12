@@ -33,8 +33,8 @@ defmodule ArgosAggregation.ElasticSearch.Aggregations do
         content["buckets"]
         |> Enum.map(&reshape_aggregation_bucket(name, &1))
       %{
-        key: name,
-        values: values
+        filter_key: name,
+        filter_values: values
       }
     end)
   end
@@ -58,7 +58,7 @@ defmodule ArgosAggregation.ElasticSearch.Aggregations do
     _name,
     %{"doc_count" => count, "key" => key}
     ) do
-    %{ key: key, count: count, label: []}
+    %{ filter_value: key, count: count, label: []}
   end
 
 

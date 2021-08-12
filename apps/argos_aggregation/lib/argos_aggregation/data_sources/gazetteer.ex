@@ -16,7 +16,7 @@ defmodule ArgosAggregation.Gazetteer do
       place
       |> cast(params, [:geometry])
       |> cast_embed(:core_fields)
-      |> validate_required([:core_fields, :geometry])
+      |> validate_required([:core_fields])
     end
 
     def create(params) do
@@ -214,7 +214,7 @@ defmodule ArgosAggregation.Gazetteer do
     use GenServer
     alias ArgosAggregation.ElasticSearch.Indexer
 
-    @interval Application.get_env(:argos_aggregation, :projects_harvest_interval)
+    @interval Application.get_env(:argos_aggregation, :collections_harvest_interval)
     defp get_timezone() do
       "Etc/UTC"
     end

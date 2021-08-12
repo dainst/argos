@@ -14,9 +14,9 @@ config :argos_aggregation,
   elasticsearch_url: "http://localhost:9200",
   index_name: "argos",
 
-  projects_url: "https://collections.idai.world",
-  projects_harvest_interval: 1000 * 60 * 30, # 30 minutes
-  project_type_key: "project",
+  collections_url: "https://collections.idai.world",
+  collections_harvest_interval: 1000 * 60 * 30, # 30 minutes
+  collection_type_key: "collection",
 
   bibliography_url: "https://zenon.dainst.org",
   bibliography_harvest_interval: 1000 * 60 * 60 * 24, # Once a day (that is also zenon's update interval)
@@ -33,9 +33,12 @@ config :argos_aggregation,
   thesauri_type_key: "concept",
 
   active_harvesters: [
-    ArgosAggregation.Project.Harvester,
+    ArgosAggregation.Collection.Harvester,
     ArgosAggregation.Bibliography.Harvester
   ]
+
+config :argos_api,
+  port: 4001
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

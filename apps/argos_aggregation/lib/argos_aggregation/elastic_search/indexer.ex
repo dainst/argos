@@ -1,14 +1,14 @@
 defmodule ArgosAggregation.ElasticSearch.Indexer do
   require Logger
   alias ArgosAggregation.{
-    Chronontology, Gazetteer, Thesauri, Project, Bibliography, CoreFields
+    Chronontology, Gazetteer, Thesauri, Collection, Bibliography, CoreFields
   }
   @base_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
   @headers [{"Content-Type", "application/json"}]
   @gazetteer_type_key Application.get_env(:argos_aggregation, :gazetteer_type_key)
   @thesauri_type_key Application.get_env(:argos_aggregation, :thesauri_type_key)
   @chronontology_type_key Application.get_env(:argos_aggregation, :chronontology_type_key)
-  @project_type_key Application.get_env(:argos_aggregation, :project_type_key)
+  @collection_type_key Application.get_env(:argos_aggregation, :collection_type_key)
   @bibliography_type_key Application.get_env(:argos_aggregation, :bibliography_type_key)
 
   def index(data) do
@@ -46,8 +46,8 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
   defp validate(%{"core_fields" => %{"type" => @chronontology_type_key}} = params) do
     Chronontology.TemporalConcept.create(params)
   end
-  defp validate(%{"core_fields" => %{"type" => @project_type_key}} = params) do
-    Project.Project.create(params)
+  defp validate(%{"core_fields" => %{"type" => @collection_type_key}} = params) do
+    Collection.Collection.create(params)
   end
   defp validate(%{"core_fields" => %{"type" => @bibliography_type_key}} = params) do
     Bibliography.BibliographicRecord.create(params)
@@ -98,10 +98,10 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
 
   defp update_reference(%{"_source" => parent }) do
     case parent["core_fields"] do
-      %{"type" => @project_type_key} = core_fields ->
-        case Project.DataProvider.get_by_id(core_fields["source_id"]) do
-          {:ok, project} ->
-            index(project)
+      %{"type" => @collection_type_key} = core_fields ->
+        case Collection.DataProvider.get_by_id(core_fields["source_id"]) do
+          {:ok, collection} ->
+            index(collection)
           error ->
             error
         end

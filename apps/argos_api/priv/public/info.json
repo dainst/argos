@@ -1,0 +1,35 @@
+{
+  "get": {
+    "summary": "Get basic information about the API",
+    "operationId": "info",
+    "responses": {
+      "200": {
+        "description": "successful operation",  
+        "content": {
+          "application/json": {
+            "type": "object",
+            "description": "Basic information about the service",
+            "properties": {
+              "argos_api_version": {
+                "type": "string",
+                "description": "Build version of the API (Argos | github.com/dainst/argos)"
+              },
+              "records": {
+                "type": "integer",
+                "description": "Number of currently indexed documents"
+              },
+              "swagger_spec": {
+                "type": "string",
+                "description": "URL to the API's OpenAPI specification"
+              },
+              "swagger_ui": {
+                "type": "string",
+                "description": "URL to the webview of the OpenAPI spec"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
