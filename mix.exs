@@ -4,7 +4,7 @@ defmodule Argos.MixProject do
   def project do
     [
       apps_path: "apps",
-      version: "0.1.0",
+      version: "0.2.0",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       releases: [
@@ -15,7 +15,8 @@ defmodule Argos.MixProject do
         ],
         aggregation: [
           applications: [
-            argos_aggregation: :permanent
+            argos_aggregation: :permanent,
+            tongue: :permanent
           ]
         ]
       ],
