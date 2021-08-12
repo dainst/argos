@@ -1,0 +1,323 @@
+{
+  "get": {
+    "summary": "Finds Projects by query string",
+    "operationId": "search",
+    "parameters": [
+      {
+        "name": "q",
+        "in": "query",
+        "description": "Query string",
+        "schema": {
+          "type": "string",
+          "default": "*"
+        }
+      },
+      {
+        "name": "size",
+        "in": "query",
+        "schema": {
+          "type": "number",
+          "default": 50
+        }
+      },
+      {
+        "name": "from",
+        "in": "query",
+        "schema": {
+          "type": "number",
+          "maximum": 10000,
+          "default": 0
+        }
+      },
+      {
+        "name": "filter[]",
+        "in": "query",
+        "description": "Positive filter: Filter by value, syntax: '<filter_key>:<filter_value>'",
+        "example": "type:biblio",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z_]+:.+$"
+          }
+        }
+      },
+      {
+        "name": "!filter[]",
+        "in": "query",
+        "description": "Negative filter: Exclude by value, syntax: '<filter_key>:<filter_value>'",
+        "example": "type:biblio",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z_]+:.+$"
+          }
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SearchResult"
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SearchResult": {
+        "type": "object",
+        "description": "List of documents matching the given search.",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SparseDocument"
+            }
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Filter"
+            }
+          }
+        }
+      },
+      "SparseDocument": {
+        "type": "object",
+        "required": [
+          "core_fields"
+        ],
+        "description": "Sparse version of a document in the index. It only contains its core fields. Also the full record entry (containing the data received from the document's source system) is omitted in the core fields",
+        "properties": {
+          "core_fields": {
+            "$ref": "#/components/schemas/CoreFields"
+          }
+        }
+      },
+      "CoreFields": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "source_id",
+          "uri"
+        ],
+        "description": "Document's core fields, shared by all document types in the index.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Document's internal ID.",
+            "example": "biblio_000903451"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "biblio",
+              "collection",
+              "concept",
+              "place",
+              "temporal_concept"
+            ],
+            "example": "biblio",
+            "description": "Document's type, which represents the source system it originated from. Values can be used as filter[] or !filter[] values."
+          },
+          "source_id": {
+            "type": "string",
+            "description": "Document's ID in its respective iDAI.world source system.",
+            "example": "000903451"
+          },
+          "uri": {
+            "type": "string",
+            "description": "Link/URI to the document in its respective iDAI.world source system",
+            "example": "https//zenon.dainst.org/Record/000903451"
+          },
+          "title": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "description": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "general_topics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeneralTopic"
+            }
+          },
+          "spatial_topics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpatialTopic"
+            }
+          },
+          "temporal_topics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemporalTopic"
+            }
+          },
+          "external_links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalLink"
+            }
+          },
+          "persons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          },
+          "organizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Organisation"
+            }
+          }
+        }
+      },
+      "GeneralTopic": {
+        "description": "A descriptive link between the document and a concept document.",
+        "required": ["resource"],
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "resource": {
+            "description": "SparseDocument representation of the concept document"
+          }
+        }
+      },
+      "SpatialTopic": {
+        "description": "Descriptive link between the host document and a place.",
+        "required": ["resource"],
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "resource": {
+            "description": "SparseDocument representation of the place document"
+          }
+        }
+      },
+      "TemporalTopic": {
+        "description": "Descriptive link between the host document and a temporal concept.",
+        "required": ["resource"],
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "resource": {
+            "description": "SparseDocument representation of the temporal concept document"
+          }
+        }
+      },
+      "ExternalLink": {
+        "description": "External links related to the document",
+        "required": ["url", "type"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "website"
+            ]
+          }
+        }
+      },
+      "Filter": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "subject"
+          },
+          "label": {
+            "$ref": "#/components/schemas/TranslatedContent"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "example": "buildings"
+                },
+                "label": {
+                  "$ref": "#/components/schemas/TranslatedContent"
+                },
+                "count": {
+                  "type": "number",
+                  "example": 42
+                }
+              }
+            }
+          }
+        }
+      },
+      "TranslatedContent": {
+        "type": "array",
+        "description": "List containing pairs of language codes and text for different languages",
+        "required": ["text"],
+        "items": {
+          "type": "object",
+          "properties": {
+            "lang": {
+              "type": "string",
+              "example": "en"
+            },
+            "text": {
+              "type": "string",
+              "example": "English text variant"
+            }
+          }
+        }
+      },
+      "Person": {
+        "type": "object",
+        "description": "Information concerning a person",
+        "required": ["name"],
+        "properties": {
+          "uri": {
+            "type": "string",
+            "example": "https://orcid.org/0000-0002-0560-4749" 
+          },
+          "name": {
+            "type": "string",
+            "example": "Benjamin Ducke"
+          }
+        }
+      },
+      "Organisation": {
+        "type": "object",
+        "description": "Information concerning an organisation",
+        "required": ["name"],
+        "properties": {
+          "uri": {
+            "type": "string",
+            "example": "https://ror.org/023md1f53" 
+          },
+          "name": {
+            "type": "string",
+            "example": "Deutsches Archäologisches Institut"
+          }
+        }
+      }
+    }
+  }
+}
