@@ -72,7 +72,7 @@ defmodule ArgosAPITest do
 
   test "swagger spec is served" do
     %{resp_body: body} = response =
-      conn(:get, "/swagger/openapi.json")
+      conn(:get, "/public/openapi.json")
       |> ArgosAPI.Router.call(%{})
 
     assert response.status == 200
