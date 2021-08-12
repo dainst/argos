@@ -16,7 +16,7 @@ defmodule ArgosAggregation.Gazetteer do
       place
       |> cast(params, [:geometry])
       |> cast_embed(:core_fields)
-      |> validate_required([:core_fields, :geometry])
+      |> validate_required([:core_fields])
     end
 
     def create(params) do
