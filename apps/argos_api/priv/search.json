@@ -193,6 +193,7 @@
             "$ref": "#/components/schemas/TranslatedContent"
           },
           "resource": {
+            "type": "object",
             "description": "SparseDocument representation of the concept document"
           }
         }
@@ -205,6 +206,7 @@
             "$ref": "#/components/schemas/TranslatedContent"
           },
           "resource": {
+            "type": "object",
             "description": "SparseDocument representation of the place document"
           }
         }
@@ -217,6 +219,7 @@
             "$ref": "#/components/schemas/TranslatedContent"
           },
           "resource": {
+            "type": "object",
             "description": "SparseDocument representation of the temporal concept document"
           }
         }
