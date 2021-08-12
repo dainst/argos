@@ -1,6 +1,6 @@
 {
   "get": {
-    "summary": "Finds Projects by query string",
+    "summary": "Search documents in the iDAI.world",
     "operationId": "search",
     "parameters": [
       {
