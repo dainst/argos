@@ -12,6 +12,9 @@
     "/": {
       "$ref": "./info.json"
     },
+    "/doc/{id}": {
+      "$ref": "./doc.json"
+    },
     "/search": {
       "$ref": "./search.json"
     }
