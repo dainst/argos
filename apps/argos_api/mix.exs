@@ -31,7 +31,8 @@ defmodule ArgosAPI.MixProject do
       {:exsync, "~> 0.2", only: :dev},
       {:plug_cowboy, "~> 2.4"},
       {:cors_plug, "~> 2.0"},
-      {:open_api_spex, "~> 3.10"}
+      {:open_api_spex, "~> 3.10"},
+      {:argos_aggregation, in_umbrella: true, runtime: false}
     ]
   end
 end
