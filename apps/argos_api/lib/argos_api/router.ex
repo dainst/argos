@@ -18,10 +18,11 @@ defmodule ArgosAPI.Router do
 
   alias ArgosAPI.Errors
 
-  get "/swagger/openapi.json" do
-
+  get "/public/openapi.json" do
+    # Because we want to set the API version dynamically for the main openapi document
+    # the file is not served as a static asset in contrast to the other files in /public.
     api_spec =
-      Application.app_dir(:argos_api, "priv/openapi.json")
+      Application.app_dir(:argos_api, "priv/public/openapi.json")
       |> File.read!()
       |> Poison.decode!()
       |> Map.update!(
@@ -38,7 +39,8 @@ defmodule ArgosAPI.Router do
     send_resp(conn, 200, Poison.encode!(api_spec))
   end
 
-  forward "/swagger", to: OpenApiSpex.Plug.SwaggerUI, path: "/swagger/openapi.json"
+  forward "/public", to: ArgosAPI.PublicFilesPlug
+  forward "/swagger", to: OpenApiSpex.Plug.SwaggerUI, path: "/public/openapi.json"
 
   get "/doc/:id" do
     ArgosAPI.DocumentController.get(conn)
