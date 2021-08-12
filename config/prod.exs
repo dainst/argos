@@ -8,7 +8,7 @@
 import Config
 
 config :argos_aggregation,
-  elasticsearch_url: "elasticsearch:9200",
+  elasticsearch_url: "http://elasticsearch:9200",
   index_name: "argos",
   elasticsearch_mapping_path: "/elasticsearch-mapping.json"
 
