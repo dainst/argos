@@ -9,21 +9,26 @@ defmodule ArgosAggregation.BibliographyTest do
   }
 
   @example_json "../../priv/example_zenon_params.json"
+    |> File.read!()
+    |> Poison.decode!()
 
   test "get by id with invalid id yields error" do
     assert {:error, "record not-existing not found."} == Bibliography.DataProvider.get_by_id("not-existing")
   end
 
-  test "bibliography's core_fields contains full_record data" do
+  test "bibliographyic record's core_fields contains full_record data" do
     id = "002023378"
 
-    assert {:ok, %{
-      "core_fields" => %{
-        "full_record" => %{
-          "id" => ^id
-        }
-      }
-    }} = Bibliography.DataProvider.get_by_id(id)
+    {:ok, %{core_fields: %{full_record: %{ "id" => record_id}}}} =
+      id
+      |> Bibliography.DataProvider.get_by_id()
+      |> case do
+        {:ok, data} ->
+          data
+         end
+      |> BibliographicRecord.create()
+
+    assert record_id == id
   end
 
   describe "elastic search tests" do
@@ -52,7 +57,6 @@ defmodule ArgosAggregation.BibliographyTest do
 
     test "get by id yields bibliographic record" do
       id = "002023378"
-
       {:ok, record } =
         id
         |> Bibliography.DataProvider.get_by_id()
@@ -61,7 +65,22 @@ defmodule ArgosAggregation.BibliographyTest do
         end
         |> Bibliography.BibliographicRecord.create()
 
-        assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
+      assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
+    end
+
+    test "urls in zenon data get parsed as external link" do
+      {:ok, %{core_fields: %{external_links: [%{url: linked_record_url}]}}} =
+        @example_json
+        |> Bibliography.BibliographyParser.parse_record()
+        |> case do
+          {:ok, data} ->
+            data
+        end
+        |> BibliographicRecord.create()
+
+      %{"urls" => [%{"url" => input_url}]} = @example_json
+
+      assert input_url == linked_record_url
     end
 
     test "updating referenced thesauri concept updates bibliographic record" do
@@ -73,15 +92,14 @@ defmodule ArgosAggregation.BibliographyTest do
       assert("created" == ths_indexing.upsert_response["result"])
 
 
-      biblio_indexing = with {:ok, file_content} <- File.read(@example_json) do
-        {:ok,data} = Poison.decode(file_content)
-        data
-          |> Bibliography.BibliographyParser.parse_record()
-          |> case do
-            {:ok, params} -> params
-          end
-          |> Indexer.index()
-      end
+      biblio_indexing =
+        @example_json
+        |> Bibliography.BibliographyParser.parse_record()
+        |> case do
+          {:ok, params} -> params
+        end
+        |> Indexer.index()
+
       assert("created" == biblio_indexing.upsert_response["result"])
 
       # Force refresh to make sure recently upserted docs are considered in search.
@@ -120,15 +138,13 @@ defmodule ArgosAggregation.BibliographyTest do
       gaz_indexing = Indexer.index(gaz_data)
 
       assert("created" == gaz_indexing.upsert_response["result"])
-      biblio_indexing = with {:ok, file_content} <- File.read(@example_json) do
-        {:ok,data} = Poison.decode(file_content)
-        data
-          |> Bibliography.BibliographyParser.parse_record()
-          |> case do
-            {:ok, params} -> params
-          end
-          |> Indexer.index()
-      end
+      biblio_indexing =
+        @example_json
+        |> Bibliography.BibliographyParser.parse_record()
+        |> case do
+          {:ok, params} -> params
+        end
+        |> Indexer.index()
 
       assert("created" == biblio_indexing.upsert_response["result"])
 

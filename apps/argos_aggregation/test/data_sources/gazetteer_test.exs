@@ -54,13 +54,16 @@ defmodule ArgosAggregation.GazetteerTest do
   test "gazetteer record's core_fields contains full_record data" do
     id = "2048575"
 
-    assert {:ok, %{
-      "core_fields" => %{
-        "full_record" => %{
-          "gazId" => ^id
-        }
-      }
-    }} = DataProvider.get_by_id(id)
+    {:ok, %{core_fields: %{full_record: %{"gazId" => record_id}}}} =
+      id
+      |> DataProvider.get_by_id()
+      |> case do
+        {:ok, data} ->
+          data
+      end
+      |> Place.create()
+
+    assert record_id == id
   end
 
   describe "elastic search integration tests" do

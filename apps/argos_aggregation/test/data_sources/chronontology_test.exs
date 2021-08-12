@@ -64,15 +64,15 @@ defmodule ArgosAggregation.ChronontologyTest do
   test "chronotology record's core_fields contains full_record data" do
     id = "X5lOSI8YQFiL"
 
-    assert {:ok, %{
-      "core_fields" => %{
-        "full_record" => %{
-          "resource" => %{
-            "id" => ^id
-          }
-        }
-      }
-    }} = DataProvider.get_by_id(id)
+    {:ok, %{core_fields: %{full_record: %{"resource" => %{"id" => record_id}}}}} =
+      DataProvider.get_by_id(id)
+      |> case do
+        {:ok, data} ->
+          data
+         end
+      |> TemporalConcept.create()
+
+    assert record_id == id
   end
 
 
