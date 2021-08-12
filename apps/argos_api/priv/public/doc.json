@@ -19,13 +19,24 @@
           "application/json": {
             "schema": {
               "oneOf": [
-                {"$ref": "#/components/schemas/Collection"},
-                {"$ref": "#/components/schemas/BibliographicRecord"},
-                {"$ref": "#/components/schemas/Place"},
-                {"$ref": "#/components/schemas/Concept"},
-                {"$ref": "#/components/schemas/TemporalConcept"}
+                {
+                  "$ref": "#/components/schemas/Collection"
+                },
+                {
+                  "$ref": "#/components/schemas/BibliographicRecord"
+                },
+                {
+                  "$ref": "#/components/schemas/Place"
+                },
+                {
+                  "$ref": "#/components/schemas/Concept"
+                },
+                {
+                  "$ref": "#/components/schemas/TemporalConcept"
+                }
               ]
-            }
+            },
+            "example": "{\n  \"core_fields\": {\n    \"uri\": \"https://collections.idai.world/api/collections/1\",\n    \"type\": \"collection\",\n    \"title\": [\n      {\n        \"text\": \"Photoarchive Berlin\",\n        \"lang\": \"en\"\n      },\n      {\n        \"text\": \"Fotoarchiv Berlin\",\n        \"lang\": \"de\"\n      }\n    ],\n    \"temporal_topics\": [],\n    \"spatial_topics\": [\n      {\n        \"topic_context_note\": [],\n        \"resource\": {\n          \"geometry\": [\n            {\n              \"type\": \"Point\",\n              \"coordinates\": [\n                13.27303,\n                52.45491\n              ]\n            },\n            {\n              \"type\": \"MultiPolygon\",\n              \"coordinates\": [\n                [\n                  [\n                    [\n                      13.282808879694812,\n                      52.4424555176076\n                    ],\n                    [\n                      13.270105937800281,\n                      52.4424555176076\n                    ],\n                    [\n                      13.249849895319812,\n                      52.458043754196396\n                    ],\n                    [\n                      13.246588329157703,\n                      52.4601357149835\n                    ],\n                    [\n                      13.247274974665515,\n                      52.467665950853025\n                    ],\n                    [\n                      13.2546564138745,\n                      52.46599267642029\n                    ],\n                    [\n                      13.260836223444812,\n                      52.46735221674203\n                    ],\n                    [\n                      13.26238117583739,\n                      52.46672474181137\n                    ],\n                    [\n                      13.290018657526844,\n                      52.470907739059676\n                    ],\n                    [\n                      13.3095880544995,\n                      52.46745679502749\n                    ],\n                    [\n                      13.305639842829578,\n                      52.46536518210906\n                    ],\n                    [\n                      13.304094890437,\n                      52.458775951777994\n                    ],\n                    [\n                      13.293451885065906,\n                      52.445594532323305\n                    ],\n                    [\n                      13.282808879694812,\n                      52.4424555176076\n                    ]\n                  ]\n                ]\n              ]\n            }\n          ],\n          \"core_fields\": {\n            \"uri\": \"https://gazetteer.dainst.org/place/2048575\",\n            \"type\": \"place\",\n            \"title\": [\n              {\n                \"text\": \"Berlin- Dahlem\",\n                \"lang\": \"de\"\n              },\n              {\n                \"text\": \"Berlin-Dahlem\",\n                \"lang\": \"fr\"\n              },\n              {\n                \"text\": \"Далем\",\n                \"lang\": \"ru\"\n              },\n              {\n                \"text\": \"Berlin-Dahlem\",\n                \"lang\": \"de\"\n              },\n              {\n                \"text\": \"Dahlem\",\n                \"lang\": \"de\"\n              }\n            ],\n            \"temporal_topics\": [],\n            \"spatial_topics\": [],\n            \"source_id\": \"2048575\",\n            \"persons\": [],\n            \"organisations\": [],\n            \"id\": \"place_2048575\",\n            \"general_topics\": [],\n            \"full_record\": {\n              \"types\": [\n                \"populated-place\"\n              ],\n              \"provenance\": [\n                \"Propylaeum_GNDID_Import\",\n                \"geonames\"\n              ],\n              \"prefName\": {\n                \"title\": \"Berlin- Dahlem\",\n                \"language\": \"de\"\n              },\n              \"prefLocation\": {\n                \"shape\": [\n                  [\n                    [\n                      [\n                        13.282808879694812,\n                        52.4424555176076\n                      ],\n                      [\n                        13.270105937800281,\n                        52.4424555176076\n                      ],\n                      [\n                        13.249849895319812,\n                        52.458043754196396\n                      ],\n                      [\n                        13.246588329157703,\n                        52.4601357149835\n                      ],\n                      [\n                        13.247274974665515,\n                        52.467665950853025\n                      ],\n                      [\n                        13.2546564138745,\n                        52.46599267642029\n                      ],\n                      [\n                        13.260836223444812,\n                        52.46735221674203\n                      ],\n                      [\n                        13.26238117583739,\n                        52.46672474181137\n                      ],\n                      [\n                        13.290018657526844,\n                        52.470907739059676\n                      ],\n                      [\n                        13.3095880544995,\n                        52.46745679502749\n                      ],\n                      [\n                        13.305639842829578,\n                        52.46536518210906\n                      ],\n                      [\n                        13.304094890437,\n                        52.458775951777994\n                      ],\n                      [\n                        13.293451885065906,\n                        52.445594532323305\n                      ],\n                      [\n                        13.282808879694812,\n                        52.4424555176076\n                      ]\n                    ]\n                  ]\n                ],\n                \"publicSite\": true,\n                \"coordinates\": [\n                  13.27303,\n                  52.45491\n                ],\n                \"confidence\": 2\n              },\n              \"parent\": \"https://gazetteer.dainst.org/place/2048564\",\n              \"names\": [\n                {\n                  \"title\": \"Berlin-Dahlem\",\n                  \"language\": \"fr\"\n                },\n                {\n                  \"title\": \"Далем\",\n                  \"language\": \"ru\"\n                },\n                {\n                  \"title\": \"Berlin-Dahlem\",\n                  \"language\": \"de\"\n                },\n                {\n                  \"title\": \"Dahlem\",\n                  \"language\": \"de\"\n                }\n              ],\n              \"links\": [\n                {\n                  \"predicate\": \"owl:sameAs\",\n                  \"object\": \"http://sws.geonames.org/2939440\"\n                },\n                {\n                  \"predicate\": \"rdfs:seeAlso\",\n                  \"object\": \"http://en.wikipedia.org/wiki/Dahlem_%28Berlin%29\"\n                },\n                {\n                  \"predicate\": \"owl:sameAs\",\n                  \"object\": \"https://de.wikipedia.org/wiki/Berlin-Dahlem\"\n                },\n                {\n                  \"predicate\": \"owl:sameAs\",\n                  \"object\": \"http://d-nb.info/gnd/4333496-9\"\n                },\n                {\n                  \"predicate\": \"owl:sameAs\",\n                  \"object\": \"https://sws.geonames.org/2939440\"\n                }\n              ],\n              \"identifiers\": [\n                {\n                  \"value\": \"4333496-9\",\n                  \"context\": \"GND-ID\"\n                },\n                {\n                  \"value\": \"zTopogEuropMitteDeutsBrandBerliDahlem\",\n                  \"context\": \"zenon-thesaurus\"\n                },\n                {\n                  \"value\": \"000052132\",\n                  \"context\": \"zenon-systemnr\"\n                },\n                {\n                  \"value\": \"2939440\",\n                  \"context\": \"geonames\"\n                }\n              ],\n              \"gazId\": \"2048575\",\n              \"comments\": [\n                {\n                  \"text\": \"Dahlem ist ein Berliner Ortsteil im Bezirk Steglitz-Zehlendorf.\",\n                  \"language\": \"de\"\n                }\n              ],\n              \"ancestors\": [\n                \"https://gazetteer.dainst.org/place/2044274\",\n                \"https://gazetteer.dainst.org/place/2044223\",\n                \"https://gazetteer.dainst.org/place/2042600\"\n              ],\n              \"@id\": \"https://gazetteer.dainst.org/place/2048575\"\n            },\n            \"external_links\": [],\n            \"description\": []\n          }\n        }\n      }\n    ],\n    \"source_id\": \"1\",\n    \"persons\": [],\n    \"organisations\": [],\n    \"id\": \"collection_1\",\n    \"general_topics\": [\n      {\n        \"topic_context_note\": [],\n        \"resource\": {\n          \"core_fields\": {\n            \"uri\": \"http://thesauri.dainst.org/_328cf29e\",\n            \"type\": \"concept\",\n            \"title\": [\n              {\n                \"text\": \"Keramiklampen\",\n                \"lang\": \"de\"\n              }\n            ],\n            \"temporal_topics\": [],\n            \"spatial_topics\": [],\n            \"source_id\": \"_328cf29e\",\n            \"persons\": [],\n            \"organisations\": [],\n            \"id\": \"concept__328cf29e\",\n            \"general_topics\": [],\n            \"full_record\": null,\n            \"external_links\": [],\n            \"description\": []\n          }\n        }\n      },\n      {\n        \"topic_context_note\": [],\n        \"resource\": {\n          \"core_fields\": {\n            \"uri\": \"http://thesauri.dainst.org/_6b00aec3\",\n            \"type\": \"concept\",\n            \"title\": [\n              {\n                \"text\": \"Vase\",\n                \"lang\": \"de\"\n              }\n            ],\n            \"temporal_topics\": [],\n            \"spatial_topics\": [],\n            \"source_id\": \"_6b00aec3\",\n            \"persons\": [],\n            \"organisations\": [],\n            \"id\": \"concept__6b00aec3\",\n            \"general_topics\": [],\n            \"full_record\": null,\n            \"external_links\": [],\n            \"description\": []\n          }\n        }\n      },\n      {\n        \"topic_context_note\": [],\n        \"resource\": {\n          \"core_fields\": {\n            \"uri\": \"http://thesauri.dainst.org/_1342-l3\",\n            \"type\": \"concept\",\n            \"title\": [\n              {\n                \"text\": \"Plastik/Skulptur\",\n                \"lang\": \"de\"\n              }\n            ],\n            \"temporal_topics\": [],\n            \"spatial_topics\": [],\n            \"source_id\": \"_1342-l3\",\n            \"persons\": [],\n            \"organisations\": [],\n            \"id\": \"concept__1342-l3\",\n            \"general_topics\": [],\n            \"full_record\": null,\n            \"external_links\": [],\n            \"description\": []\n          }\n        }\n      }\n    ],\n    \"full_record\": {\n      \"updated_at\": \"2021-08-04T09:51:16\",\n      \"titles\": [\n        {\n          \"language_code\": \"en\",\n          \"content\": \"Photoarchive Berlin\"\n        },\n        {\n          \"language_code\": \"de\",\n          \"content\": \"Fotoarchiv Berlin\"\n        }\n      ],\n      \"starts_at\": null,\n      \"stakeholders\": [],\n      \"project_key\": \"fotoarchivdaiberlin\",\n      \"linked_resources\": [\n        {\n          \"uri\": \"https://gazetteer.dainst.org/place/2048575\",\n          \"res_id\": \"2048575\",\n          \"linked_system\": \"gazetteer\",\n          \"labels\": [\n            {\n              \"language_code\": \"en\",\n              \"content\": \"Berlin, Dahlem\"\n            }\n          ],\n          \"descriptions\": []\n        },\n        {\n          \"uri\": \"http://thesauri.dainst.org/_328cf29e\",\n          \"res_id\": \"_328cf29e\",\n          \"linked_system\": \"thesaurus\",\n          \"labels\": [\n            {\n              \"language_code\": \"en\",\n              \"content\": \"Keramiklampen\"\n            }\n          ],\n          \"descriptions\": []\n        },\n        {\n          \"uri\": \"http://thesauri.dainst.org/_6b00aec3\",\n          \"res_id\": \"_6b00aec3\",\n          \"linked_system\": \"thesaurus\",\n          \"labels\": [\n            {\n              \"language_code\": \"en\",\n              \"content\": \"Vase\"\n            }\n          ],\n          \"descriptions\": []\n        },\n        {\n          \"uri\": \"http://thesauri.dainst.org/_1342-l3\",\n          \"res_id\": \"_1342-l3\",\n          \"linked_system\": \"thesaurus\",\n          \"labels\": [\n            {\n              \"language_code\": \"en\",\n              \"content\": \"Plastik/Skulptur\"\n            }\n          ],\n          \"descriptions\": []\n        }\n      ],\n      \"inserted_at\": \"2020-12-02T14:01:56\",\n      \"images\": [\n        {\n          \"primary\": true,\n          \"path\": \"https://collections.idai.world/media/fotoarchivdaiberlin/idai_images_photothek_berlin.jpg\",\n          \"labels\": [\n            {\n              \"language_code\": \"en\",\n              \"content\": \"1\"\n            }\n          ]\n        }\n      ],\n      \"id\": 1,\n      \"external_links\": [\n        {\n          \"url\": \"https://arachne.dainst.org/project/fotoarchivdaiberlin\",\n          \"labels\": [\n            {\n              \"language_code\": \"en\",\n              \"content\": \"Berlin head office\"\n            }\n          ]\n        }\n      ],\n      \"ends_at\": null,\n      \"descriptions\": [\n        {\n          \"language_code\": \"en\",\n          \"content\": \"The photo archive at the Berlin head office offers images on vase painting, sculpture, lamps and topography.\"\n        }\n      ]\n    },\n    \"external_links\": [\n      {\n        \"url\": \"https://collections.idai.world/media/fotoarchivdaiberlin/idai_images_photothek_berlin.jpg\",\n        \"type\": \"image\",\n        \"label\": [\n          {\n            \"text\": \"1\",\n            \"lang\": \"en\"\n          }\n        ]\n      },\n      {\n        \"url\": \"https://arachne.dainst.org/project/fotoarchivdaiberlin\",\n        \"type\": \"website\",\n        \"label\": [\n          {\n            \"text\": \"Berlin head office\",\n            \"lang\": \"en\"\n          }\n        ]\n      }\n    ],\n    \"description\": [\n      {\n        \"text\": \"The photo archive at the Berlin head office offers images on vase painting, sculpture, lamps and topography.\",\n        \"lang\": \"en\"\n      }\n    ]\n  }\n}"
           }
         }
       }
@@ -49,7 +60,7 @@
         "type": "object",
         "required": [
           "core_fields"
-        ],        
+        ],
         "description": "Document representing a iDAI.world bibliographic record (https://zenon.dainst.org). core_fields.type is 'biblio'",
         "properties": {
           "core_fields": {
@@ -61,7 +72,7 @@
         "type": "object",
         "required": [
           "core_fields"
-        ],        
+        ],
         "description": "Document representing a iDAI.world concept (https://thesauri.dainst.org). core_fields.type is 'concept'. May be linked to other documents via 'general_topics'",
         "properties": {
           "core_fields": {
@@ -73,7 +84,7 @@
         "type": "object",
         "required": [
           "core_fields"
-        ],        
+        ],
         "description": "Document representing a iDAI.world place (https://gazetteer.dainst.org). core_fields.type is 'place'. May be linked to other documents via 'spatial_topics'",
         "properties": {
           "core_fields": {
@@ -92,7 +103,7 @@
         "type": "object",
         "required": [
           "core_fields"
-        ],        
+        ],
         "description": "Document representing a iDAI.world chronologic/period record (https://chronontology.dainst.org). core_fields.type is 'temporal_concept', . May be linked to other documents via 'temporal_topics'",
         "properties": {
           "core_fields": {
@@ -123,22 +134,24 @@
                 "description": "JSON representation of the original dataset harvested from the document's source system."
               }
             }
-          }         
-        ]        
+          }
+        ]
       },
-      "Geometry":{
+      "Geometry": {
         "description": "A geometry as defined by the GeoJSON standard",
-        "externalDocs":{
+        "externalDocs": {
           "url": "http://geojson.org/geojson-spec.html#geometry-objects"
         },
         "type": "object",
-        "required":["type", "coordinates"],
+        "required": [
+          "type",
+          "coordinates"
+        ],
         "properties": {
-
-          "type":{
+          "type": {
             "type": "string",
             "description": "GeoJSON data type definition",
-            "enum":[
+            "enum": [
               "Point",
               "Polygon",
               "MultiPoint",
@@ -146,8 +159,8 @@
               "LineString",
               "MultiLineString"
             ]
-          }, 
-          "coordinates":{
+          },
+          "coordinates": {
             "type": "array",
             "description": "Coordinate values"
           }
