@@ -16,7 +16,7 @@ defmodule ArgosAPI.InfoController do
       argos_api_version: argos_vsn,
       records: count_docs,
       swagger_ui: "#{@host_url}/swagger",
-      swagger_spec: "#{@host_url}/swagger/openapi.json"
+      swagger_spec: "#{@host_url}/public/openapi.json"
     }
 
     send_resp(conn, 200, Poison.encode!(info))
