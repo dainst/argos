@@ -50,7 +50,7 @@ defmodule ArgosAggregation.Thesauri do
 
     def read_from_url(url) do
       Finch.build(:get, url)
-      |> Finch.request(ArgosAggregationFinchProcess)
+      |> Finch.request(ArgosAggregationFinchProcess, timeout: 60000)
       |> fetch_response
     end
 
