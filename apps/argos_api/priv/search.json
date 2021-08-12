@@ -166,6 +166,7 @@
           },
           "external_links": {
             "type": "array",
+            "description": "External links related to the document",
             "items": {
               "$ref": "#/components/schemas/ExternalLink"
             }
@@ -221,7 +222,6 @@
         }
       },
       "ExternalLink": {
-        "description": "External link related to the document",
         "required": ["url", "type"],
         "properties": {
           "url": {
