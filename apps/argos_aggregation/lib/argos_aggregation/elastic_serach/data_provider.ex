@@ -96,7 +96,8 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
 
   defp transform_to_sparse_doc(doc) do
     # TODO: Cast to ecto schemas?
-    # TODO: Strip full_record from doc and from topics
+    # The document and all linked 'topic'-documents are stripped down to their :core_fields.
+    # Additionally the :full_record data is also removed.
     doc
     |> Map.update!("core_fields", fn(core_fields) ->
       core_fields
