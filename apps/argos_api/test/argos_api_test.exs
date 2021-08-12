@@ -7,7 +7,7 @@ defmodule ArgosAPITest do
     TestHelpers
   }
 
-  @example_json "../../priv/example_projects_params.json"
+  @example_json "../../priv/example_collection_params.json"
 
   test "invalid size yields 400 status" do
     response =
@@ -130,7 +130,7 @@ defmodule ArgosAPITest do
       with {:ok, file_content} <- File.read(@example_json) do
         {:ok,data} = Poison.decode(file_content)
         data
-        |> ArgosAggregation.Project.ProjectParser.parse_project()
+        |> ArgosAggregation.Collection.CollectionParser.parse_collection()
         |> case do
           {:ok, params} -> params
         end

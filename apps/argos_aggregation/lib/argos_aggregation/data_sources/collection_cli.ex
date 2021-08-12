@@ -1,9 +1,9 @@
 require Logger
 
-defmodule ArgosAggregation.ProjectCLI do
+defmodule ArgosAggregation.CollectionCLI do
 
   def run() do
-    ArgosAggregation.Project.Harvester.run_harvest()
+    ArgosAggregation.Collection.Harvester.run_harvest()
   end
 
   def run(date_string) do
@@ -27,7 +27,7 @@ defmodule ArgosAggregation.ProjectCLI do
   end
 
   def handle_arguments({:ok, date, _offset}) do
-    ArgosAggregation.Project.Harvester.run_harvest(date)
+    ArgosAggregation.Collection.Harvester.run_harvest(date)
   end
 
   def handle_arguments({:error, reason}) do

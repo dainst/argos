@@ -1,10 +1,10 @@
 defmodule ArgosAggregation.Release do
-  def seed_projects(date) do
-    ArgosAggregation.ProjectCLI.run(date)
+  def seed_collections(date) do
+    ArgosAggregation.CollectionCLI.run(date)
   end
 
-  def seed_projects() do
-    ArgosAggregation.ProjectCLI.run()
+  def seed_collections() do
+    ArgosAggregation.CollectionCLI.run()
   end
 
   def seed_bibliography(date) do

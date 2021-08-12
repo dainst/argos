@@ -214,7 +214,7 @@ defmodule ArgosAggregation.Gazetteer do
     use GenServer
     alias ArgosAggregation.ElasticSearch.Indexer
 
-    @interval Application.get_env(:argos_aggregation, :projects_harvest_interval)
+    @interval Application.get_env(:argos_aggregation, :collections_harvest_interval)
     defp get_timezone() do
       "Etc/UTC"
     end

@@ -1,4 +1,4 @@
-defmodule ArgosAggregation.Project do
+defmodule ArgosAggregation.Collection do
   require Logger
 
   alias ArgosAggregation.{
@@ -7,7 +7,7 @@ defmodule ArgosAggregation.Project do
     Chronontology
   }
 
-  defmodule Project do
+  defmodule Collection do
     use ArgosAggregation.Schema
 
     alias ArgosAggregation.CoreFields
@@ -18,22 +18,22 @@ defmodule ArgosAggregation.Project do
       embeds_one(:core_fields, CoreFields)
     end
 
-    def changeset(project, params \\ %{}) do
-      project
+    def changeset(collection, params \\ %{}) do
+      collection
       |> cast(params, [])
       |> cast_embed(:core_fields)
       |> validate_required(:core_fields)
     end
 
     def create(params) do
-      changeset(%Project{}, params)
+      changeset(%Collection{}, params)
       |> apply_action(:create)
     end
   end
 
   defmodule DataProvider do
-    @base_url Application.get_env(:argos_aggregation, :projects_url)
-    alias ArgosAggregation.Project.ProjectParser
+    @base_url Application.get_env(:argos_aggregation, :collections_url)
+    alias ArgosAggregation.Collection.CollectionParser
 
     alias ArgosAggregation.Gazetteer
     alias ArgosAggregation.Thesauri
@@ -41,7 +41,7 @@ defmodule ArgosAggregation.Project do
 
     def get_all() do
       "#{@base_url}/api/projects"
-      |> get_project_list()
+      |> get_collection_list()
     end
 
     def get_by_date(%Date{} = date) do
@@ -51,7 +51,7 @@ defmodule ArgosAggregation.Project do
         })
 
       "#{@base_url}/api/projects?#{query}"
-      |> get_project_list()
+      |> get_collection_list()
     end
 
     def get_by_date(%DateTime{} = date) do
@@ -61,10 +61,10 @@ defmodule ArgosAggregation.Project do
         })
 
       "#{@base_url}/api/projects?#{query}"
-      |> get_project_list()
+      |> get_collection_list()
     end
 
-    defp get_project_list(url) do
+    defp get_collection_list(url) do
       result =
         Finch.build(:get, url)
         |> Finch.request(ArgosAggregationFinchProcess)
@@ -73,7 +73,7 @@ defmodule ArgosAggregation.Project do
       case result do
         {:ok, data} ->
           data
-          |> Enum.map(&ProjectParser.parse_project(&1))
+          |> Enum.map(&CollectionParser.parse_collection(&1))
 
         {:error, _} ->
           []
@@ -88,7 +88,7 @@ defmodule ArgosAggregation.Project do
 
       case result do
         {:ok, data} ->
-          ProjectParser.parse_project(data)
+          CollectionParser.parse_collection(data)
 
         {:error, reason} ->
           {:error, reason}
@@ -127,11 +127,11 @@ defmodule ArgosAggregation.Project do
     end
   end
 
-  defmodule ProjectParser do
-    @base_url Application.get_env(:argos_aggregation, :projects_url)
-    @field_type Application.get_env(:argos_aggregation, :project_type_key)
+  defmodule CollectionParser do
+    @base_url Application.get_env(:argos_aggregation, :collections_url)
+    @field_type Application.get_env(:argos_aggregation, :collection_type_key)
 
-    def parse_project(data) do
+    def parse_collection(data) do
       external_links = parse_external_links(data["images"], data["external_links"])
 
       {spatial_topics, general_topics, temporal_topics} =
@@ -142,7 +142,7 @@ defmodule ArgosAggregation.Project do
       core_fields = %{
         "type" => @field_type,
         "source_id" => "#{data["id"]}",
-        "uri" => "#{@base_url}/api/projects/#{data["id"]}",
+        "uri" => "#{@base_url}/api/collections/#{data["id"]}",
         "title" => parse_translations(data["titles"]),
         "description" => parse_translations(data["descriptions"]),
         "external_links" => external_links,
@@ -302,7 +302,7 @@ defmodule ArgosAggregation.Project do
     use GenServer
     alias ArgosAggregation.ElasticSearch.Indexer
 
-    @interval Application.get_env(:argos_aggregation, :projects_harvest_interval)
+    @interval Application.get_env(:argos_aggregation, :collections_harvest_interval)
     # TODO Noch nicht refactored!
     defp get_timezone() do
       "Etc/UTC"
@@ -311,7 +311,7 @@ defmodule ArgosAggregation.Project do
     def init(state) do
       state = Map.put(state, :last_run, DateTime.now!(get_timezone()))
 
-      Logger.info("Starting projects harvester with an interval of #{@interval}ms.")
+      Logger.info("Starting collections harvester with an interval of #{@interval}ms.")
 
       Process.send(self(), :run, [])
       {:ok, state}

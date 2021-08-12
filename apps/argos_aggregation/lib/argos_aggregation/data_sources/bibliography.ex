@@ -13,8 +13,8 @@ defmodule ArgosAggregation.Bibliography do
       embeds_one(:core_fields, ArgosAggregation.CoreFields)
     end
 
-    def changeset(project, params \\ %{}) do
-      project
+    def changeset(collection, params \\ %{}) do
+      collection
       |> cast(params, [])
       |> cast_embed(:core_fields)
       |> validate_required(:core_fields)
