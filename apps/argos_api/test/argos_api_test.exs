@@ -153,16 +153,16 @@ defmodule ArgosAPITest do
         body
         |> Poison.decode!()
 
-      # 1 project, 2 places, 1 concept
+      # 1 collection, 2 places, 1 concept
       assert total == 4
     end
 
     test "document is accessable through endpoint" do
       %{resp_body: body } =
-        conn(:get, "/doc/project_1")
+        conn(:get, "/doc/collection_1")
         |> ArgosAPI.Router.call(%{})
 
-      assert %{"core_fields" => %{"id" => "project_1" }} = Poison.decode!(body)
+      assert %{"core_fields" => %{"id" => "collection_1" }} = Poison.decode!(body)
     end
 
     test "invalid document id yields 404" do

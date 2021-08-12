@@ -16,7 +16,7 @@ config :argos_aggregation,
 
   projects_url: "https://collections.idai.world",
   projects_harvest_interval: 1000 * 60 * 30, # 30 minutes
-  project_type_key: "project",
+  project_type_key: "collection",
 
   bibliography_url: "https://zenon.dainst.org",
   bibliography_harvest_interval: 1000 * 60 * 60 * 24, # Once a day (that is also zenon's update interval)
