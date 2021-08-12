@@ -92,37 +92,6 @@ defmodule ArgosAPITest do
     assert response.status == 200
   end
 
-  test "urls provided by info controller resolve" do
-    %{"swagger_spec" => spec_path, "swagger_ui" => ui_path} =
-      conn(:get, "/")
-      |> ArgosAPI.Router.call(%{})
-      |> case do
-        %{resp_body: body} ->
-          body
-        end
-      |> Poison.decode!()
-
-    status =
-      Finch.build(:get, spec_path)
-      |> Finch.request(ArgosAPIFinch)
-      |> case do
-        {:ok, %{status: status}} ->
-          status
-      end
-
-    assert status == 200
-
-    status =
-      Finch.build(:get, ui_path)
-      |> Finch.request(ArgosAPIFinch)
-      |> case do
-        {:ok, %{status: status}} ->
-          status
-      end
-
-    assert status == 200
-  end
-
   describe "elastic search tests" do
 
     setup do
@@ -155,6 +124,37 @@ defmodule ArgosAPITest do
 
       # 1 collection, 2 places, 1 concept
       assert total == 4
+    end
+
+    test "urls provided by info controller resolve" do
+      %{"swagger_spec" => spec_path, "swagger_ui" => ui_path} =
+        conn(:get, "/")
+        |> ArgosAPI.Router.call(%{})
+        |> case do
+          %{resp_body: body} ->
+            body
+          end
+        |> Poison.decode!()
+
+      status =
+        Finch.build(:get, spec_path)
+        |> Finch.request(ArgosAPIFinch)
+        |> case do
+          {:ok, %{status: status}} ->
+            status
+        end
+
+      assert status == 200
+
+      status =
+        Finch.build(:get, ui_path)
+        |> Finch.request(ArgosAPIFinch)
+        |> case do
+          {:ok, %{status: status}} ->
+            status
+        end
+
+      assert status == 200
     end
 
     test "document is accessable through endpoint" do
