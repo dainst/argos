@@ -221,7 +221,7 @@
         }
       },
       "ExternalLink": {
-        "description": "External links related to the document",
+        "description": "External link related to the document",
         "required": ["url", "type"],
         "properties": {
           "url": {
