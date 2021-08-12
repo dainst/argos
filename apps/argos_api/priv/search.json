@@ -130,7 +130,7 @@
               "temporal_concept"
             ],
             "example": "biblio",
-            "description": "Document's type, which represents the source system it originated from. Values can be used as filter[] or !filter[] values."
+            "description": "Document's type, which represents the source system it originated from. Can be filtered upon (see Filter)."
           },
           "source_id": {
             "type": "string",
@@ -188,7 +188,7 @@
         }
       },
       "GeneralTopic": {
-        "description": "A descriptive link between the document and a concept document.",
+        "description": "A descriptive link between the document and a concept document. Can be filtered upon (see Filter).",
         "required": ["resource"],
         "properties": {
           "label": {
@@ -201,7 +201,7 @@
         }
       },
       "SpatialTopic": {
-        "description": "Descriptive link between the host document and a place.",
+        "description": "Descriptive link between the host document and a place. Can be filtered upon (see Filter).",
         "required": ["resource"],
         "properties": {
           "label": {
@@ -214,7 +214,7 @@
         }
       },
       "TemporalTopic": {
-        "description": "Descriptive link between the host document and a temporal concept.",
+        "description": "Descriptive link between the host document and a temporal concept. Can be filtered upon (see Filter).",
         "required": ["resource"],
         "properties": {
           "label": {
@@ -242,36 +242,6 @@
               "image",
               "website"
             ]
-          }
-        }
-      },
-      "Filter": {
-        "properties": {
-          "key": {
-            "type": "string",
-            "example": "subject"
-          },
-          "label": {
-            "$ref": "#/components/schemas/TranslatedContent"
-          },
-          "values": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "key": {
-                  "type": "string",
-                  "example": "buildings"
-                },
-                "label": {
-                  "$ref": "#/components/schemas/TranslatedContent"
-                },
-                "count": {
-                  "type": "number",
-                  "example": 42
-                }
-              }
-            }
           }
         }
       },
@@ -320,6 +290,44 @@
           "name": {
             "type": "string",
             "example": "Deutsches Archäologisches Institut"
+          }
+        }
+      },
+      "Filter": {
+        "required": ["filter_key", "filter_values"],
+        "properties": {
+          "filter_key": {
+            "description": "Each filter type has its specific filter key.",
+            "type": "string",
+            "enum": [
+              "general_topic_id",
+              "spatial_topic_id",
+              "temporal_topic_id",
+              "type"
+            ],
+            "example": "spatial_topic_id" 
+          },
+          "filter_values": {
+            "type": "array",
+            "description": "List of possible filter values. filter_value has to be used to construct queries, while labels may contain more human text for usage in interfaces.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filter_value": {
+                  "type": "string",
+                  "description": "Value for constructing a filtered query. In this example combination of spatial_topic_id, a query with filter[]=spatial_topic_id:place_2042737 would only retrieve documents that contain place_2042737 as a spatial_topic. See also SpatialTopic in CoreFields.",
+                  "example": "place_2042737"
+                },
+                "label": {
+                  "$ref": "#/components/schemas/TranslatedContent"
+                },
+                "count": {
+                  "type": "number",
+                  "description": "Number of documents in the current search that would match this filter's criteria.",
+                  "example": 42
+                }
+              }
+            }
           }
         }
       }
