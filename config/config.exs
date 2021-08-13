@@ -38,7 +38,8 @@ config :argos_aggregation,
   ]
 
 config :argos_api,
-  port: 4001
+  port: 4001,
+  host: "http://localhost"
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
