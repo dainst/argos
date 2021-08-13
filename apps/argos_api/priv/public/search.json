@@ -33,28 +33,29 @@
         "name": "filter[]",
         "in": "query",
         "description": "Positive filter: Filter by value, syntax: '<filter_key>:<filter_value>'",
-        "example": "type:biblio",
         "explode": true,
+        "style": "form",
         "schema": {
           "type": "array",
           "items": {
             "type": "string",
             "pattern": "^[a-z_]+:.+$"
-          }
+          },
+          "example": ["type:biblio"]
         }
       },
       {
         "name": "!filter[]",
         "in": "query",
         "description": "Negative filter: Exclude by value, syntax: '<filter_key>:<filter_value>'",
-        "example": "spatial_topic_id:place_2063214",
         "explode": true,
         "schema": {
           "type": "array",
           "items": {
             "type": "string",
             "pattern": "^[a-z_]+:.+$"
-          }
+          },
+          "example": ["spatial_topic_id:place_2063214"]
         }
       }
     ],
