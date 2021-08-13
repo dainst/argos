@@ -19,15 +19,11 @@ Run application stack (harvesting scripts and search endpoint on http://localhos
 mix run --no-halt
 ```
 
-Add ES mapping project data
+Seed some initial data
 ```bash
-mix update-mapping
+mix seed
 ```
 
-Seed project data
-```bash
-mix seed.projects
-```
 ### Testing
 ```bash
 mix test
