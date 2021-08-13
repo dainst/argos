@@ -47,7 +47,7 @@
         "name": "!filter[]",
         "in": "query",
         "description": "Negative filter: Exclude by value, syntax: '<filter_key>:<filter_value>'",
-        "example": "type:biblio",
+        "example": "spatial_topic_id:place_2063214",
         "explode": true,
         "schema": {
           "type": "array",
