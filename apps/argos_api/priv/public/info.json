@@ -4,7 +4,7 @@
     "operationId": "info",
     "responses": {
       "200": {
-        "description": "successful operation",  
+        "description": "OK",  
         "content": {
           "application/json": {
             "type": "object",
