@@ -1,7 +1,5 @@
 defmodule ArgosAPI.InfoController do
   @elasticsearch_url Application.get_env(:argos_aggregation, :elasticsearch_url)
-  @host_url Application.get_env(:argos_api, :host_url, "http://localhost:#{Application.get_env(:argos_api, :port)}")
-
   import Plug.Conn
 
   def get(conn) do
@@ -12,11 +10,14 @@ defmodule ArgosAPI.InfoController do
       |> Finch.request(ArgosAPIFinch)
       |> handle_result()
 
+    host = Application.get_env(:argos_api, :host)
+    port = Application.get_env(:argos_api, :port)
+
     info = %{
       argos_api_version: argos_vsn,
       records: count_docs,
-      swagger_ui: "#{@host_url}/swagger",
-      swagger_spec: "#{@host_url}/public/openapi.json"
+      swagger_ui: "#{host}:#{port}/swagger",
+      swagger_spec: "#{host}:#{port}/public/openapi.json"
     }
 
     send_resp(conn, 200, Poison.encode!(info))
