@@ -1,6 +1,9 @@
 # Argos
 
-**TODO: Add description**
+## Prerequisites
+* Docker
+* docker-compose
+* Elixir >= 1.11
 
 ## Development
 
