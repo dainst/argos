@@ -96,6 +96,11 @@
         "type": "object",
         "description": "List of documents and useful filter suggestions matching the given search",
         "properties": {
+          "total": {
+            "type": "integer",
+            "maximum": 10000,
+            "description": "Number of documents that match the query. The real number might exceed 10000, but currently the API does not support 'Search after' yet. This means a maximum of 10000 documents are retrievable for a single search. See also https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html#search-after."
+          },
           "results": {
             "type": "array",
             "description": "List of search results",
