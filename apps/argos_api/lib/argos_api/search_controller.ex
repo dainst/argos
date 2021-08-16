@@ -39,7 +39,7 @@ defmodule ArgosAPI.SearchController do
     |> Map.get(name, default_value)
     |> Integer.parse()
     |> case do
-        {val, ""} when max_value != -1 and val >= max_value ->
+        {val, ""} when val >= max_value ->
           {:error, "Parameter '#{name}' exceeds maximum of #{max_value}: #{val}."}
         {val, ""} when val >= 0 ->
           {:ok, Map.put(query, name, val)}
