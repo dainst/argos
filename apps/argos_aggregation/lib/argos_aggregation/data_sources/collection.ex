@@ -142,7 +142,7 @@ defmodule ArgosAggregation.Collection do
       core_fields = %{
         "type" => @field_type,
         "source_id" => "#{data["id"]}",
-        "uri" => "#{@base_url}/api/collections/#{data["id"]}",
+        "uri" => "#{@base_url}/api/projects/#{data["id"]}",
         "title" => parse_translations(data["titles"]),
         "description" => parse_translations(data["descriptions"]),
         "external_links" => external_links,
