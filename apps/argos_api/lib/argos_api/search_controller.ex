@@ -27,25 +27,28 @@ defmodule ArgosAPI.SearchController do
 
   defp build_query(params) do
     {:ok, %{"q" => Map.get(params, "q", "*")}}
-    |> parse_positive_number(params, "size", "50")
-    |> parse_positive_number(params, "from", "0")
+    |> parse_positive_number(params, "size", "50", 10000)
+    |> parse_positive_number(params, "from", "0", 10000)
     |> parse_filters(params, "filter")
     |> parse_filters(params, "!filter")
     |> finalize_query()
   end
 
-  defp parse_positive_number({:ok, query}, params, name, default_value) do
+  defp parse_positive_number({:ok, query}, params, name, default_value, max_value) do
     params
     |> Map.get(name, default_value)
     |> Integer.parse()
     |> case do
+        {val, ""} when max_value != -1 and val >= max_value ->
+          {:error, "Parameter '#{name}' exceeds maximum of #{max_value}: #{val}."}
         {val, ""} when val >= 0 ->
           {:ok, Map.put(query, name, val)}
         _ ->
-          {:error, "Invalid size parameter '#{params[name]}'."}
+          {:error, "Invalid '#{name}' parameter '#{params[name]}'."}
       end
   end
-  defp parse_positive_number({:error, _} = error, _, _, _) do
+
+  defp parse_positive_number({:error, _} = error, _, _, _, _) do
     error
   end
 
