@@ -128,29 +128,54 @@ defmodule ArgosAggregation.Bibliography do
     def get_record_list(params) do
       Finch.build(:get, "#{@base_url}/api/v1/search?#{URI.encode_query(params)}")
       |> Finch.request(ArgosAggregationFinchProcess)
-      |> parse_response()
+      |> BibliographyParser.parse_response()
     end
 
-    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}) do
-      { :ok, Poison.decode!(body) }
-    end
-    defp parse_response({:ok, %Finch.Response{status: code}}) do
-      { :error, "Received status code #{code}" }
-    end
-    defp parse_response({:error, error}) do
-      { :error, error.reason() }
-    end
+
   end
 
   defmodule BibliographyParser do
     @base_url Application.get_env(:argos_aggregation, :bibliography_url)
     @field_type Application.get_env(:argos_aggregation, :bibliography_type_key)
 
+    def parse_response({:ok, %Finch.Response{status: 200, body: body}}) do
+      { :ok, Poison.decode!(body) }
+    end
+    def parse_response({:ok, %Finch.Response{status: code}}) do
+      { :error, "Received status code #{code}" }
+    end
+    def parse_response({:error, error}) do
+      { :error, error.reason() }
+    end
+
+    def getJournalMappings() do
+      Finch.build(:get, "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping")
+      |> Finch.request(ArgosAggregationFinchProcess)
+      |> parse_response()
+    end
+    def getBookMappings() do
+      Finch.build(:get, "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping")
+      |> Finch.request(ArgosAggregationFinchProcess)
+      |> parse_response()
+    end
     def parse_record(record) do
+
+      {:ok,journalMappings} = getJournalMappings()
+      {:ok,bookMappings} = getBookMappings()
+      Logger.warning(journalMappings)
+      Logger.warning(bookMappings)
 
       external_links =
         record["urls"]
         |> Enum.map(&parse_url(&1))
+
+      if journalMappings["publications"][record["id"]] do
+        [parse_url(%{"url"=>journalMappings["publications"][record["id"]], "descr"=>"journal"})|external_links]
+      end
+
+      if bookMappings["publications"][record["id"]] do
+        [parse_url(%{"url"=>bookMappings["publications"][record["id"]], "descr"=>"book"})|external_links]
+      end
 
       spatial_topics =
         record["DAILinks"]["gazetteer"]
