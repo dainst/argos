@@ -170,11 +170,11 @@ defmodule ArgosAggregation.Bibliography do
         |> Enum.map(&parse_url(&1))
 
       if journalMappings["publications"][record["id"]] do
-        [parse_url(%{"url"=>journalMappings["publications"][record["id"]], "descr"=>"journal"})|external_links]
+        [parse_url(%{"url"=>journalMappings["publications"][record["id"]], "desc"=>"journal"})|external_links]
       end
 
       if bookMappings["publications"][record["id"]] do
-        [parse_url(%{"url"=>bookMappings["publications"][record["id"]], "descr"=>"book"})|external_links]
+        [parse_url(%{"url"=>bookMappings["publications"][record["id"]], "desc"=>"book"})|external_links]
       end
 
       spatial_topics =
