@@ -42,11 +42,11 @@ defmodule ArgosAggregation.Bibliography do
     def get_publications_link(zenon_id, type) do
       case type do
         :journal ->
-          journalMappings = DataProvider.getJournalMappings()
-          journalMappings["publications"][zenon_id]
+          {:ok, journalMappings} = DataProvider.getJournalMappings()
+          {:ok,journalMappings["publications"][zenon_id]}
         :book ->
-          bookMappings = DataProvider.getBookMappings()
-          bookMappings["publications"][zenon_id]
+          {:ok, bookMappings} = DataProvider.getBookMappings()
+          {:ok, bookMappings["publications"][zenon_id]}
       end
     end
 
@@ -162,7 +162,7 @@ defmodule ArgosAggregation.Bibliography do
         end
 
       end
-      Cachex.get!(:bibliographyCache, "journalMapping")
+      Cachex.get(:bibliographyCache, "journalMapping")
     end
     def getBookMappings() do
       if !Cachex.get!(:bibliographyCache, "bookMapping") do
@@ -174,7 +174,7 @@ defmodule ArgosAggregation.Bibliography do
         end
 
       end
-      Cachex.get!(:bibliographyCache, "bookMapping")
+      Cachex.get(:bibliographyCache, "bookMapping")
     end
 
 
@@ -193,14 +193,19 @@ defmodule ArgosAggregation.Bibliography do
         record["urls"]
         |> Enum.map(&parse_url(&1))
 
-      if DataProvider.get_publications_link(record["id"], :journal) do
-        Logger.debug("found journal mapping: #{record["id"]} => #{DataProvider.get_publications_link(record["id"], :journal)}")
-        [parse_url(%{"url"=>DataProvider.get_publications_link(record["id"], :journal), "desc"=>"journal"})|external_links]
+      case DataProvider.get_publications_link(record["id"], :journal) do
+        {:ok, nil}-> nil
+        {:ok, journal}->
+        Logger.info("found journal mapping: #{record["id"]} => #{journal}")
+        [parse_url(%{"url"=>journal, "desc"=>"journal"})|external_links]
       end
 
-      if DataProvider.get_publications_link(record["id"], :book) do
-        Logger.debug("found book mapping: #{record["id"]} => #{DataProvider.get_publications_link(record["id"], :book)}")
-        [parse_url(%{"url"=>DataProvider.get_publications_link(record["id"], :book), "desc"=>"book"})|external_links]
+
+      case DataProvider.get_publications_link(record["id"], :book) do
+        {:ok, nil}-> nil
+        {:ok, book}->
+        Logger.debug("found book mapping: #{record["id"]} => #{book}")
+        [parse_url(%{"url"=>book, "desc"=>"book"})|external_links]
       end
 
       spatial_topics =
