@@ -128,24 +128,16 @@ defmodule ArgosAggregation.Bibliography do
     def get_record_list(params) do
       Finch.build(:get, "#{@base_url}/api/v1/search?#{URI.encode_query(params)}")
       |> Finch.request(ArgosAggregationFinchProcess)
-      |> BibliographyParser.parse_response()
+      |> parse_response()
     end
 
-
-  end
-
-  defmodule BibliographyParser do
-
-    @base_url Application.get_env(:argos_aggregation, :bibliography_url)
-    @field_type Application.get_env(:argos_aggregation, :bibliography_type_key)
-
-    def parse_response({:ok, %Finch.Response{status: 200, body: body}}) do
+    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}) do
       { :ok, Poison.decode!(body) }
     end
-    def parse_response({:ok, %Finch.Response{status: code}}) do
+    defp parse_response({:ok, %Finch.Response{status: code}}) do
       { :error, "Received status code #{code}" }
     end
-    def parse_response({:error, error}) do
+    defp parse_response({:error, error}) do
       { :error, error.reason() }
     end
 
@@ -173,10 +165,20 @@ defmodule ArgosAggregation.Bibliography do
       end
       Cachex.get!(:bibliographyCache, "bookMapping")
     end
+
+
+  end
+
+  defmodule BibliographyParser do
+
+    @base_url Application.get_env(:argos_aggregation, :bibliography_url)
+    @field_type Application.get_env(:argos_aggregation, :bibliography_type_key)
+
+
     def parse_record(record) do
 
-      journalMappings = getJournalMappings()
-      bookMappings = getBookMappings()
+      journalMappings = DataProvider.getJournalMappings()
+      bookMappings = DataProvider.getBookMappings()
 
       external_links =
         record["urls"]
