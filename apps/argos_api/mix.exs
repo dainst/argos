@@ -28,6 +28,7 @@ defmodule ArgosAPI.MixProject do
     [
       {:poison, "~> 4.0", override: true},
       {:finch, "~> 0.7"},
+      {:cachex, "~> 3.4.0"},
       {:exsync, "~> 0.2", only: :dev},
       {:plug_cowboy, "~> 2.4"},
       {:cors_plug, "~> 2.0"},

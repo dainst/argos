@@ -11,6 +11,7 @@ defmodule ArgosAggregation.Application do
 
   require Logger
   require Finch
+  require Cachex
 
   defp running_script?([head]) do
     head == "--script"
@@ -100,7 +101,7 @@ defmodule ArgosAggregation.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ArgosAggregation.Supervisor]
-    children = [{Finch, name: ArgosAggregationFinchProcess}] ++ children
+    children = [{Finch, name: ArgosAggregationFinchProcess},{Cachex, name: :bibliographyCache}] ++ children
 
     supervisor_response = Supervisor.start_link(children, opts)
 

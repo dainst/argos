@@ -135,6 +135,7 @@ defmodule ArgosAggregation.Bibliography do
   end
 
   defmodule BibliographyParser do
+
     @base_url Application.get_env(:argos_aggregation, :bibliography_url)
     @field_type Application.get_env(:argos_aggregation, :bibliography_type_key)
 
@@ -149,19 +150,31 @@ defmodule ArgosAggregation.Bibliography do
     end
 
     def getJournalMappings() do
-      Finch.build(:get, "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping")
-      |> Finch.request(ArgosAggregationFinchProcess)
-      |> parse_response()
+      if Cachex.empty?(:bibliographyCache, "journalMapping") do
+        case Finch.build(:get, "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping")
+        |> Finch.request(ArgosAggregationFinchProcess)
+        |> parse_response() do
+          {:ok, response} -> Cachex.put(:bibliographyCache, "journalMapping", response)
+        end
+
+      end
+      Cachex.get!(:bibliographyCache, "journalMapping")
     end
     def getBookMappings() do
-      Finch.build(:get, "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping")
-      |> Finch.request(ArgosAggregationFinchProcess)
-      |> parse_response()
+      if Cachex.empty?(:bibliographyCache, "bookMapping") do
+        case Finch.build(:get, "https://publications.dainst.org/books/plugins/pubIds/zenon/api/index.php?task=mapping")
+        |> Finch.request(ArgosAggregationFinchProcess)
+        |> parse_response() do
+          {:ok, response} -> Cachex.put(:bibliographyCache, "bookMapping", response)
+        end
+
+      end
+      Cachex.get!(:bibliographyCache, "bookMapping")
     end
     def parse_record(record) do
 
-      {:ok,journalMappings} = getJournalMappings()
-      {:ok,bookMappings} = getBookMappings()
+      journalMappings = getJournalMappings()
+      bookMappings = getBookMappings()
 
       external_links =
         record["urls"]
