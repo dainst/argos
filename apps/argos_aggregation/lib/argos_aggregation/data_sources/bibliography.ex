@@ -196,7 +196,7 @@ defmodule ArgosAggregation.Bibliography do
       case DataProvider.get_publications_link(record["id"], :journal) do
         {:ok, nil}-> nil
         {:ok, journal}->
-        Logger.info("found journal mapping: #{record["id"]} => #{journal}")
+        Logger.debug("found journal mapping: #{record["id"]} => #{journal}")
         [parse_url(%{"url"=>journal, "desc"=>"journal"})|external_links]
       end
 
