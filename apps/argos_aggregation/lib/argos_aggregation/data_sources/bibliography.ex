@@ -150,7 +150,7 @@ defmodule ArgosAggregation.Bibliography do
     end
 
     def getJournalMappings() do
-      if Cachex.empty?(:bibliographyCache, "journalMapping") do
+      if !Cachex.get!(:bibliographyCache, "journalMapping") do
         case Finch.build(:get, "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping")
         |> Finch.request(ArgosAggregationFinchProcess)
         |> parse_response() do
@@ -161,7 +161,7 @@ defmodule ArgosAggregation.Bibliography do
       Cachex.get!(:bibliographyCache, "journalMapping")
     end
     def getBookMappings() do
-      if Cachex.empty?(:bibliographyCache, "bookMapping") do
+      if !Cachex.get!(:bibliographyCache, "bookMapping") do
         case Finch.build(:get, "https://publications.dainst.org/books/plugins/pubIds/zenon/api/index.php?task=mapping")
         |> Finch.request(ArgosAggregationFinchProcess)
         |> parse_response() do
