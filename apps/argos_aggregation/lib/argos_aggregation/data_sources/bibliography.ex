@@ -39,6 +39,17 @@ defmodule ArgosAggregation.Bibliography do
       |> get_batches()
     end
 
+    def get_publications_link(zenon_id, type) do
+      case type do
+        :journal ->
+          journalMappings = DataProvider.getJournalMappings()
+          journalMappings["publications"][zenon_id]
+        :book ->
+          bookMappings = DataProvider.getBookMappings()
+          bookMappings["publications"][zenon_id]
+      end
+    end
+
     def get_by_id(id) do
       result =
         %{
@@ -177,21 +188,19 @@ defmodule ArgosAggregation.Bibliography do
 
     def parse_record(record) do
 
-      journalMappings = DataProvider.getJournalMappings()
-      bookMappings = DataProvider.getBookMappings()
 
       external_links =
         record["urls"]
         |> Enum.map(&parse_url(&1))
 
-      if journalMappings["publications"][record["id"]] do
-        Logger.debug("found journal mapping: #{record["id"]} => #{journalMappings["publications"][record["id"]]}")
-        [parse_url(%{"url"=>journalMappings["publications"][record["id"]], "desc"=>"journal"})|external_links]
+      if DataProvider.get_publications_link(record["id"], :journal) do
+        Logger.debug("found journal mapping: #{record["id"]} => #{DataProvider.get_publications_link(record["id"], :journal)}")
+        [parse_url(%{"url"=>DataProvider.get_publications_link(record["id"], :journal), "desc"=>"journal"})|external_links]
       end
 
-      if bookMappings["publications"][record["id"]] do
-        Logger.debug("found book mapping: #{record["id"]} => #{bookMappings["publications"][record["id"]]}")
-        [parse_url(%{"url"=>bookMappings["publications"][record["id"]], "desc"=>"book"})|external_links]
+      if DataProvider.get_publications_link(record["id"], :book) do
+        Logger.debug("found book mapping: #{record["id"]} => #{DataProvider.get_publications_link(record["id"], :book)}")
+        [parse_url(%{"url"=>DataProvider.get_publications_link(record["id"], :book), "desc"=>"book"})|external_links]
       end
 
       spatial_topics =
