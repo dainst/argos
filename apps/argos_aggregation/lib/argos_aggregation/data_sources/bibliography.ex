@@ -168,12 +168,12 @@ defmodule ArgosAggregation.Bibliography do
         |> Enum.map(&parse_url(&1))
 
       if journalMappings["publications"][record["id"]] do
-        Logger.info("found journal mapping: #{record["id"]} => #{journalMappings["publications"][record["id"]]}")
+        Logger.debug("found journal mapping: #{record["id"]} => #{journalMappings["publications"][record["id"]]}")
         [parse_url(%{"url"=>journalMappings["publications"][record["id"]], "desc"=>"journal"})|external_links]
       end
 
       if bookMappings["publications"][record["id"]] do
-        Logger.info("found book mapping: #{record["id"]} => #{bookMappings["publications"][record["id"]]}")
+        Logger.debug("found book mapping: #{record["id"]} => #{bookMappings["publications"][record["id"]]}")
         [parse_url(%{"url"=>bookMappings["publications"][record["id"]], "desc"=>"book"})|external_links]
       end
 
