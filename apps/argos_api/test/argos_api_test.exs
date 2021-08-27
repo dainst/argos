@@ -7,7 +7,7 @@ defmodule ArgosAPITest do
     TestHelpers
   }
 
-  @example_json "../../priv/example_collection_params.json"
+  @example_json Application.app_dir(:argos_core, "priv/example_collection_params.json")
 
   test "invalid size yields 400 status" do
     response =

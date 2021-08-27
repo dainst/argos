@@ -6,7 +6,7 @@ defmodule ArgosCore.Application do
   use Application
 
   @elasticsearch_url "#{Application.get_env(:argos_core, :elasticsearch_url)}/#{Application.get_env(:argos_core, :index_name)}"
-  @elasticsearch_mapping_path Application.get_env(:argos_core, :elasticsearch_mapping_path)
+  @elasticsearch_mapping_path Application.get_env(:argos_core, :elasticsearch_mapping_path, Application.app_dir(:argos_core, "priv/elasticsearch-mapping.json"))
 
   require Logger
   require Finch

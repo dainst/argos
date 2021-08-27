@@ -29,8 +29,14 @@
   "images": [
     {
       "labels": [
-        { "content": "Voll das passende Bild.", "language_code": "de" },
-        { "content": "Just a very fitting picture.", "language_code": "en" }
+        {
+          "content": "Voll das passende Bild.",
+          "language_code": "de"
+        },
+        {
+          "content": "Just a very fitting picture.",
+          "language_code": "en"
+        }
       ],
       "path": "http://localhost:4000/media/projects/1/idai_archive_spanish_codices.jpg",
       "primary": true
@@ -44,11 +50,20 @@
           "content": "Der Ort über den geschrieben wird.",
           "language_code": "de"
         },
-        { "content": "The place written about.", "language_code": "en" }
+        {
+          "content": "The place written about.",
+          "language_code": "en"
+        }
       ],
       "labels": [
-        { "content": "Rome", "language_code": "en" },
-        { "content": "Rom", "language_code": "de" }
+        {
+          "content": "Rome",
+          "language_code": "en"
+        },
+        {
+          "content": "Rom",
+          "language_code": "de"
+        }
       ],
       "linked_system": "gazetteer",
       "res_id": "2323295",
@@ -60,11 +75,20 @@
           "content": "Der Ort über den auch geschrieben wird.",
           "language_code": "de"
         },
-        { "content": "The place also written about.", "language_code": "en" }
+        {
+          "content": "The place also written about.",
+          "language_code": "en"
+        }
       ],
       "labels": [
-        { "content": "Etruria", "language_code": "en" },
-        { "content": "Etrurien", "language_code": "de" }
+        {
+          "content": "Etruria",
+          "language_code": "en"
+        },
+        {
+          "content": "Etrurien",
+          "language_code": "de"
+        }
       ],
       "linked_system": "gazetteer",
       "res_id": "2072406",
@@ -76,11 +100,20 @@
           "content": "Der Zeit über die geschrieben wird.",
           "language_code": "de"
         },
-        { "content": "The period written about.", "language_code": "en" }
+        {
+          "content": "The period written about.",
+          "language_code": "en"
+        }
       ],
       "labels": [
-        { "content": "Classic", "language_code": "en" },
-        { "content": "Klassik", "language_code": "de" }
+        {
+          "content": "Classic",
+          "language_code": "en"
+        },
+        {
+          "content": "Klassik",
+          "language_code": "de"
+        }
       ],
       "linked_system": "chronontology",
       "res_id": "mSrGeypeMHjw",
@@ -124,8 +157,14 @@
   ],
   "starts_at": "2019-01-10",
   "titles": [
-    { "content": "Großartiges Ausgrabungsprojekt", "language_code": "de" },
-    { "content": "Great digging project", "language_code": "en" }
+    {
+      "content": "Großartiges Ausgrabungsprojekt",
+      "language_code": "de"
+    },
+    {
+      "content": "Great digging project",
+      "language_code": "en"
+    }
   ],
   "updated_at": "2021-06-01T07:44:07"
 }

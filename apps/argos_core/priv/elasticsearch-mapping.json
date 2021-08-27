@@ -12,11 +12,10 @@
         },
         "type": {
             "type": "alias",
-            "path": "core_fields.type" 
+            "path": "core_fields.type"
         }
     },
-    "dynamic_templates": 
-    [
+    "dynamic_templates": [
         {
             "general_topic_id": {
                 "path_match": "core_fields.general_topics.resource.core_fields.id",

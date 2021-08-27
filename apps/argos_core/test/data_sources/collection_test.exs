@@ -13,7 +13,8 @@ defmodule ArgosCore.CollectionTest do
     TestHelpers,
     CoreFields
   }
-  @example_json "../../priv/example_collection_params.json"
+
+  @example_json Application.app_dir(:argos_core, "priv/example_collection_params.json")
 
   test "get by id with invalid id yields error" do
     assert {:error, 404} == Collection.DataProvider.get_by_id("-1")

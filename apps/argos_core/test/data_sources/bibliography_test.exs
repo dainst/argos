@@ -8,7 +8,7 @@ defmodule ArgosCore.BibliographyTest do
     Gazetteer, Thesauri, Bibliography, Bibliography.BibliographicRecord, ElasticSearch.Indexer, CoreFields, TestHelpers
   }
 
-  @example_json "../../priv/example_zenon_params.json"
+  @example_json Application.app_dir(:argos_core, "priv/example_zenon_params.json")
     |> File.read!()
     |> Poison.decode!()
 
