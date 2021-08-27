@@ -44,13 +44,13 @@ defmodule Argos.MixProject do
         "seed.collections", "seed.bibliography"
       ],
       "seed.collections": [
-        "run --eval 'ArgosCore.CollectionCLI.run()' -- --script"
+        "run --eval 'ArgosHarvesting.CollectionCLI.run()' -- --script"
       ],
       "seed.chronontology": [
-        "run --eval 'ArgosCore.ChronontologyCLI.run()' -- --script"
+        "run --eval 'ArgosHarvesting.ChronontologyCLI.run()' -- --script"
       ],
       "seed.bibliography": [
-        "run --eval 'ArgosCore.BibliographyCLI.run(
+        "run --eval 'ArgosHarvesting.BibliographyCLI.run(
           DateTime.utc_now() |> DateTime.add(-60 * 60 * 24 * #{seed_days_ago}) |> DateTime.to_iso8601()
         )' -- --script"
       ]
