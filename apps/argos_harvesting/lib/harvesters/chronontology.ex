@@ -1,6 +1,7 @@
 defmodule ArgosHarvesting.Chronontology do
   use GenServer
   alias ArgosCore.ElasticSearch.Indexer
+  alias ArgosCore.Chronontology.DataProvider
 
   require Logger
 
