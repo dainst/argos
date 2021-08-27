@@ -9,10 +9,15 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
   }
 
   def get_doc(doc_id) do
-    Finch.build(:get, "#{@base_url}/_doc/#{doc_id}")
+    try do
+      Finch.build(:get, "#{@base_url}/_doc/#{doc_id}")
     |> Finch.request(ArgosAggregationFinchProcess)
     |> parse_response()
     |> extract_doc_from_response()
+    rescue
+      e -> {:error,e}
+    end
+
   end
 
   def search_referencing_docs(%Gazetteer.Place{} = place) do
@@ -29,11 +34,15 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
   end
 
   def run_query(query) do
-
-    Finch.build(:post, "#{@base_url}/_search", [{"Content-Type", "application/json"}], query)
+    try do
+      Finch.build(:post, "#{@base_url}/_search", [{"Content-Type", "application/json"}], query)
     |> Finch.request(ArgosAggregationFinchProcess)
     |> parse_response()
     |> extract_search_result_from_response()
+    rescue
+      e->{:error,e}
+    end
+
   end
 
   defp search_field(field_name, term) do
@@ -46,8 +55,12 @@ defmodule ArgosAggregation.ElasticSearch.DataProvider do
         }
       }
     )
+    try do
     Finch.build(:post, "#{@base_url}/_search", @headers, query)
     |> Finch.request(ArgosAggregationFinchProcess)
+    rescue
+      e->{:error, e}
+    end
   end
 
   defp parse_response({:ok, %Finch.Response{body: body}}) do

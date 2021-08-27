@@ -59,9 +59,13 @@ defmodule ArgosAggregation.ElasticSearch.Indexer do
     data_json =
       data
       |> Poison.encode!
+    try do
+      Finch.build(:post, "#{@base_url}/_update/#{id}?retry_on_conflict=5", @headers, data_json)
+      |> Finch.request(ArgosAggregationFinchProcess)
+    rescue
+      e->{:error,e}
+    end
 
-    Finch.build(:post, "#{@base_url}/_update/#{id}?retry_on_conflict=5", @headers, data_json)
-    |> Finch.request(ArgosAggregationFinchProcess)
   end
   defp parse_response({:ok, %Finch.Response{body: body}}) do
     Poison.decode!(body)
