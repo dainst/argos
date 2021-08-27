@@ -20,8 +20,8 @@ defmodule ArgosAPI.Router do
 
   get "/favicon.ico" do
     conn
-    |> send_resp(204, "")
     |> put_resp_content_type("text/plain")
+    |> send_resp(204, "")
     |> halt()
   end
 
