@@ -82,7 +82,6 @@ defmodule ArgosCore.Thesauri do
   defmodule DataProvider do
     require Logger
 
-    alias ArgosCore.ElasticSearch.Indexer
     alias ArgosCore.Thesauri.ConceptParser
 
     def get_by_date(%Date{} = date) do
