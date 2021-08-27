@@ -4,11 +4,12 @@ defmodule ArgosAPI.InfoController do
 
   def get(conn) do
     argos_vsn = List.to_string(Application.spec(:argos_api, :vsn))
-
+    try do
     %{"_all" => %{"total" => %{"docs" => %{"count" => count_docs }}}} =
       Finch.build(:get, "#{@elasticsearch_url}/_stats", [{"Content-Type", "application/json"}])
       |> Finch.request(ArgosAPIFinch)
       |> handle_result()
+
 
     host_url = Application.get_env(:argos_api, :host_url)
 
@@ -20,6 +21,9 @@ defmodule ArgosAPI.InfoController do
     }
 
     send_resp(conn, 200, Poison.encode!(info))
+    rescue
+      _-> send_resp(conn, 500, "internal server error")
+    end
   end
 
   defp handle_result({:ok, %Finch.Response{status: 200, body: body}}) do
