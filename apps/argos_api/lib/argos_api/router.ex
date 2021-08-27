@@ -18,6 +18,13 @@ defmodule ArgosAPI.Router do
 
   alias ArgosAPI.Errors
 
+  get "/favicon.ico" do
+    conn
+    |> send_resp(204, "")
+    |> put_resp_content_type("text/plain")
+    |> halt()
+  end
+
   get "/public/openapi.json" do
     # Because we want to set the API version dynamically for the main openapi document
     # the file is not served as a static asset in contrast to the other files in /public.
