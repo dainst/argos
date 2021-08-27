@@ -12,6 +12,8 @@ defmodule ArgosAPI.DocumentController do
         send_resp(conn, 200, Poison.encode!(doc))
       {:error, 404} ->
         Errors.send(conn, 404, "Document #{id} not found.")
+        {:error, _} ->
+          Errors.send(conn, 500, "An internal error occured.")
     end
   end
 end
