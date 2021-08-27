@@ -39,14 +39,15 @@ defmodule ArgosAggregation.Bibliography do
       |> get_batches()
     end
 
-    def get_publications_link(zenon_id, type) do
-      case type do
-        :journal ->
-          {:ok, journalMappings} = DataProvider.getJournalMappings()
-          {:ok,journalMappings["publications"][zenon_id]}
-        :book ->
-          {:ok, bookMappings} = DataProvider.getBookMappings()
-          {:ok, bookMappings["publications"][zenon_id]}
+
+    def get_publications_link(zenon_id) do
+      case DataProvider.getJournalMappings() do
+        {:ok, nil} -> case DataProvider.getBookMappings() do
+          {:ok, books} ->
+            {:ok, books["publications"][zenon_id]}
+        end
+        {:ok, journals} ->
+          {:ok, journals["publications"][zenon_id]}
       end
     end
 
@@ -185,28 +186,27 @@ defmodule ArgosAggregation.Bibliography do
     @base_url Application.get_env(:argos_aggregation, :bibliography_url)
     @field_type Application.get_env(:argos_aggregation, :bibliography_type_key)
 
-
+    defp prepend_if_true(list, cond, extra) do
+      if cond, do: extra ++ list, else: list
+    end
     def parse_record(record) do
 
+      link =
+        case DataProvider.get_publications_link(record["id"]) do
+          {:ok, nil} -> nil
+          {:ok, url} ->
+            Logger.debug("found journal mapping: #{record["id"]} => #{url}")
+            %{"url" => url, "desc" => "Available online"}
+        end
+      urls = case record["urls"] do
+        nil-> link
+        list -> list |> prepend_if_true(link,[link])
+      end
 
       external_links =
-        record["urls"]
+        urls
         |> Enum.map(&parse_url(&1))
 
-      case DataProvider.get_publications_link(record["id"], :journal) do
-        {:ok, nil}-> nil
-        {:ok, journal}->
-        Logger.debug("found journal mapping: #{record["id"]} => #{journal}")
-        [parse_url(%{"url"=>journal, "desc"=>"journal"})|external_links]
-      end
-
-
-      case DataProvider.get_publications_link(record["id"], :book) do
-        {:ok, nil}-> nil
-        {:ok, book}->
-        Logger.debug("found book mapping: #{record["id"]} => #{book}")
-        [parse_url(%{"url"=>book, "desc"=>"book"})|external_links]
-      end
 
       spatial_topics =
         record["DAILinks"]["gazetteer"]
