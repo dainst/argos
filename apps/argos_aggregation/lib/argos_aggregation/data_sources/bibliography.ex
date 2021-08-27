@@ -186,26 +186,27 @@ defmodule ArgosAggregation.Bibliography do
     @base_url Application.get_env(:argos_aggregation, :bibliography_url)
     @field_type Application.get_env(:argos_aggregation, :bibliography_type_key)
 
-    defp prepend_if_true(list, cond, extra) do
-      if cond, do: extra ++ list, else: list
-    end
     def parse_record(record) do
 
-      link =
+      publications_links =
         case DataProvider.get_publications_link(record["id"]) do
-          {:ok, nil} -> nil
+          {:ok, nil} ->
+            []
           {:ok, url} ->
-            Logger.debug("found journal mapping: #{record["id"]} => #{url}")
-            %{"url" => url, "desc" => "Available online"}
+            [%{
+              "url" => url,
+              "type" => :website,
+              "label" => [%{"lang" => "en", "text" => "Available online"}, %{"lang" => "de", "text" => "Online verfügbar"}]
+            }]
         end
-      urls = case record["urls"] do
-        nil-> link
-        list -> list |> prepend_if_true(link,[link])
-      end
 
       external_links =
-        urls
+        record["urls"]
         |> Enum.map(&parse_url(&1))
+
+      external_links =
+        publications_links ++ external_links
+        |> Enum.uniq_by(fn(%{"url" => url}) -> url end) # um sicher zu stellen dass wir nicht die selbe URL doppelt hinzufügen weil sie einmal in "urls" definiert war und einmal in den mappings.
 
 
       spatial_topics =
