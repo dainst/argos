@@ -13,7 +13,7 @@ defmodule ArgosAPI.DocumentController do
       {:error, 404} ->
         Errors.send(conn, 404, "Document #{id} not found.")
         {:error, _} ->
-          Errors.send(conn, 500, "An internal error occured.")
+          Errors.send(conn, 500)
     end
   end
 end
