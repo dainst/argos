@@ -6,7 +6,6 @@ defmodule ArgosCore.Application do
   use Application
 
   @elasticsearch_url "#{Application.get_env(:argos_core, :elasticsearch_url)}/#{Application.get_env(:argos_core, :index_name)}"
-  @active_harvesters Application.get_env(:argos_core, :active_harvesters)
   @elasticsearch_mapping_path Application.get_env(:argos_core, :elasticsearch_mapping_path)
 
   require Logger
