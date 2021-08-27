@@ -1,8 +1,8 @@
 ExUnit.start()
 
 defmodule ArgosAPI.TestHelpers do
-  @elasticsearch_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
-  @elasticsearch_mapping_path Application.get_env(:argos_aggregation, :elasticsearch_mapping_path)
+  @elasticsearch_url "#{Application.get_env(:argos_core, :elasticsearch_url)}/#{Application.get_env(:argos_core, :index_name)}"
+  @elasticsearch_mapping_path Application.get_env(:argos_core, :elasticsearch_mapping_path)
 
   def create_index() do
 

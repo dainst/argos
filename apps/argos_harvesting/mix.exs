@@ -1,15 +1,15 @@
-defmodule ArgosAPI.MixProject do
+defmodule ArgosHarvesting.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :argos_api,
+      app: :argos_harvesting,
       version: "0.1.0",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.11",
+      elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -18,19 +18,14 @@ defmodule ArgosAPI.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
-      mod: {ArgosAPI.Application, []}
+      extra_applications: [:logger]
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:argos_core, in_umbrella: true},
-      {:exsync, "~> 0.2", only: :dev},
-      {:plug_cowboy, "~> 2.4"},
-      {:cors_plug, "~> 2.0"},
-      {:open_api_spex, "~> 3.10"}
+      {:argos_core, in_umbrella: true}
     ]
   end
 end

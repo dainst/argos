@@ -7,7 +7,7 @@ defmodule ArgosAPI.DocumentController do
 
     id = Map.get(conn.params, "id")
 
-    case ArgosAggregation.ElasticSearch.DataProvider.get_doc(id) do
+    case ArgosCore.ElasticSearch.DataProvider.get_doc(id) do
       {:ok, doc} ->
         send_resp(conn, 200, Poison.encode!(doc))
       {:error, 404} ->

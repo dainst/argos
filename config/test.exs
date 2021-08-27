@@ -7,10 +7,8 @@
 # General application configuration
 import Config
 
-config :argos_aggregation,
+config :argos_core,
   await_index: false,
-  active_harvesters: [
-  ],
   index_name: "argos_testing"
 
 config :argos_api,

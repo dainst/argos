@@ -42,13 +42,13 @@ If Elasticsearch fails to create files on startup, try chown in data/elasticsear
 
 ```bash
 docker build -f DockerfileAPI -t dainst/argos_api:latest .
-docker build -f DockerfileAggregation -t dainst/argos_aggregation:latest .
+docker build -f DockerfileHarvesting -t dainst/argos_harvesting:latest .
 ```
 
 2.  __Locally__, push the new docker image(s) to dockerhub:
 ```bash
 docker push dainst/argos_api:latest
-docker push dainst/argos_aggregation:latest
+docker push dainst/argos_harvesting:latest
 ```
 
 3. __Locally__ (optional), if change occurred, copy config files to server:
@@ -61,7 +61,7 @@ See VM documentation for the appropriate locations.
 4. __Serverside__, pull the latest image(s)
 ```bash
 docker pull dainst/argos_api:latest
-docker pull dainst/argos_aggregation:latest
+docker pull dainst/argos_harvesting:latest
 ```
 
 5. __Serverside__, restart the service
@@ -71,6 +71,6 @@ sudo systemctl restart argos
 
 6. __Serverside__, run release [functions](lib/release.ex) as required by your recent changes. For example, you can update the ES mapping and reindex all projects by running:
 ```
-docker exec -it argos-aggregation /app/bin/aggregation eval "ArgosAggregation.Release.update_mapping()"
-docker exec -it argos-aggregation /app/bin/aggregation eval "ArgosAggregation.Release.seed_projects()"
+docker exec -it argos-harvesting /app/bin/harvesting eval "ArgosCore.Release.update_mapping()"
+docker exec -it argos-harvesting /app/bin/harvesting eval "ArgosHarvesting.ReleaseCLI.seed_projects()"
 ```
