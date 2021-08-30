@@ -205,8 +205,7 @@ defmodule ArgosCore.Bibliography do
 
       external_links =
         publications_links ++ external_links
-        |> Enum.uniq_by(fn(%{"url" => url}) -> url end) # um sicher zu stellen dass wir nicht die selbe URL doppelt hinzufügen weil sie einmal in "urls" definiert war und einmal in den mappings.
-
+        |> Enum.uniq_by(fn(%{"url" => url}) -> url end)
 
       spatial_topics =
         record["DAILinks"]["gazetteer"]
