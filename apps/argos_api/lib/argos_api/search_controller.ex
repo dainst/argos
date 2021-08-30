@@ -1,7 +1,7 @@
 defmodule ArgosAPI.SearchController do
   import Plug.Conn
 
-  alias ArgosAggregation.ElasticSearch.DataProvider
+  alias ArgosCore.ElasticSearch.DataProvider
   alias ArgosAPI.Errors
 
   def search(conn) do
@@ -103,7 +103,7 @@ defmodule ArgosAPI.SearchController do
         },
         size: size,
         from: from,
-        aggs: ArgosAggregation.ElasticSearch.Aggregations.aggregation_definitions()
+        aggs: ArgosCore.ElasticSearch.Aggregations.aggregation_definitions()
       }
     { :ok, query }
   end

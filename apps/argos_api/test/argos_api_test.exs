@@ -7,7 +7,7 @@ defmodule ArgosAPITest do
     TestHelpers
   }
 
-  @example_json "../../priv/example_collection_params.json"
+  @example_json Application.app_dir(:argos_core, "priv/example_collection_params.json")
 
   test "invalid size yields 400 status" do
     response =
@@ -99,11 +99,11 @@ defmodule ArgosAPITest do
       with {:ok, file_content} <- File.read(@example_json) do
         {:ok,data} = Poison.decode(file_content)
         data
-        |> ArgosAggregation.Collection.CollectionParser.parse_collection()
+        |> ArgosCore.Collection.CollectionParser.parse_collection()
         |> case do
           {:ok, params} -> params
         end
-        |> ArgosAggregation.ElasticSearch.Indexer.index()
+        |> ArgosCore.ElasticSearch.Indexer.index()
       end
       TestHelpers.refresh_index()
 

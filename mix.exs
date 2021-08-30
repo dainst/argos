@@ -13,10 +13,9 @@ defmodule Argos.MixProject do
             argos_api: :permanent
           ]
         ],
-        aggregation: [
+        harvesting: [
           applications: [
-            argos_aggregation: :permanent,
-            tongue: :permanent
+            argos_harvesting: :permanent
           ]
         ]
       ],
@@ -30,26 +29,28 @@ defmodule Argos.MixProject do
   #
   # Run "mix help deps" for examples and options.
   defp deps do
-    []
+    [
+      {:poison, "~> 4.0", override: true} # :api's open_api_spex dependency wants a lower poison version.
+    ]
   end
 
   defp aliases do
     seed_days_ago = 3
     [
       "update-mapping": [
-        "run --eval 'ArgosAggregation.Release.update_mapping()' -- --script"
+        "run --eval 'ArgosCore.Release.update_mapping()' -- --script"
       ],
       seed: [
         "seed.collections", "seed.bibliography"
       ],
       "seed.collections": [
-        "run --eval 'ArgosAggregation.CollectionCLI.run()' -- --script"
+        "run --eval 'ArgosHarvesting.CollectionCLI.run()' -- --script"
       ],
       "seed.chronontology": [
-        "run --eval 'ArgosAggregation.ChronontologyCLI.run()' -- --script"
+        "run --eval 'ArgosHarvesting.ChronontologyCLI.run()' -- --script"
       ],
       "seed.bibliography": [
-        "run --eval 'ArgosAggregation.BibliographyCLI.run(
+        "run --eval 'ArgosHarvesting.BibliographyCLI.run(
           DateTime.utc_now() |> DateTime.add(-60 * 60 * 24 * #{seed_days_ago}) |> DateTime.to_iso8601()
         )' -- --script"
       ]

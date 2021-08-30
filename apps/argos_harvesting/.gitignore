@@ -1,6 +1,5 @@
 # The directory Mix will write compiled artifacts to.
 /_build/
-/build/
 
 # If you run "mix test --cover", coverage assets end up here.
 /cover/
@@ -20,14 +19,8 @@ erl_crash.dump
 # Also ignore archive artifacts (built via "mix archive.build").
 *.ez
 
-# Also ignore elastic state files
-*.st
+# Ignore package tarball (built via "mix hex.build").
+argos_harvesting-*.tar
 
-# Temporary files for e.g. tests
-/tmp
-
-.vscode/launch.json
-
-apps/argos_api/.elixir_ls/**
-apps/argos_core/.elixir_ls/**
-apps/argos_harvesting/.elixir_ls/**
+# Temporary files, for example, from tests.
+/tmp/

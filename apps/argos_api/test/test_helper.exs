@@ -1,8 +1,8 @@
 ExUnit.start()
 
 defmodule ArgosAPI.TestHelpers do
-  @elasticsearch_url "#{Application.get_env(:argos_aggregation, :elasticsearch_url)}/#{Application.get_env(:argos_aggregation, :index_name)}"
-  @elasticsearch_mapping_path Application.get_env(:argos_aggregation, :elasticsearch_mapping_path)
+  @elasticsearch_url "#{Application.get_env(:argos_core, :elasticsearch_url)}/#{Application.get_env(:argos_core, :index_name)}"
+  @elasticsearch_mapping_path Application.app_dir(:argos_core, "priv/elasticsearch-mapping.json")
 
   def create_index() do
 
@@ -11,8 +11,7 @@ defmodule ArgosAPI.TestHelpers do
       {:error, error}-> raise error
       _-> {:ok}
    end
-    mapping = File.read!("../../#{@elasticsearch_mapping_path}")
-
+    mapping = File.read!(@elasticsearch_mapping_path)
 
     case Finch.build(:put, "#{@elasticsearch_url}/_mapping", [{"Content-Type", "application/json"}], mapping)
     |> Finch.request(ArgosAPIFinch) do

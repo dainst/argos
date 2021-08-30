@@ -7,16 +7,16 @@ RUN mix do local.hex --force, local.rebar --force
 
 COPY mix.* ./
 COPY config/ config
-COPY apps/argos_api/mix.* /app/apps/argos_api/
+COPY apps/argos_harvesting/mix.* /app/apps/argos_harvesting/
 COPY apps/argos_core /app/apps/argos_core
 
 ENV MIX_ENV=prod
 RUN mix do deps.get, deps.compile
 
-COPY apps/argos_api/lib /app/apps/argos_api/lib
-COPY apps/argos_api/priv /app/apps/argos_api/priv
+COPY apps/argos_harvesting/lib /app/apps/argos_harvesting/lib
+COPY priv priv
 
-RUN mix do compile, release api
+RUN mix do compile, release harvesting
 
 ########################################################################
 
@@ -29,8 +29,8 @@ RUN chown nobody:nobody /app
 
 USER nobody:nobody
 
-COPY --from=build --chown=nobody:nobody /app/_build/prod/rel/api .
+COPY --from=build --chown=nobody:nobody /app/_build/prod/rel/harvesting .
 
 ENV HOME=/app
 
-CMD ["bin/api", "start"]
+CMD ["bin/harvesting", "start"]
