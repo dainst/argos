@@ -10,6 +10,7 @@ defmodule ArgosCore.Application do
 
   require Logger
   require Finch
+  require Cachex
 
   def update_mapping() do
     Logger.info("update mapping")
@@ -81,7 +82,10 @@ defmodule ArgosCore.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ArgosCore.Supervisor]
-    children = [{Finch, name: ArgosCoreFinchProcess}]
+    children = [
+      {Finch, name: ArgosCoreFinchProcess},
+      {Cachex, name: :bibliographyCache}
+    ]
 
     supervisor_response = Supervisor.start_link(children, opts)
 

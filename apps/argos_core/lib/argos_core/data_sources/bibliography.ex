@@ -39,6 +39,18 @@ defmodule ArgosCore.Bibliography do
       |> get_batches()
     end
 
+
+    def get_publications_link(zenon_id) do
+      case DataProvider.getJournalMappings() do
+        {:ok, nil} -> case DataProvider.getBookMappings() do
+          {:ok, books} ->
+            {:ok, books["publications"][zenon_id]}
+        end
+        {:ok, journals} ->
+          {:ok, journals["publications"][zenon_id]}
+      end
+    end
+
     def get_by_id(id) do
       result =
         %{
@@ -140,6 +152,33 @@ defmodule ArgosCore.Bibliography do
     defp parse_response({:error, error}) do
       { :error, error.reason() }
     end
+
+    def getJournalMappings() do
+      if !Cachex.get!(:bibliographyCache, "journalMapping") do
+        case Finch.build(:get, "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping")
+        |> Finch.request(ArgosAggregationFinchProcess)
+        |> parse_response() do
+          {:ok, response} -> Cachex.put(:bibliographyCache, "journalMapping", response, ttl: :timer.seconds(30))
+          _ -> Logger.warn("Error while fetching journalMappings")
+        end
+
+      end
+      Cachex.get(:bibliographyCache, "journalMapping")
+    end
+    def getBookMappings() do
+      if !Cachex.get!(:bibliographyCache, "bookMapping") do
+        case Finch.build(:get, "https://publications.dainst.org/books/plugins/pubIds/zenon/api/index.php?task=mapping")
+        |> Finch.request(ArgosAggregationFinchProcess)
+        |> parse_response() do
+          {:ok, response} -> Cachex.put(:bibliographyCache, "bookMapping", response, ttl: :timer.seconds(30))
+          _ -> Logger.warn("Error while fetching bookMappings")
+        end
+
+      end
+      Cachex.get(:bibliographyCache, "bookMapping")
+    end
+
+
   end
 
   defmodule BibliographyParser do
@@ -148,9 +187,26 @@ defmodule ArgosCore.Bibliography do
 
     def parse_record(record) do
 
+      publications_links =
+        case DataProvider.get_publications_link(record["id"]) do
+          {:ok, nil} ->
+            []
+          {:ok, url} ->
+            [%{
+              "url" => url,
+              "type" => :website,
+              "label" => [%{"lang" => "en", "text" => "Available online"}, %{"lang" => "de", "text" => "Online verfügbar"}]
+            }]
+        end
+
       external_links =
         record["urls"]
         |> Enum.map(&parse_url(&1))
+
+      external_links =
+        publications_links ++ external_links
+        |> Enum.uniq_by(fn(%{"url" => url}) -> url end) # um sicher zu stellen dass wir nicht die selbe URL doppelt hinzufügen weil sie einmal in "urls" definiert war und einmal in den mappings.
+
 
       spatial_topics =
         record["DAILinks"]["gazetteer"]

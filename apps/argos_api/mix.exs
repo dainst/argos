@@ -27,6 +27,8 @@ defmodule ArgosAPI.MixProject do
   defp deps do
     [
       {:argos_core, in_umbrella: true},
+      {:poison, "~> 4.0", override: true},
+      {:finch, "~> 0.7"},
       {:exsync, "~> 0.2", only: :dev},
       {:plug_cowboy, "~> 2.4"},
       {:cors_plug, "~> 2.0"},

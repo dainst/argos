@@ -69,7 +69,7 @@ defmodule ArgosCore.BibliographyTest do
     end
 
     test "urls in zenon data get parsed as external link" do
-      {:ok, %{core_fields: %{external_links: [%{url: linked_record_url}]}}} =
+      {:ok, %{core_fields: %{external_links: [%{url: mapped_link_url},%{url: linked_record_url}]}}} =
         @example_json
         |> Bibliography.BibliographyParser.parse_record()
         |> case do
@@ -81,6 +81,7 @@ defmodule ArgosCore.BibliographyTest do
       %{"urls" => [%{"url" => input_url}]} = @example_json
 
       assert input_url == linked_record_url
+      assert mapped_link_url == "https://publications.dainst.org/journals/index.php/aa/article/view/2820"
     end
 
     test "updating referenced thesauri concept updates bibliographic record" do

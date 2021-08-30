@@ -32,6 +32,7 @@ defmodule ArgosCore.MixProject do
     [
       {:poison, "~> 4.0"},
       {:finch, "~> 0.7"},
+      {:cachex, "~> 3.4.0"},
       {:tzdata, "~> 1.0.4"},
       {:geo, "~> 3.3.7"},
       {:sweet_xml, "~> 0.6.6"},
