@@ -156,7 +156,7 @@ defmodule ArgosCore.Bibliography do
     def getJournalMappings() do
       if !Cachex.get!(:bibliographyCache, "journalMapping") do
         case Finch.build(:get, "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping")
-        |> Finch.request(ArgosAggregationFinchProcess)
+        |> Finch.request(ArgosCoreFinchProcess)
         |> parse_response() do
           {:ok, response} -> Cachex.put(:bibliographyCache, "journalMapping", response, ttl: :timer.seconds(30))
           _ -> Logger.warn("Error while fetching journalMappings")
@@ -168,7 +168,7 @@ defmodule ArgosCore.Bibliography do
     def getBookMappings() do
       if !Cachex.get!(:bibliographyCache, "bookMapping") do
         case Finch.build(:get, "https://publications.dainst.org/books/plugins/pubIds/zenon/api/index.php?task=mapping")
-        |> Finch.request(ArgosAggregationFinchProcess)
+        |> Finch.request(ArgosCoreFinchProcess)
         |> parse_response() do
           {:ok, response} -> Cachex.put(:bibliographyCache, "bookMapping", response, ttl: :timer.seconds(30))
           _ -> Logger.warn("Error while fetching bookMappings")
