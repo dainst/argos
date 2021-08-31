@@ -68,8 +68,12 @@ defmodule ArgosCore.BibliographyTest do
       assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
     end
 
+    test "get by id with invalid id yields error" do
+      assert {:error, 404} == Bibliography.DataProvider.get_by_id("000000000")
+    end
+
     test "urls in zenon data get parsed as external link" do
-      {:ok, %{core_fields: %{external_links: [%{url: mapped_link_url},%{url: linked_record_url}]}}} =
+      {:ok, %{core_fields: %{external_links: external_links}}} =
         @example_json
         |> Bibliography.BibliographyParser.parse_record()
         |> case do
@@ -80,8 +84,16 @@ defmodule ArgosCore.BibliographyTest do
 
       %{"urls" => [%{"url" => input_url}]} = @example_json
 
-      assert input_url == linked_record_url
-      assert mapped_link_url == "https://publications.dainst.org/journals/index.php/aa/article/view/2820"
+      record_urls =
+        external_links
+        |> Enum.map(fn(el) ->
+          Map.get(el, :url)
+        end)
+
+      # parsed from the "urls" key in the example json
+      assert Enum.member?(record_urls, input_url)
+      # retrieved from publications.dainst.org using the example record's id
+      assert Enum.member?(record_urls, "https://publications.dainst.org/journals/index.php/aa/article/view/2820")
     end
 
     test "updating referenced thesauri concept updates bibliographic record" do

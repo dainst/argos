@@ -388,11 +388,9 @@ defmodule ArgosCore.Thesauri do
         |> Enum.map(&parse_single_doc(&1))
       end
 
-      @doc """
-      parses a single <rdf:Description rdf:about="thesaurus/_id"></rdf:Description> doc from a hierarchy
 
-      returns {:ok, %Concept{}}
-      """
+      # parses a single <rdf:Description rdf:about="thesaurus/_id"></rdf:Description> doc from a hierarchy
+      # returns {:ok, %Concept{}}
       defp parse_single_doc(doc) do
         {:ok, id} =
           doc

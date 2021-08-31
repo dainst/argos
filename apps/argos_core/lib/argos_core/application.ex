@@ -84,7 +84,7 @@ defmodule ArgosCore.Application do
     opts = [strategy: :one_for_one, name: ArgosCore.Supervisor]
     children = [
       {Finch, name: ArgosCoreFinchProcess},
-      {Cachex, name: :bibliographyCache}
+      {Cachex, name: :argos_core_cache}
     ]
 
     supervisor_response = Supervisor.start_link(children, opts)
