@@ -42,6 +42,9 @@ defmodule ArgosCore.BibliographyTest do
       :ok
     end
 
+    @tag timeout: (10000 * 60 * 3)
+    # This test may take some time because a lot of "deleted" records are skipped
+    # while searching OAI PMH for existing records.
     test "get all yields bibliographic records as result" do
       records =
         Bibliography.DataProvider.get_all()
