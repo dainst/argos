@@ -5,7 +5,6 @@ defmodule ArgosCore.NaturalLanguageDetector do
 
   def get_language_key(string, threshold \\ 0.9)
   def get_language_key(string, threshold) when is_binary(string) do
-    try do
       detection_result =
         string
         |> Tongue.detect()
@@ -24,11 +23,6 @@ defmodule ArgosCore.NaturalLanguageDetector do
           # Nothing over threshold
           ""
       end
-    catch
-      :exit, {:timeout, _} ->
-        Logger.warning("Language detection processed timed out. Retrying...")
-        get_language_key(string, threshold)
-    end
   end
 
   def get_language_key(_no_string, _) do

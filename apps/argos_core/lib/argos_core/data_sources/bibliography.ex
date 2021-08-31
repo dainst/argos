@@ -158,8 +158,13 @@ defmodule ArgosCore.Bibliography do
                   error ->
                     error
                 end
-                |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
-                |> Enum.map(&Task.await(&1, 1000 * 60))
+                |> Stream.chunk_every(20) # Process in chunks to throttle the number of parallel processes
+                |> Enum.map(fn(chunk) ->
+                  chunk
+                  |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
+                  |> Enum.map(&Task.await(&1, 1000 * 60))
+                end)
+                |> List.flatten()
             end
 
           case records do
@@ -270,8 +275,7 @@ defmodule ArgosCore.Bibliography do
 
       spatial_topics =
         record["DAILinks"]["gazetteer"]
-        |> Enum.map(&Task.async( fn -> parse_place(&1) end))
-        |> Enum.map(&Task.await(&1, 1000 * 60 * 5))
+        |> Enum.map(&parse_place/1)
         |> Enum.filter(fn val ->
           case val do
             {:error, _msg} ->
@@ -283,8 +287,7 @@ defmodule ArgosCore.Bibliography do
 
       general_topics =
         record["DAILinks"]["thesauri"]
-        |> Enum.map(&Task.async( fn -> parse_concept(&1) end))
-        |> Enum.map(&Task.await(&1, 1000 * 60 * 5))
+        |> Enum.map(&parse_concept/1)
         |> Enum.filter(fn val ->
           case val do
             {:error, _msg} ->
