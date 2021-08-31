@@ -13,7 +13,7 @@ defmodule ArgosCore.BibliographyTest do
     |> Poison.decode!()
 
   test "get by id with invalid id yields error" do
-    assert {:error, "record not-existing not found."} == Bibliography.DataProvider.get_by_id("not-existing")
+    assert {:error, 404} == Bibliography.DataProvider.get_by_id("not-existing")
   end
 
   test "bibliographyic record's core_fields contains full_record data" do
@@ -69,10 +69,6 @@ defmodule ArgosCore.BibliographyTest do
         |> Bibliography.BibliographicRecord.create()
 
       assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
-    end
-
-    test "get by id with invalid id yields error" do
-      assert {:error, 404} == Bibliography.DataProvider.get_by_id("000000000")
     end
 
     test "urls in zenon data get parsed as external link" do
