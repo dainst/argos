@@ -32,11 +32,10 @@ defmodule ArgosCore.Bibliography do
     @base_url Application.get_env(:argos_core, :bibliography_url)
 
     alias ArgosCore.Bibliography.BibliographyParser
+
+    import SweetXml
     def get_all() do
-      %{
-        "prettyPrint" => false
-      }
-      |> get_batches()
+      get_batches(%{})
     end
 
 
@@ -93,78 +92,115 @@ defmodule ArgosCore.Bibliography do
         |> String.replace(" ", "T")
 
       %{
-        "prettyPrint" => false,
-        "daterange[]" => "last_indexed",
-        "last_indexedfrom" => encoded_date,
-        "last_indexedto" => "*"
+        "from" => encoded_date
       }
-      |> get_batches
+      |> get_batches()
+    end
+
+    defp get_id_list_via_oai(params) do
+      case params do
+        %{"resumptionToken" => ""} ->
+          {:halt, "No more records for query #{Poison.encode!(params)}, stopping."}
+        params ->
+          xml_response =
+            Finch.build(:get, "#{@base_url}/OAI/Server?verb=ListRecords&metadataPrefix=oai_dc&#{URI.encode_query(params)}")
+            |> Finch.request(ArgosCoreFinchProcess)
+            |> parse_response(:xml)
+
+          case xml_response do
+            {:ok, xml} ->
+                if xpath(xml, ~x(/OAI-PMH/error[@code='noRecordsMatch'])o) != nil or xpath(xml, ~x(/OAI-PMH/ListRecords)l) == [] do
+                  Logger.warning("No records matched OAI PMH parameters #{Poison.encode!(params)}.")
+                  {:halt, params}
+                else
+                  {
+                    xpath(xml, ~x"//record/header[not(@status='deleted')]/identifier/text()"sl),
+                    xpath(xml, ~x"//resumptionToken/text()"s)
+                  }
+                end
+            error ->
+              error
+          end
+      end
     end
 
     def get_batches(query_params) do
       Stream.resource(
-        fn () ->
-          final_params =
-            query_params
-            |> Map.put("page", 1)
-            |> Map.put("limit", 100)
-
-          Logger.info("Running bibliography batch query with for #{@base_url}/api/v1/search?#{URI.encode_query(final_params)}")
-
-          final_params
+        fn() ->
+          query_params
         end,
-        fn (params) ->
-          case process_batch_query(params) do
-            {:error, reason} ->
-              Logger.error("Error while processing batch. #{reason}")
-              {:halt, params}
-            [] ->
-              {:halt, params}
-            record_list ->
-              Logger.info("Retrieving page #{params["page"]}.")
+        fn(params) ->
+          oai_result =
+            case get_id_list_via_oai(params) do
+              {:halt, _} = halt ->
+                halt
+              {list, token} ->
+                query =
+                  list
+                  |> Enum.reduce("", fn( id, acc) ->
+                  "id[]=#{id}&#{acc}"
+                end)
+                {query, token}
+            end
+
+          records =
+            case oai_result do
+              {:halt, _} = halt ->
+                halt
+              {"", _} ->
+                []
+              {query, _} ->
+                Finch.build(:get, "#{@base_url}/api/v1/record?#{query}")
+                |> Finch.request(ArgosCoreFinchProcess)
+                |> parse_response(:json)
+                |> case do
+                  {:ok, %{"records" => records}} ->
+                    records
+                  error ->
+                    error
+                end
+                |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
+                |> Enum.map(&Task.await(&1, 1000 * 60))
+            end
+
+          case records do
+            {:halt, _} = halt ->
+              halt
+            val ->
+              {_, token} = oai_result
               {
-                record_list,
-                params
-                |> Map.update!("page", fn (old) -> old + 1 end)
+                val,
+                Map.put(params, "resumptionToken", token)
               }
           end
         end,
-        fn (_params) ->
-          Logger.info("Finished search.")
+        fn(msg) ->
+          case msg do
+            {:halt, reason} ->
+              Logger.info(reason)
+            msg ->
+              msg
+          end
         end
       )
     end
 
-    defp process_batch_query(params) do
-      result =
-        params
-        |> get_record_list()
-
-      case result do
-        {:ok, %{"records" => records}} ->
-          records
-          |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
-          |> Enum.map(&Task.await(&1, 1000 * 60))
-        {:ok, %{"resultCount" => _number}} ->
-          # either empty search result (resultCount == 0) or search's last page + 1 (resultCount == n, but no record key)
-          []
-        {:error, reason} ->
-          {:error, reason}
-      end
-    end
     def get_record_list(params) do
       Finch.build(:get, "#{@base_url}/api/v1/search?#{URI.encode_query(params)}")
       |> Finch.request(ArgosCoreFinchProcess)
-      |> parse_response()
+      |> parse_response(:json)
     end
 
-    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}) do
+    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}, :xml) do
+      { :ok, SweetXml.parse(body) }
+    end
+    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}, :json) do
       { :ok, Poison.decode!(body) }
     end
-    defp parse_response({:ok, %Finch.Response{status: code}}) do
+    defp parse_response({:ok, %Finch.Response{status: code}}, _) do
       { :error, "Received status code #{code}" }
     end
-    defp parse_response({:error, error}) do
+    defp parse_response({:error, error}, _) do
       { :error, error.reason() }
     end
 
@@ -211,8 +247,6 @@ defmodule ArgosCore.Bibliography do
           cached_value
       end
     end
-
-
   end
 
   defmodule BibliographyParser do
