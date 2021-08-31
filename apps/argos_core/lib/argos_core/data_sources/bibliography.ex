@@ -67,18 +67,17 @@ defmodule ArgosCore.Bibliography do
 
     def get_by_id(id) do
       result =
-        %{
-          "prettyPrint" => false,
-          "lookfor" => "id:#{id}"
-        }
-        |> get_record_list()
+        Finch.build(:get, "#{@base_url}/api/v1/record?id=#{id}")
+        |> Finch.request(ArgosCoreFinchProcess)
+        |> parse_response(:json)
 
       case result do
         {:ok, %{"records" => [record]}} ->
           record
           |> BibliographyParser.parse_record()
-        {:ok, %{"resultCount" => 0}} ->
-          {:error, "record #{id} not found."}
+        {:error, "Received status code 400"} ->
+          # For some reason VuFind returns a 400, with payload {"status": "ERROR", "statusMessage": "Error loading record"} instead of 404.
+          {:error, 404}
         {:error, reason} ->
           {:error, reason}
       end
@@ -183,12 +182,6 @@ defmodule ArgosCore.Bibliography do
           end
         end
       )
-    end
-
-    def get_record_list(params) do
-      Finch.build(:get, "#{@base_url}/api/v1/search?#{URI.encode_query(params)}")
-      |> Finch.request(ArgosCoreFinchProcess)
-      |> parse_response(:json)
     end
 
     defp parse_response({:ok, %Finch.Response{status: 200, body: body}}, :xml) do

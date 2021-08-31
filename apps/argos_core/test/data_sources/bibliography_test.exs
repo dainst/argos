@@ -68,6 +68,10 @@ defmodule ArgosCore.BibliographyTest do
       assert %Bibliography.BibliographicRecord{ core_fields: %CoreFields{source_id: ^id}} = record
     end
 
+    test "get by id with invalid id yields error" do
+      assert {:error, 404} == Bibliography.DataProvider.get_by_id("000000000")
+    end
+
     test "urls in zenon data get parsed as external link" do
       {:ok, %{core_fields: %{external_links: external_links}}} =
         @example_json
