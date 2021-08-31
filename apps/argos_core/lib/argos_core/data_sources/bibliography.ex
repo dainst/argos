@@ -178,8 +178,9 @@ defmodule ArgosCore.Bibliography do
 
           case response do
             {:ok, response} ->
-              Cachex.put(:argos_core_cache, :biblio_to_ojs_mappings, response, ttl: :timer.seconds(60 * 5))
-              {:ok, response["publications"]}
+              mapping = response["publications"]
+              Cachex.put(:argos_core_cache, :biblio_to_ojs_mappings, mapping, ttl: :timer.seconds(60 * 30))
+              {:ok, mapping}
             {:error, reason} = error ->
               Logger.error("Received #{reason} while tryig to load publications' journal mapping.")
               error
@@ -199,10 +200,11 @@ defmodule ArgosCore.Bibliography do
 
           case response do
             {:ok, response} ->
-              Cachex.put(:argos_core_cache, :biblio_to_omp_mappings, response, ttl: :timer.seconds(60 * 5))
-              {:ok, response["publications"]}
+              mapping = response["publications"]
+              Cachex.put(:argos_core_cache, :biblio_to_omp_mappings, mapping, ttl: :timer.seconds(60 * 30))
+              {:ok, mapping}
             {:error, reason} = error ->
-              Logger.error("Received #{reason} while tryig to load publications' journal mapping.")
+              Logger.error("Received #{reason} while trying to load publications' book mapping.")
               error
           end
         cached_value ->
