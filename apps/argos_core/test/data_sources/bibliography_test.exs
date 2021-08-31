@@ -58,7 +58,7 @@ defmodule ArgosCore.BibliographyTest do
       end)
     end
 
-    test "get by id yields bibliographic record" do
+    test "get by id returns valid record data for bibliographic record" do
       id = "002023378"
       {:ok, record } =
         id
