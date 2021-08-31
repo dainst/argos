@@ -41,13 +41,28 @@ defmodule ArgosCore.Bibliography do
 
 
     def get_publications_link(zenon_id) do
-      case DataProvider.getJournalMappings() do
-        {:ok, nil} -> case DataProvider.getBookMappings() do
-          {:ok, books} ->
-            {:ok, books["publications"][zenon_id]}
+      link =
+        case get_journal_mappings() do
+          {:ok, nil} ->
+            {:ok, nil}
+          {:ok, mapping} ->
+            {:ok, mapping[zenon_id]}
+          error ->
+            error
         end
-        {:ok, journals} ->
-          {:ok, journals["publications"][zenon_id]}
+
+      if {:ok, nil} == link do
+        # If journal mapping did not succeed, try books.
+        case get_book_mappings() do
+          {:ok, nil} ->
+            {:ok, nil}
+          {:ok, mapping} ->
+            {:ok, mapping[zenon_id]}
+          error ->
+            error
+        end
+      else
+        link
       end
     end
 
@@ -153,29 +168,46 @@ defmodule ArgosCore.Bibliography do
       { :error, error.reason() }
     end
 
-    def getJournalMappings() do
-      if !Cachex.get!(:bibliographyCache, "journalMapping") do
-        case Finch.build(:get, "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping")
-        |> Finch.request(ArgosCoreFinchProcess)
-        |> parse_response() do
-          {:ok, response} -> Cachex.put(:bibliographyCache, "journalMapping", response, ttl: :timer.seconds(30))
-          _ -> Logger.warn("Error while fetching journalMappings")
-        end
+    def get_journal_mappings() do
+      case Cachex.get(:argos_core_cache, :biblio_to_ojs_mappings) do
+        {:ok, nil} ->
+          response =
+            Finch.build(:get, "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping")
+            |> Finch.request(ArgosCoreFinchProcess)
+            |> parse_response(:json)
 
+          case response do
+            {:ok, response} ->
+              Cachex.put(:argos_core_cache, :biblio_to_ojs_mappings, response, ttl: :timer.seconds(60 * 5))
+              {:ok, response["publications"]}
+            {:error, reason} = error ->
+              Logger.error("Received #{reason} while tryig to load publications' journal mapping.")
+              error
+          end
+        cached_value ->
+          cached_value
       end
-      Cachex.get(:bibliographyCache, "journalMapping")
     end
-    def getBookMappings() do
-      if !Cachex.get!(:bibliographyCache, "bookMapping") do
-        case Finch.build(:get, "https://publications.dainst.org/books/plugins/pubIds/zenon/api/index.php?task=mapping")
-        |> Finch.request(ArgosCoreFinchProcess)
-        |> parse_response() do
-          {:ok, response} -> Cachex.put(:bibliographyCache, "bookMapping", response, ttl: :timer.seconds(30))
-          _ -> Logger.warn("Error while fetching bookMappings")
-        end
 
+    def get_book_mappings() do
+      case Cachex.get(:argos_core_cache, :biblio_to_omp_mappings) do
+        {:ok, nil} ->
+          response =
+            Finch.build(:get, "https://publications.dainst.org/books/plugins/pubIds/zenon/api/index.php?task=mapping")
+            |> Finch.request(ArgosCoreFinchProcess)
+            |> parse_response(:json)
+
+          case response do
+            {:ok, response} ->
+              Cachex.put(:argos_core_cache, :biblio_to_omp_mappings, response, ttl: :timer.seconds(60 * 5))
+              {:ok, response["publications"]}
+            {:error, reason} = error ->
+              Logger.error("Received #{reason} while tryig to load publications' journal mapping.")
+              error
+          end
+        cached_value ->
+          cached_value
       end
-      Cachex.get(:bibliographyCache, "bookMapping")
     end
 
 
