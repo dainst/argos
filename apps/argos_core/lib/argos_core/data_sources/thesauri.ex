@@ -40,7 +40,7 @@ defmodule ArgosCore.Thesauri do
 
     def request_node_hierarchy(id) do
       "#{@base_url}/hierarchy/#{id}.rdf?dir=down"
-      |> read_from_url([{"timeout", "50_000"}, {"recv_timeout", "50_000"}])
+      |> read_from_url()
     end
 
     def request_single_node(id) do
@@ -49,26 +49,10 @@ defmodule ArgosCore.Thesauri do
     end
 
     def read_from_url(url) do
-      Finch.build(:get, url)
-      |> Finch.request(ArgosCoreFinchProcess, timeout: 60000)
-      |> fetch_response
+      ArgosCore.HTTPClient.get(
+        url, :text
+      )
     end
-
-    def read_from_url(url, options) when is_list(options) do
-      Finch.build(:get, url, options)
-      |> Finch.request(ArgosCoreFinchProcess)
-      |> fetch_response
-    end
-
-    defp fetch_response({:ok, %{status: 200, body: body}}), do: {:ok, body}
-    defp fetch_response({:ok, %Finch.Response{status: 404}}) do
-      {:error, 404}
-    end
-    defp fetch_response({:ok, %Finch.Response{status: code}}) do
-      {:error, "Received unhandled status code #{code}"}
-    end
-    defp fetch_response({:error, error}), do: {:error, error.reason()}
-
   end
 
   defmodule DataSourceClient.Local do
@@ -204,7 +188,7 @@ defmodule ArgosCore.Thesauri do
     end
 
     defp get_by_id_from_source(id) do
-      case DataSourceClient.Http.request_single_node(id) do
+      case DataSourceClient.Http.request_single_node(id)  do
         {:ok, xml} -> ConceptParser.read_single_document(xml, id)
         error -> error
       end
@@ -213,7 +197,7 @@ defmodule ArgosCore.Thesauri do
     defp get_by_id_locally(id) do
       case DataSourceClient.Local.request_single_node(id) do
         {:ok, _} = concept -> concept
-        {:error, 404} ->
+        {:error, %{status: 404}} ->
           case get_by_id_from_source(id) do
             {:ok, concept} = res ->
               ArgosCore.ElasticSearch.Indexer.index(concept)

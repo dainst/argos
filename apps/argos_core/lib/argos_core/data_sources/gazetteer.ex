@@ -50,9 +50,10 @@ defmodule ArgosCore.Gazetteer do
 
     defp get_by_id_from_source(id) do
       response =
-        Finch.build(:get, "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true", [{"follow_redirect", "true"}], [])
-        |> Finch.request(ArgosCoreFinchProcess)
-        |> parse_response()
+        ArgosCore.HTTPClient.get(
+          "#{@base_url}/doc/#{id}.json?shortLanguageCodes=true",
+          :json
+        )
 
       case response do
         {:ok, body} ->
@@ -66,7 +67,7 @@ defmodule ArgosCore.Gazetteer do
       case ArgosCore.ElasticSearch.DataProvider.get_doc("place_#{id}") do
         {:ok, _} = place ->
           place
-        {:error, 404} ->
+        {:error, %{status: 404}} ->
           case get_by_id_from_source(id) do
             {:ok, place} = res ->
               ArgosCore.ElasticSearch.Indexer.index(place)
@@ -128,22 +129,10 @@ defmodule ArgosCore.Gazetteer do
     end
 
     defp run_search(params) do
-      Finch.build(:get, "#{@base_url}/search.json?shortLanguageCodes=true&#{URI.encode_query(params)}")
-      |> Finch.request(ArgosCoreFinchProcess)
-      |> parse_response()
-    end
-
-    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}) do
-      Poison.decode(body)
-    end
-    defp parse_response({:ok, %Finch.Response{status: 404}}) do
-      {:error, 404}
-    end
-    defp parse_response({:ok, %Finch.Response{status: code}}) do
-      {:error, "Received unhandled status code #{code}."}
-    end
-    defp parse_response({:error, error}) do
-      {:error, error}
+      ArgosCore.HTTPClient.get(
+        "#{@base_url}/search.json?shortLanguageCodes=true&#{URI.encode_query(params)}",
+        :json
+      )
     end
   end
 

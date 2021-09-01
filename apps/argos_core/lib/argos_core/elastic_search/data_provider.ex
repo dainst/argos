@@ -9,9 +9,9 @@ defmodule ArgosCore.ElasticSearch.DataProvider do
   }
 
   def get_doc(doc_id) do
-    Finch.build(:get, "#{@base_url}/_doc/#{doc_id}")
-    |> Finch.request(ArgosCoreFinchProcess)
-    |> parse_response()
+    ArgosCore.HTTPClient.get(
+      "#{@base_url}/_doc/#{doc_id}", :json
+    )
     |> extract_doc_from_response()
   end
 
@@ -29,10 +29,12 @@ defmodule ArgosCore.ElasticSearch.DataProvider do
   end
 
   def run_query(query) do
-
-    Finch.build(:post, "#{@base_url}/_search", [{"Content-Type", "application/json"}], query)
-    |> Finch.request(ArgosCoreFinchProcess)
-    |> parse_response()
+    ArgosCore.HTTPClient.post(
+      "#{@base_url}/_search",
+      [{"Content-Type", "application/json"}],
+      query,
+      :json
+    )
     |> extract_search_result_from_response()
   end
 
@@ -46,16 +48,16 @@ defmodule ArgosCore.ElasticSearch.DataProvider do
         }
       }
     )
-    Finch.build(:post, "#{@base_url}/_search", @headers, query)
-    |> Finch.request(ArgosCoreFinchProcess)
-  end
-
-  defp parse_response({:ok, %Finch.Response{body: body}}) do
-    Poison.decode(body)
+    ArgosCore.HTTPClient.post(
+      "#{@base_url}/_search",
+      @headers,
+      query,
+      :json
+    )
   end
 
   defp extract_doc_from_response({:ok, %{"found" => false}}) do
-    {:error, 404}
+    {:error, %{status: 404, body: %{"found" => false}}}
   end
   defp extract_doc_from_response({:ok, %{"_source" => data}}) do
     {:ok, data}

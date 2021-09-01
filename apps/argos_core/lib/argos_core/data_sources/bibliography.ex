@@ -66,20 +66,21 @@ defmodule ArgosCore.Bibliography do
     end
 
     def get_by_id(id) do
-      result =
-        Finch.build(:get, "#{@base_url}/api/v1/record?id=#{id}")
-        |> Finch.request(ArgosCoreFinchProcess)
-        |> parse_response(:json)
+      result = ArgosCore.HTTPClient.get("#{@base_url}/api/v1/record?id=#{id}", :json)
 
       case result do
         {:ok, %{"records" => [record]}} ->
           record
           |> BibliographyParser.parse_record()
-        {:error, "Received status code 400"} ->
-          # For some reason VuFind returns a 400, with payload {"status": "ERROR", "statusMessage": "Error loading record"} instead of 404.
-          {:error, 404}
-        {:error, reason} ->
-          {:error, reason}
+        {:error, %{
+          body: "{\"status\":\"ERROR\",\"statusMessage\":\"Error loading record\"}",
+          status: 400}
+        } ->
+          # For some reason VuFind returns a 400, with payload {"status": "ERROR", "statusMessage":
+          # "Error loading record"} instead of 404.
+          {:error, %{status: 404, body: "Error not found"}}
+        error ->
+          error
       end
     end
 
@@ -102,9 +103,10 @@ defmodule ArgosCore.Bibliography do
           {:halt, "No more records for query #{Poison.encode!(params)}, stopping."}
         params ->
           xml_response =
-            Finch.build(:get, "#{@base_url}/OAI/Server?verb=ListRecords&metadataPrefix=oai_dc&#{URI.encode_query(params)}")
-            |> Finch.request(ArgosCoreFinchProcess)
-            |> parse_response(:xml)
+            ArgosCore.HTTPClient.get(
+              "#{@base_url}/OAI/Server?verb=ListRecords&metadataPrefix=oai_dc&#{URI.encode_query(params)}",
+              :xml
+            )
 
           case xml_response do
             {:ok, xml} ->
@@ -149,9 +151,10 @@ defmodule ArgosCore.Bibliography do
               {"", _} ->
                 []
               {query, _} ->
-                Finch.build(:get, "#{@base_url}/api/v1/record?#{query}")
-                |> Finch.request(ArgosCoreFinchProcess)
-                |> parse_response(:json)
+                ArgosCore.HTTPClient.get(
+                  "#{@base_url}/api/v1/record?#{query}",
+                  :json
+                )
                 |> case do
                   {:ok, %{"records" => records}} ->
                     records
@@ -189,26 +192,14 @@ defmodule ArgosCore.Bibliography do
       )
     end
 
-    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}, :xml) do
-      { :ok, SweetXml.parse(body) }
-    end
-    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}, :json) do
-      { :ok, Poison.decode!(body) }
-    end
-    defp parse_response({:ok, %Finch.Response{status: code}}, _) do
-      { :error, "Received status code #{code}" }
-    end
-    defp parse_response({:error, error}, _) do
-      { :error, error.reason() }
-    end
-
     def get_journal_mappings() do
       case Cachex.get(:argos_core_cache, :biblio_to_ojs_mappings) do
         {:ok, nil} ->
           response =
-            Finch.build(:get, "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping")
-            |> Finch.request(ArgosCoreFinchProcess)
-            |> parse_response(:json)
+            ArgosCore.HTTPClient.get(
+              "https://publications.dainst.org/journals/plugins/pubIds/zenon/api/index.php?task=mapping",
+              :json
+            )
 
           case response do
             {:ok, response} ->
@@ -228,17 +219,18 @@ defmodule ArgosCore.Bibliography do
       case Cachex.get(:argos_core_cache, :biblio_to_omp_mappings) do
         {:ok, nil} ->
           response =
-            Finch.build(:get, "https://publications.dainst.org/books/plugins/pubIds/zenon/api/index.php?task=mapping")
-            |> Finch.request(ArgosCoreFinchProcess)
-            |> parse_response(:json)
+            ArgosCore.HTTPClient.get(
+              "https://publications.dainst.org/books/plugins/pubIds/zenon/api/index.php?task=mapping",
+              :json
+            )
 
           case response do
             {:ok, response} ->
               mapping = response["publications"]
               Cachex.put(:argos_core_cache, :biblio_to_omp_mappings, mapping, ttl: :timer.seconds(60 * 30))
               {:ok, mapping}
-            {:error, reason} = error ->
-              Logger.error("Received #{reason} while trying to load publications' book mapping.")
+            {:error, %{status: status} = error} ->
+              Logger.error("Received #{status} while trying to load publications' book mapping.")
               error
           end
         cached_value ->
@@ -388,10 +380,10 @@ defmodule ArgosCore.Bibliography do
           %{
             "resource" => place
           }
-        {:error, msg} = error ->
-          Logger.error("Received error for #{data["uri"]}:")
-          Logger.error(msg)
-          error
+        {:error, %{status: status} = msg} = error ->
+            Logger.error("Received #{status} for #{data["uri"]}:")
+            Logger.error(msg)
+            error
       end
     end
 
@@ -406,10 +398,10 @@ defmodule ArgosCore.Bibliography do
           %{
             "resource" => concept
           }
-        {:error, msg} = _error ->
-          Logger.error("Received error for #{data["uri"]}:")
+        {:error, %{status: status} = msg} = error ->
+          Logger.error("Received #{status} for #{data["uri"]}:")
           Logger.error(msg)
-          nil
+          error
       end
     end
   end

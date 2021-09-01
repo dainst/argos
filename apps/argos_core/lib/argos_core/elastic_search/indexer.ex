@@ -22,7 +22,6 @@ defmodule ArgosCore.ElasticSearch.Indexer do
             doc_as_upsert: true
           }
           |> upsert()
-          |> parse_response()
 
         res_reference_update =
           res
@@ -60,18 +59,19 @@ defmodule ArgosCore.ElasticSearch.Indexer do
       data
       |> Poison.encode!
 
-    Finch.build(:post, "#{@base_url}/_update/#{id}?retry_on_conflict=5", @headers, data_json)
-    |> Finch.request(ArgosCoreFinchProcess)
-  end
-  defp parse_response({:ok, %Finch.Response{body: body}}) do
-    Poison.decode!(body)
+    ArgosCore.HTTPClient.post(
+      "#{@base_url}/_update/#{id}?retry_on_conflict=5",
+      @headers,
+      data_json,
+      :json
+    )
   end
 
-  defp extract_search_hits_from_response(%{"hits" => %{"hits" => hits}}) do
+  defp extract_search_hits_from_response({:ok, %{"hits" => %{"hits" => hits}}}) do
     hits
   end
 
-  defp upsert_change?(%{"result" => result}) do
+  defp upsert_change?({:ok, %{"result" => result}}) do
     case result do
       "updated" -> true
       "created" -> true
@@ -86,7 +86,6 @@ defmodule ArgosCore.ElasticSearch.Indexer do
         []
       res ->
         res
-        |> parse_response()
         |> extract_search_hits_from_response()
         |> Enum.map(&update_reference(&1))
     end

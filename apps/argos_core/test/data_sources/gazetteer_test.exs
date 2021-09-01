@@ -27,7 +27,7 @@ defmodule ArgosCore.GazetteerTest do
   end
 
   test "get by id with unknown id yields 404 error" do
-    assert {:error, 404} = DataProvider.get_by_id("non-existant")
+    {:error, %{status: 404}} = DataProvider.get_by_id("non-existant")
   end
 
   test "get all yields places as result" do
@@ -86,9 +86,9 @@ defmodule ArgosCore.GazetteerTest do
 
       indexing_response = ArgosCore.ElasticSearch.Indexer.index(place)
 
-      assert %{
-        upsert_response: %{"_id" => "place_2048575", "result" => "created"}
-      } = indexing_response
+      %{
+        upsert_response: {:ok, %{"_id" => "place_2048575", "result" => "created"}
+      }} = indexing_response
     end
 
     test "place can be reloaded locally" do

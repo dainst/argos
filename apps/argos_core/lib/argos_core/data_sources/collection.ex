@@ -66,13 +66,14 @@ defmodule ArgosCore.Collection do
 
     defp get_collection_list(url) do
       result =
-        Finch.build(:get, url)
-        |> Finch.request(ArgosCoreFinchProcess)
-        |> handle_result()
+        ArgosCore.HTTPClient.get(
+          url,
+          :json
+        )
 
       case result do
         {:ok, data} ->
-          data
+          data["data"]
           |> Enum.map(&CollectionParser.parse_collection(&1))
 
         {:error, _} ->
@@ -82,48 +83,20 @@ defmodule ArgosCore.Collection do
 
     def get_by_id(id) do
       result =
-        Finch.build(:get, "#{@base_url}/api/projects/#{id}")
-        |> Finch.request(ArgosCoreFinchProcess)
-        |> handle_result()
+        ArgosCore.HTTPClient.get(
+          "#{@base_url}/api/projects/#{id}",
+          :json
+        )
 
       case result do
+        # Rewrite 404 because Erga does not correctly set status code, see SD-1520
+        {:ok, %{"code" => 404} = body} ->
+          {:error, %{status: 404, body: body}}
         {:ok, data} ->
-          CollectionParser.parse_collection(data)
-
-        {:error, reason} ->
-          {:error, reason}
+          CollectionParser.parse_collection(data["data"])
+        error ->
+          error
       end
-    end
-
-    defp handle_result({:ok, %Finch.Response{status: 200, body: body}} = _response) do
-      case Poison.decode(body) do
-        {:ok, %{"code" => 404}} ->
-          {:error, 404}
-
-        {:ok, data} ->
-          {:ok, data["data"]}
-
-        {:error, reason} ->
-          {:error, reason}
-      end
-    end
-
-    defp handle_result({_, %Finch.Response{status: 404}}) do
-      {:error, 404}
-    end
-
-    defp handle_result({_, %Finch.Response{status: 400}}) do
-      {:error, 400}
-    end
-
-    defp handle_result({:error, %Mint.HTTPError{reason: :econnrefused}}) do
-      Logger.error("No connection to #{@base_url}")
-      {:error, :econnrefused}
-    end
-
-    defp handle_result({:error, %Mint.HTTPError{reason: :timeout}}) do
-      Logger.error("Timeout for #{@base_url}")
-      {:error, :timeout}
     end
   end
 

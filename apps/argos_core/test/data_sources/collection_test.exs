@@ -16,9 +16,12 @@ defmodule ArgosCore.CollectionTest do
 
   @example_json Application.app_dir(:argos_core, "priv/example_collection_params.json")
 
-  test "get by id with invalid id yields error" do
-    assert {:error, 404} == Collection.DataProvider.get_by_id("-1")
-    assert {:error, 400} == Collection.DataProvider.get_by_id("not-a-number")
+  test "get by id using an a non existing id 404" do
+    {:error, %{status: 404}} = Collection.DataProvider.get_by_id("-1")
+  end
+
+  test "get by id using invalid id yields 400" do
+    {:error, %{status: 400}} = Collection.DataProvider.get_by_id("not-a-number")
   end
 
   describe "elastic search tests" do
@@ -28,6 +31,7 @@ defmodule ArgosCore.CollectionTest do
       on_exit(fn ->
         TestHelpers.remove_index()
       end)
+
       :ok
     end
 
@@ -78,19 +82,21 @@ defmodule ArgosCore.CollectionTest do
 
       ths_indexing = Indexer.index(ths_data)
 
-      assert("created" == ths_indexing.upsert_response["result"])
+      {:ok, %{"result" => "created"}} = ths_indexing.upsert_response
 
+      collection_indexing =
+        with {:ok, file_content} <- File.read(@example_json) do
+          {:ok, data} = Poison.decode(file_content)
 
-      collection_indexing = with {:ok, file_content} <- File.read(@example_json) do
-        {:ok,data} = Poison.decode(file_content)
-        data
-          |> Collection.CollectionParser.parse_collection()|> case do
+          data
+          |> Collection.CollectionParser.parse_collection()
+          |> case do
             {:ok, collection} -> collection
           end
           |> Indexer.index()
-      end
+        end
 
-      assert("created" == collection_indexing.upsert_response["result"])
+      {:ok, %{"result" => "created"}} = collection_indexing.upsert_response
 
       # Force refresh to make sure recently upserted docs are considered in search.
       TestHelpers.refresh_index()
@@ -99,23 +105,25 @@ defmodule ArgosCore.CollectionTest do
         ths_data
         |> Map.update!(
           "core_fields",
-          fn (old_core) ->
+          fn old_core ->
             Map.update!(
               old_core,
               "title",
-              fn (old_title) ->
+              fn old_title ->
                 old_title ++ [%{"text" => "Test name", "lang" => "de"}]
-              end)
-          end)
+              end
+            )
+          end
+        )
         |> Indexer.index()
 
-      assert("updated" == ths_indexing.upsert_response["result"])
+      {:ok, %{"result" => "updated"}} = ths_indexing.upsert_response
 
-      %{upsert_response: %{"_version" => collection_new_version, "_id" => collection_new_id}} =
+      %{upsert_response: {:ok, %{"_version" => collection_new_version, "_id" => collection_new_id}}} =
         ths_indexing.referencing_docs_update_response
         |> List.first()
 
-      %{"_version" => collection_old_version, "_id" => collection_old_id} =
+      {:ok, %{"_version" => collection_old_version, "_id" => collection_old_id}} =
         collection_indexing.upsert_response
 
       assert collection_old_version + 1 == collection_new_version
@@ -127,16 +135,21 @@ defmodule ArgosCore.CollectionTest do
 
       gaz_indexing = Indexer.index(gaz_data)
 
-      assert("created" == gaz_indexing.upsert_response["result"])
-      collection_indexing = with {:ok, file_content} <- File.read(@example_json) do
-        {:ok,data} = Poison.decode(file_content)
-        data
-          |> Collection.CollectionParser.parse_collection()|> case do
+      {:ok, %{"result" => "created"}} = gaz_indexing.upsert_response
+
+      collection_indexing =
+        with {:ok, file_content} <- File.read(@example_json) do
+          {:ok, data} = Poison.decode(file_content)
+
+          data
+          |> Collection.CollectionParser.parse_collection()
+          |> case do
             {:ok, collection} -> collection
           end
           |> Indexer.index()
-      end
-      assert("created" == collection_indexing.upsert_response["result"])
+        end
+
+      {:ok, %{"result" => "created"}} = collection_indexing.upsert_response
 
       # Force refresh to make sure recently upserted docs are considered in search.
       TestHelpers.refresh_index()
@@ -145,23 +158,26 @@ defmodule ArgosCore.CollectionTest do
         gaz_data
         |> Map.update!(
           "core_fields",
-          fn (old_core) ->
+          fn old_core ->
             Map.update!(
               old_core,
               "title",
-              fn (old_title) ->
+              fn old_title ->
                 old_title ++ [%{"text" => "Test name", "lang" => "de"}]
-              end)
-          end)
+              end
+            )
+          end
+        )
         |> Indexer.index()
 
-      assert("updated" == gaz_indexing.upsert_response["result"])
+      {:ok, %{"result" => "updated"}} = gaz_indexing.upsert_response
 
-      %{upsert_response: %{"_version" => collection_new_version, "_id" => collection_new_id}} =
+      %{upsert_response: {:ok, %{"_version" => collection_new_version, "_id" => collection_new_id}}} =
         gaz_indexing.referencing_docs_update_response
         |> List.first()
 
-      %{"_version" => collection_old_version, "_id" => collection_old_id} = collection_indexing.upsert_response
+      {:ok, %{"_version" => collection_old_version, "_id" => collection_old_id}} =
+        collection_indexing.upsert_response
 
       assert collection_old_version + 1 == collection_new_version
       assert collection_new_id == collection_old_id
@@ -172,18 +188,21 @@ defmodule ArgosCore.CollectionTest do
 
       chron_indexing = Indexer.index(chron_data)
 
-      assert("created" == chron_indexing.upsert_response["result"])
+      {:ok, %{"result" => "created"}} = chron_indexing.upsert_response
 
-      collection_indexing = with {:ok, file_content} <- File.read(@example_json) do
-        {:ok,data} = Poison.decode(file_content)
-        data
-          |> Collection.CollectionParser.parse_collection()|> case do
+      collection_indexing =
+        with {:ok, file_content} <- File.read(@example_json) do
+          {:ok, data} = Poison.decode(file_content)
+
+          data
+          |> Collection.CollectionParser.parse_collection()
+          |> case do
             {:ok, collection} -> collection
           end
           |> Indexer.index()
-      end
+        end
 
-      assert("created" == collection_indexing.upsert_response["result"])
+      {:ok, %{"result" => "created"}} = collection_indexing.upsert_response
 
       # Force refresh to make sure recently upserted docs are considered in search.
       TestHelpers.refresh_index()
@@ -192,27 +211,29 @@ defmodule ArgosCore.CollectionTest do
         chron_data
         |> Map.update!(
           "core_fields",
-          fn (old_core) ->
+          fn old_core ->
             Map.update!(
               old_core,
               "title",
-              fn (old_title) ->
+              fn old_title ->
                 old_title ++ [%{"text" => "Test name", "lang" => "de"}]
-              end)
-          end)
+              end
+            )
+          end
+        )
         |> Indexer.index()
 
-      assert("updated" == chron_indexing.upsert_response["result"])
+      {:ok, %{"result" => "updated"}} = chron_indexing.upsert_response
 
-      %{upsert_response: %{"_version" => collection_new_version, "_id" => collection_new_id}} =
+      %{upsert_response: {:ok, %{"_version" => collection_new_version, "_id" => collection_new_id}}} =
         chron_indexing.referencing_docs_update_response
         |> List.first()
 
-      %{"_version" => collection_old_version, "_id" => collection_old_id} = collection_indexing.upsert_response
+      {:ok, %{"_version" => collection_old_version, "_id" => collection_old_id}} =
+        collection_indexing.upsert_response
 
       assert collection_old_version + 1 == collection_new_version
       assert collection_new_id == collection_old_id
     end
-
   end
 end

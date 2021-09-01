@@ -13,7 +13,7 @@ defmodule ArgosCore.BibliographyTest do
     |> Poison.decode!()
 
   test "get by id with invalid id yields error" do
-    assert {:error, 404} == Bibliography.DataProvider.get_by_id("not-existing")
+    {:error, %{status: 404}} = Bibliography.DataProvider.get_by_id("not-existing")
   end
 
   test "bibliographyic record's core_fields contains full_record data" do
@@ -101,8 +101,7 @@ defmodule ArgosCore.BibliographyTest do
 
       ths_indexing = Indexer.index(ths_data)
 
-      assert("created" == ths_indexing.upsert_response["result"])
-
+      {:ok, %{"result" => "created"}} = ths_indexing.upsert_response
 
       biblio_indexing =
         @example_json
@@ -112,7 +111,7 @@ defmodule ArgosCore.BibliographyTest do
         end
         |> Indexer.index()
 
-      assert("created" == biblio_indexing.upsert_response["result"])
+      {:ok, %{"result" => "created"}} = biblio_indexing.upsert_response
 
       # Force refresh to make sure recently upserted docs are considered in search.
       TestHelpers.refresh_index()
@@ -131,13 +130,13 @@ defmodule ArgosCore.BibliographyTest do
           end)
         |> Indexer.index()
 
-      assert("updated" == ths_indexing.upsert_response["result"])
+      {:ok, %{"result" => "updated"}} =ths_indexing.upsert_response
 
-      %{upsert_response: %{"_version" => biblio_new_version, "_id" => biblio_new_id}} =
+      %{upsert_response: {:ok, %{"_version" => biblio_new_version, "_id" => biblio_new_id}}} =
         ths_indexing.referencing_docs_update_response
         |> List.first()
 
-      %{"_version" => biblio_old_version, "_id" => biblio_old_id} = biblio_indexing.upsert_response
+      {:ok, %{"_version" => biblio_old_version, "_id" => biblio_old_id}} = biblio_indexing.upsert_response
 
       assert biblio_old_version + 1 == biblio_new_version
       assert biblio_new_id == biblio_old_id
@@ -149,7 +148,8 @@ defmodule ArgosCore.BibliographyTest do
 
       gaz_indexing = Indexer.index(gaz_data)
 
-      assert("created" == gaz_indexing.upsert_response["result"])
+      {:ok, %{"result" => "created"}} = gaz_indexing.upsert_response
+
       biblio_indexing =
         @example_json
         |> Bibliography.BibliographyParser.parse_record()
@@ -158,7 +158,7 @@ defmodule ArgosCore.BibliographyTest do
         end
         |> Indexer.index()
 
-      assert("created" == biblio_indexing.upsert_response["result"])
+      {:ok, %{"result" => "created"}} = biblio_indexing.upsert_response
 
       # Force refresh to make sure recently upserted docs are considered in search.
       TestHelpers.refresh_index()
@@ -177,13 +177,13 @@ defmodule ArgosCore.BibliographyTest do
           end)
         |> Indexer.index()
 
-      assert("updated" == gaz_indexing.upsert_response["result"])
+      {:ok, %{"result" => "updated"}} = gaz_indexing.upsert_response
 
-      %{upsert_response: %{"_version" => biblio_new_version, "_id" => biblio_new_id}} =
+      %{upsert_response: {:ok, %{"_version" => biblio_new_version, "_id" => biblio_new_id}}} =
         gaz_indexing.referencing_docs_update_response
         |> List.first()
 
-      %{"_version" => biblio_old_version, "_id" => biblio_old_id} = biblio_indexing.upsert_response
+      {:ok, %{"_version" => biblio_old_version, "_id" => biblio_old_id}} = biblio_indexing.upsert_response
 
       assert biblio_old_version + 1 == biblio_new_version
       assert biblio_new_id == biblio_old_id

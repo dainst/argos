@@ -49,10 +49,7 @@ defmodule ArgosCore.Chronontology do
     end
 
     defp get_by_id_from_source(id) do
-      response =
-        Finch.build(:get, "#{@base_url}/data/period/#{id}")
-        |> Finch.request(ArgosCoreFinchProcess)
-        |> parse_response()
+      response = ArgosCore.HTTPClient.get("#{@base_url}/data/period/#{id}", :json)
 
       case response do
         {:ok, data} ->
@@ -64,7 +61,7 @@ defmodule ArgosCore.Chronontology do
 
     defp get_by_id_locally(id) do
       case ArgosCore.ElasticSearch.DataProvider.get_doc("temporal_concept_#{id}") do
-        {:error, 404} ->
+        {:error, %{status: 404}} ->
           get_by_id_from_source(id)
         {:ok, tc} ->
           {:ok, tc}
@@ -128,24 +125,10 @@ defmodule ArgosCore.Chronontology do
     end
 
     def get_list(params) do
-
-      Finch.build(:get, "#{@base_url}/data/period?#{URI.encode_query(params)}")
-      |> Finch.request(ArgosCoreFinchProcess)
-      |> parse_response()
-    end
-
-    defp parse_response({:ok, %Finch.Response{status: 200, body: body}}) do
-      body
-      |> Poison.decode()
-    end
-    defp parse_response({:ok, %Finch.Response{status: 404}}) do
-      {:error, 404}
-    end
-    defp parse_response({:ok, %Finch.Response{status: code}}) do
-      {:error, "Received unhandled status code #{code}."}
-    end
-    defp parse_response({:error, error}) do
-      {:error, error.reason()}
+      ArgosCore.HTTPClient.get(
+        "#{@base_url}/data/period?#{URI.encode_query(params)}",
+        :json
+      )
     end
 
     defp parse_period_data(data) do

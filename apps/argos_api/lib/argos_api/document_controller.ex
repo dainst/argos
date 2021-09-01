@@ -10,7 +10,7 @@ defmodule ArgosAPI.DocumentController do
     case ArgosCore.ElasticSearch.DataProvider.get_doc(id) do
       {:ok, doc} ->
         send_resp(conn, 200, Poison.encode!(doc))
-      {:error, 404} ->
+      {:error, %{status: 404}} ->
         Errors.send(conn, 404, "Document #{id} not found.")
     end
   end
