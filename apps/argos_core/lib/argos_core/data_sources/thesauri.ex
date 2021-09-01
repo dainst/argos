@@ -50,7 +50,7 @@ defmodule ArgosCore.Thesauri do
 
     def read_from_url(url) do
       ArgosCore.HTTPClient.get(
-        url, :text
+        url
       )
     end
   end
