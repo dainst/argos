@@ -66,15 +66,7 @@ defmodule ArgosCore.ThesauriTest do
     end
 
     test "get by id with invalid id yields 404" do
-      invalid_id = "i-am-non-existant"
-
-      error = DataProvider.get_by_id(invalid_id)
-
-      expected_error = {
-        :error,
-        "Received unhandled status code 404"
-      }
-      assert expected_error == error
+      {:error, 404} = DataProvider.get_by_id("i-am-non-existant")
     end
   end
 

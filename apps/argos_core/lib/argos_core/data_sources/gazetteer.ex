@@ -136,6 +136,9 @@ defmodule ArgosCore.Gazetteer do
     defp parse_response({:ok, %Finch.Response{status: 200, body: body}}) do
       Poison.decode(body)
     end
+    defp parse_response({:ok, %Finch.Response{status: 404}}) do
+      {:error, 404}
+    end
     defp parse_response({:ok, %Finch.Response{status: code}}) do
       {:error, "Received unhandled status code #{code}."}
     end

@@ -61,6 +61,9 @@ defmodule ArgosCore.Thesauri do
     end
 
     defp fetch_response({:ok, %{status: 200, body: body}}), do: {:ok, body}
+    defp fetch_response({:ok, %Finch.Response{status: 404}}) do
+      {:error, 404}
+    end
     defp fetch_response({:ok, %Finch.Response{status: code}}) do
       {:error, "Received unhandled status code #{code}"}
     end

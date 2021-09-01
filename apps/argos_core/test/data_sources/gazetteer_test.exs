@@ -26,6 +26,10 @@ defmodule ArgosCore.GazetteerTest do
     assert %Place{ core_fields: %CoreFields{source_id: ^id}} = place
   end
 
+  test "get by id with unknown id yields 404 error" do
+    assert {:error, 404} = DataProvider.get_by_id("non-existant")
+  end
+
   test "get all yields places as result" do
     records =
       DataProvider.get_all()

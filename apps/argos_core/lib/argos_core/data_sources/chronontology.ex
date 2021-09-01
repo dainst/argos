@@ -138,11 +138,12 @@ defmodule ArgosCore.Chronontology do
       body
       |> Poison.decode()
     end
-
+    defp parse_response({:ok, %Finch.Response{status: 404}}) do
+      {:error, 404}
+    end
     defp parse_response({:ok, %Finch.Response{status: code}}) do
       {:error, "Received unhandled status code #{code}."}
     end
-
     defp parse_response({:error, error}) do
       {:error, error.reason()}
     end
