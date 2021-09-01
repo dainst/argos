@@ -14,7 +14,6 @@ ENV MIX_ENV=prod
 RUN mix do deps.get, deps.compile
 
 COPY apps/argos_harvesting/lib /app/apps/argos_harvesting/lib
-COPY priv priv
 
 RUN mix do compile, release harvesting
 
