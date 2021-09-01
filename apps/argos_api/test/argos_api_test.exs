@@ -136,25 +136,12 @@ defmodule ArgosAPITest do
           end
         |> Poison.decode!()
 
-      status =
-        Finch.build(:get, spec_path)
-        |> Finch.request(ArgosAPIFinch)
-        |> case do
-          {:ok, %{status: status}} ->
-            status
-        end
+      {:ok, _} =
+        ArgosCore.HTTPClient.get(spec_path)
 
-      assert status == 200
 
-      status =
-        Finch.build(:get, ui_path)
-        |> Finch.request(ArgosAPIFinch)
-        |> case do
-          {:ok, %{status: status}} ->
-            status
-        end
-
-      assert status == 200
+      {:ok, _} =
+        ArgosCore.HTTPClient.get(ui_path)
     end
 
     test "document is accessable through endpoint" do

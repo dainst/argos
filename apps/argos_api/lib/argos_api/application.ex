@@ -28,8 +28,7 @@ defmodule ArgosAPI.Application do
         [] # We do not want to (re)start the harvesters when running exs scripts.
       else
         [
-          {Plug.Cowboy, scheme: :http, plug: ArgosAPI.Router, options: [port: @cowboy_port]},
-          {Finch, name: ArgosAPIFinch}
+          {Plug.Cowboy, scheme: :http, plug: ArgosAPI.Router, options: [port: @cowboy_port]}
         ]
       end
 
