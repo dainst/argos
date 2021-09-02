@@ -59,7 +59,7 @@ services:
     restart: always
 
   api:
-    image: "dainst/argos_api:latest"
+    image: "dainst/argos_api:${ARGOS_API_VERSION}"
     container_name: "argos-api"
     environment: 
       - HOST=https://${HOST}
@@ -72,7 +72,7 @@ services:
     restart: always
   
   harvesting:
-    image: "dainst/argos_harvesting:latest"
+    image: "dainst/argos_harvesting:${ARGOS_HARVESTING_VERSION}"
     container_name: "argos-harvesting"
     volumes: 
       - "./elasticsearch-mapping.json:/elasticsearch-mapping.json"
