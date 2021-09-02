@@ -117,7 +117,8 @@ defmodule ArgosCore.Bibliography do
                   {
                     xpath(xml, ~x"//record/header[not(@status='deleted')]/identifier/text()"sl),
                     xpath(xml, ~x"//resumptionToken/text()"s),
-                    xpath(xml, ~x"//resumptionToken/@completeListSize"s)
+                    xpath(xml, ~x"//resumptionToken/@completeListSize"s),
+                    xpath(xml, ~x"count(/OAI-PMH/ListRecords/record)"s)
                   }
                 end
             error ->
@@ -130,38 +131,37 @@ defmodule ArgosCore.Bibliography do
       Stream.resource(
         fn() ->
           %{
-            query: query_params,
-            current_count: 0
+            query: query_params
           }
         end,
         fn(params) ->
           case params do
             %{overall_count: overall_count, current_count: current_count} ->
-              Logger.info("Harvested #{current_count} of #{overall_count} records.")
+              Logger.info("Processed records: #{current_count} of possible #{overall_count}.")
             _ ->
-              Logger.info("Starting bibliography harvest.")
+              Logger.info("Starting bibliography harvest (Records marked as deleted are being ignored).")
           end
 
           oai_result =
             case get_id_list_via_oai(params[:query]) do
               {:halt, _} = halt ->
                 halt
-              {list, token, overall} ->
+              {list, token, overall, record_count} ->
                 query =
                   list
                   |> Enum.reduce("", fn( id, acc) ->
                   "id[]=#{id}&#{acc}"
                 end)
-                {query, token, overall}
+                {query, token, overall, record_count}
             end
 
           records =
             case oai_result do
               {:halt, _} = halt ->
                 halt
-              {"", _, _} ->
+              {"", _, _, _} ->
                 []
-              {query, _, _} ->
+              {query, _, _, _} ->
                 ArgosCore.HTTPClient.get(
                   "#{@base_url}/api/v1/record?#{query}",
                   :json
@@ -185,22 +185,31 @@ defmodule ArgosCore.Bibliography do
             {:halt, _} = halt ->
               halt
             val ->
-              {_, token, overall_count} = oai_result
+              {_, token, overall_count, record_count} = oai_result
+
+              {overall_count, _remainder} = Integer.parse(overall_count)
+              {record_count, _remainder} = Integer.parse(record_count)
+
               {
                 val,
                 params
                 |> Map.update!(:query, fn(query) ->
                   Map.put(query, :resumptionToken, token)
                 end)
-                |> Map.put(:overall_count, overall_count)
-                |> Map.update!(:current_count, fn(last) ->
-                  last + Enum.count(val)
+                |> Map.put_new(:overall_count, overall_count)
+                |> Map.update(:current_count, 0, fn(last) ->
+                  last + record_count
                 end)
               }
           end
         end,
         fn(msg) ->
-          Logger.info(msg)
+          case msg do
+            msg when is_binary(msg) ->
+              Logger.info(msg)
+            %{current_count: current_count, overall_count: overall_count, query: _query} ->
+              Logger.info("Stopped harvest after #{current_count} of possible #{overall_count} records.")
+          end
         end
       )
     end
