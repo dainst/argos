@@ -11,7 +11,8 @@ defmodule Argos.MixProject do
         api: [
           applications: [
             argos_api: :permanent
-          ]
+          ],
+          runtime_config_path: "config/runtime_api.exs"
         ],
         harvesting: [
           applications: [
