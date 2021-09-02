@@ -10,6 +10,3 @@ import Config
 config :logger, :console,
   format: "[$level] $message [$metadata]\n",
   metadata: [:application, :module]
-
-config :argos_core,
-  bibliography_url: "http://zenon.dev.dainst.org"
