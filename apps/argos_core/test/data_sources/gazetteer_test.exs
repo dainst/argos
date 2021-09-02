@@ -75,7 +75,7 @@ defmodule ArgosCore.GazetteerTest do
   test "gazetteer redirects are followed" do
     id = "2042806"
 
-    {:ok, %{"core_fields" => %{"gazId" => redirected_gaz_id}}} = DataProvider.get_by_id(id)
+    {:ok, %{"core_fields" => %{"source_id" => redirected_gaz_id}}} = DataProvider.get_by_id(id)
 
     assert id != redirected_gaz_id
   end
