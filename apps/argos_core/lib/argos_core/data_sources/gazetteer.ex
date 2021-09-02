@@ -49,7 +49,7 @@ defmodule ArgosCore.Gazetteer do
             nil ->
               id
             redirect ->
-              Logger.debug("Used cached redirect from #{id} to #{redirect}.")
+              Logger.debug("Used cached gazetteer redirect from #{id} to #{redirect}.")
               redirect
           end
       end
@@ -81,13 +81,13 @@ defmodule ArgosCore.Gazetteer do
           case Cachex.get(:argos_core_cache, :gazetteer_redirects) do
             {:ok, nil} ->
               Cachex.put(:argos_core_cache, :gazetteer_redirects, %{id => gaz_id}, ttl: :timer.seconds(60 * 15))
-              Logger.debug("Created new cache for redirects.")
+              Logger.debug("Created new cache for gazetteer redirects.")
             {:ok, redirects} ->
               redirects =
                 redirects
                 |> Map.put(id, gaz_id)
               Cachex.put(:argos_core_cache, :gazetteer_redirects, redirects, ttl: :timer.seconds(60 * 15))
-              Logger.debug("Added entry to existing cache for redirects.")
+              Logger.debug("Added entry to existing cache for gazetteer redirects.")
           end
 
           get_by_id(gaz_id)
