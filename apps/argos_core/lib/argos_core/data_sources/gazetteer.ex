@@ -56,6 +56,9 @@ defmodule ArgosCore.Gazetteer do
         )
 
       case response do
+        {:ok, %{status: 301, location: location}} ->
+          %{"gaz_id" => gaz_id} = Regex.named_captures(~r/\/doc\/(?<gaz_id>\d+).json/, location)
+          get_by_id(gaz_id)
         {:ok, body} ->
           PlaceParser.parse_place(body)
         error ->

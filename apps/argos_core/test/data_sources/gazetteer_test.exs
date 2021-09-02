@@ -5,7 +5,8 @@ defmodule ArgosCore.GazetteerTest do
   doctest ArgosCore.Gazetteer
 
   alias ArgosCore.Gazetteer.{
-    Place, DataProvider
+    Place,
+    DataProvider
   }
 
   alias ArgosCore.CoreFields
@@ -23,7 +24,7 @@ defmodule ArgosCore.GazetteerTest do
       end
       |> Place.create()
 
-    assert %Place{ core_fields: %CoreFields{source_id: ^id}} = place
+    assert %Place{core_fields: %CoreFields{source_id: ^id}} = place
   end
 
   test "get by id with unknown id yields 404 error" do
@@ -38,19 +39,20 @@ defmodule ArgosCore.GazetteerTest do
     assert Enum.count(records) == 10
 
     records
-    |> Enum.each(fn({:ok, record}) ->
+    |> Enum.each(fn {:ok, record} ->
       assert {:ok, %Place{}} = Place.create(record)
     end)
   end
 
   test "get by date yields places as result" do
-    records  =
+    records =
       DataProvider.get_by_date(~D[2021-01-01])
       |> Enum.take(10)
+
     assert Enum.count(records) == 10
 
     records
-    |> Enum.each(fn({:ok, record}) ->
+    |> Enum.each(fn {:ok, record} ->
       assert {:ok, %Place{}} = Place.create(record)
     end)
   end
@@ -70,14 +72,22 @@ defmodule ArgosCore.GazetteerTest do
     assert record_id == id
   end
 
-  describe "elastic search integration tests" do
+  test "gazetteer redirects are followed" do
+    id = "2042806"
 
+    {:ok, %{"core_fields" => %{"gazId" => redirected_gaz_id}}} = DataProvider.get_by_id(id)
+
+    assert id != redirected_gaz_id
+  end
+
+  describe "elastic search integration tests" do
     setup %{} do
       TestHelpers.create_index()
 
       on_exit(fn ->
         TestHelpers.remove_index()
       end)
+
       :ok
     end
 
@@ -87,8 +97,8 @@ defmodule ArgosCore.GazetteerTest do
       indexing_response = ArgosCore.ElasticSearch.Indexer.index(place)
 
       %{
-        upsert_response: {:ok, %{"_id" => "place_2048575", "result" => "created"}
-      }} = indexing_response
+        upsert_response: {:ok, %{"_id" => "place_2048575", "result" => "created"}}
+      } = indexing_response
     end
 
     test "place can be reloaded locally" do
@@ -100,15 +110,17 @@ defmodule ArgosCore.GazetteerTest do
         {:ok, params} -> params
       end
       |> Map.update!(
-          "core_fields",
-          fn (old_core) ->
-            Map.update!(
-              old_core,
-              "title",
-              fn (old_title) ->
-                old_title ++ [%{"text" => "Test name", "lang" => "de"}]
-              end)
-          end)
+        "core_fields",
+        fn old_core ->
+          Map.update!(
+            old_core,
+            "title",
+            fn old_title ->
+              old_title ++ [%{"text" => "Test name", "lang" => "de"}]
+            end
+          )
+        end
+      )
       |> ArgosCore.ElasticSearch.Indexer.index()
 
       # Now reload both locally and from iDAI.gazetteer.
@@ -119,6 +131,7 @@ defmodule ArgosCore.GazetteerTest do
           {:ok, params} -> params
         end
         |> Place.create()
+
       {:ok, place_from_gazetteer} =
         id
         |> DataProvider.get_by_id()
@@ -128,11 +141,12 @@ defmodule ArgosCore.GazetteerTest do
         |> Place.create()
 
       # Finally compare the title field length.
-      assert length(place_from_index.core_fields.title) - 1 == length(place_from_gazetteer.core_fields.title)
+      assert length(place_from_index.core_fields.title) - 1 ==
+               length(place_from_gazetteer.core_fields.title)
     end
 
     test "if place was requested to be loaded locally, but was missing in the index, it is also automatically indexed" do
-      {:ok, place } =
+      {:ok, place} =
         DataProvider.get_by_id("2048575", false)
         |> case do
           {:ok, params} -> params
@@ -141,7 +155,8 @@ defmodule ArgosCore.GazetteerTest do
 
       TestHelpers.refresh_index()
 
-      assert {:ok, _place_from_index} = ArgosCore.ElasticSearch.DataProvider.get_doc(place.core_fields.id)
+      assert {:ok, _place_from_index} =
+               ArgosCore.ElasticSearch.DataProvider.get_doc(place.core_fields.id)
     end
   end
 end
