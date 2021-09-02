@@ -110,17 +110,16 @@ defmodule ArgosCore.Bibliography do
 
           case xml_response do
             {:ok, xml} ->
-                if xpath(xml, ~x(/OAI-PMH/error[@code='noRecordsMatch'])o) != nil or xpath(xml, ~x(/OAI-PMH/ListRecords)l) == [] do
-                  Logger.warning("No records matched OAI PMH parameters #{Poison.encode!(params)}.")
-                  {:halt, params}
-                else
-                  {
-                    xpath(xml, ~x"//record/header[not(@status='deleted')]/identifier/text()"sl),
-                    xpath(xml, ~x"//resumptionToken/text()"s),
-                    xpath(xml, ~x"//resumptionToken/@completeListSize"s),
-                    xpath(xml, ~x"count(/OAI-PMH/ListRecords/record)"s)
-                  }
-                end
+              if xpath(xml, ~x"/OAI-PMH/error[@code='noRecordsMatch']"o) != nil or xpath(xml, ~x"count(/OAI-PMH/ListRecords/record)"s) == "0" do
+                {:halt, "No records matched OAI PMH parameters #{Poison.encode!(params)}."}
+              else
+                {
+                  xpath(xml, ~x"//record/header[not(@status='deleted')]/identifier/text()"sl),
+                  xpath(xml, ~x"//resumptionToken/text()"s),
+                  xpath(xml, ~x"//resumptionToken/@completeListSize"s),
+                  xpath(xml, ~x"count(/OAI-PMH/ListRecords/record)"s)
+                }
+              end
             error ->
               error
           end
