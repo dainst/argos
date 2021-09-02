@@ -1,0 +1,100 @@
+version: "3.7"
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=elasticsearch-02,elastichsearch-03
+      - cluster.initial_master_nodes=elasticsearch,elastichsearch-02,elasticsearch-03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms6g -Xmx6g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+    labels:
+      - traefik.enable=false
+    restart: always
+
+  elasticsearch-02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
+    environment:
+      - node.name=elasticsearch-02
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=elasticsearch,elastichsearch-03
+      - cluster.initial_master_nodes=elasticsearch,elastichsearch-02,elasticsearch-03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms6g -Xmx6g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data02:/usr/share/elasticsearch/data
+    labels:
+      - traefik.enable=false
+    restart: always
+
+  elasticsearch-03:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
+    environment:
+      - node.name=elasticsearch-03
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=elasticsearch,elastichsearch-02
+      - cluster.initial_master_nodes=elasticsearch,elastichsearch-02,elasticsearch-03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms6g -Xmx6g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data03:/usr/share/elasticsearch/data
+    labels:
+      - traefik.enable=false
+    restart: always
+
+  api:
+    image: "dainst/argos_api:latest"
+    container_name: "argos-api"
+    environment: 
+      - HOST=https://${HOST}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.api.rule=Host(`${HOST}`)        
+      - traefik.http.services.api.loadbalancer.server.port=4001
+      - traefik.http.routers.api.tls=true
+      - traefik.http.routers.api.tls.certresolver=myresolver
+    restart: always
+  
+  harvesting:
+    image: "dainst/argos_harvesting:latest"
+    container_name: "argos-harvesting"
+    volumes: 
+      - "./elasticsearch-mapping.json:/elasticsearch-mapping.json"
+    labels:
+      - traefik.enable=false
+    restart: always
+
+  traefik:
+    image: "traefik:v2.4"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./acme.json:/acme.json"
+      - "./traefik.toml:/etc/traefik/traefik.toml"
+    restart: always
+
+volumes:
+  data01:
+    driver: local
+  data02:
+    driver: local
+  data03:
+    driver: local
