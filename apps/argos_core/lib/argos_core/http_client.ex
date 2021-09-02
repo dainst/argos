@@ -41,6 +41,13 @@ defmodule ArgosCore.HTTPClient do
        when status >= 200 and status < 300 do
     {:ok, Poison.decode!(body)}
   end
+  defp parse_response({:ok, %Finch.Response{status: 301, headers: headers, body: body}}, _) do
+    {"location", location} =
+      headers
+      |> List.keyfind("location", 0)
+
+    {:ok, %{status: 301, body: body, location: location}}
+  end
   defp parse_response({:ok, %Finch.Response{status: status, body: body}}, _) do
     {:error, %{status: status, body: body}}
   end

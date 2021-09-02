@@ -39,7 +39,25 @@ defmodule ArgosCore.Gazetteer do
       get_batches("*")
     end
 
+    defp check_redirect_for_id(id) do
+      case Cachex.get(:argos_core_cache, :gazetteer_redirects) do
+
+        {:ok, nil} ->
+          id
+        {:ok, redirects} ->
+          case redirects[id] do
+            nil ->
+              id
+            redirect ->
+              Logger.debug("Used cached gazetteer redirect from #{id} to #{redirect}.")
+              redirect
+          end
+      end
+    end
+
     def get_by_id(id, force_reload \\ true) do
+      id = check_redirect_for_id(id)
+
       case force_reload do
         true ->
           get_by_id_from_source(id)
@@ -56,6 +74,23 @@ defmodule ArgosCore.Gazetteer do
         )
 
       case response do
+        {:ok, %{status: 301, location: location}} ->
+          %{"gaz_id" => gaz_id} = Regex.named_captures(~r/\/doc\/(?<gaz_id>\d+).json/, location)
+
+          Logger.debug("Gazetteer redirect from #{id} to #{gaz_id}.")
+          case Cachex.get(:argos_core_cache, :gazetteer_redirects) do
+            {:ok, nil} ->
+              Cachex.put(:argos_core_cache, :gazetteer_redirects, %{id => gaz_id}, ttl: :timer.seconds(60 * 15))
+              Logger.debug("Created new cache for gazetteer redirects.")
+            {:ok, redirects} ->
+              redirects =
+                redirects
+                |> Map.put(id, gaz_id)
+              Cachex.put(:argos_core_cache, :gazetteer_redirects, redirects, ttl: :timer.seconds(60 * 15))
+              Logger.debug("Added entry to existing cache for gazetteer redirects.")
+          end
+
+          get_by_id(gaz_id)
         {:ok, body} ->
           PlaceParser.parse_place(body)
         error ->
