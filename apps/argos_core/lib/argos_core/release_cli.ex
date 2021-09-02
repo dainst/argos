@@ -1,4 +1,4 @@
-defmodule ArgosCore.Release do
+defmodule ArgosCore.ReleaseCLI do
   def update_mapping() do
     Application.ensure_all_started(:argos_core)
     ArgosCore.Application.update_mapping()

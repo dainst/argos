@@ -51,6 +51,15 @@ docker push dainst/argos_api:latest
 docker push dainst/argos_harvesting:latest
 ```
 
+Optionally tag and push also with explicit version number. Ensure version match those specified in the mix.exs files. See also https://semver.org/lang/de/.
+```
+docker tag dainst/argos_api:latest dainst/argos_api:MAJOR.MINOR.PATCH
+docker tag dainst/argos_harvesting:latest dainst/argos_harvesting:MAJOR.MINOR.PATCH
+
+docker push dainst/argos_api:MAJOR.MINOR.PATCH
+docker push dainst/argos_harvesting:MAJOR.MINOR.PATCH
+```
+
 3. __Locally__ (optional), if change occurred, copy config files to server:
 - docker-compose.{prod|test}.yml
 - traefik.toml 
@@ -64,13 +73,16 @@ docker pull dainst/argos_api:latest
 docker pull dainst/argos_harvesting:latest
 ```
 
-5. __Serverside__, restart the service
+Alternatively pull specific versions. To use the specific version you have to adjust the variables defined in the .env file.
+
+5. __Serverside__, restart the services
 ```bash
-sudo systemctl restart argos
+cd /opt/argos && docker-compose -f docker-compose.deploy.yml up -d
 ```
 
-6. __Serverside__, run release [functions](lib/release.ex) as required by your recent changes. For example, you can update the ES mapping and reindex all projects by running:
+6. __Serverside__, run release functions for [harvesting](apps/argos_harvesting/lib/release_cli.ex) or [core](apps/argos_core/lib/release_cli.ex) as required by your recent changes. For example, you can update the ES mapping and reindex all projects by running:
+
 ```
-docker exec -it argos-harvesting /app/bin/harvesting eval "ArgosCore.Release.update_mapping()"
+docker exec -it argos-harvesting /app/bin/harvesting eval "ArgosCore.ReleaseCLI.update_mapping()"
 docker exec -it argos-harvesting /app/bin/harvesting eval "ArgosHarvesting.ReleaseCLI.seed_projects()"
 ```
