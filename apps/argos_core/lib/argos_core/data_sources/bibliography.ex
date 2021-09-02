@@ -92,15 +92,15 @@ defmodule ArgosCore.Bibliography do
         |> String.replace(" ", "T")
 
       %{
-        "from" => encoded_date
+        from: encoded_date
       }
       |> get_batches()
     end
 
     defp get_id_list_via_oai(params) do
       case params do
-        %{"resumptionToken" => ""} ->
-          {:halt, "No more records for query #{Poison.encode!(params)}, stopping."}
+        %{resumptionToken: ""} ->
+          {:halt, "No more records for query, stopping."}
         params ->
           xml_response =
             ArgosCore.HTTPClient.get(
@@ -116,7 +116,8 @@ defmodule ArgosCore.Bibliography do
                 else
                   {
                     xpath(xml, ~x"//record/header[not(@status='deleted')]/identifier/text()"sl),
-                    xpath(xml, ~x"//resumptionToken/text()"s)
+                    xpath(xml, ~x"//resumptionToken/text()"s),
+                    xpath(xml, ~x"//resumptionToken/@completeListSize"s)
                   }
                 end
             error ->
@@ -128,29 +129,39 @@ defmodule ArgosCore.Bibliography do
     def get_batches(query_params) do
       Stream.resource(
         fn() ->
-          query_params
+          %{
+            query: query_params,
+            current_count: 0
+          }
         end,
         fn(params) ->
+          case params do
+            %{overall_count: overall_count, current_count: current_count} ->
+              Logger.info("Harvested #{current_count} of #{overall_count} records.")
+            _ ->
+              Logger.info("Starting bibliography harvest.")
+          end
+
           oai_result =
-            case get_id_list_via_oai(params) do
+            case get_id_list_via_oai(params[:query]) do
               {:halt, _} = halt ->
                 halt
-              {list, token} ->
+              {list, token, overall} ->
                 query =
                   list
                   |> Enum.reduce("", fn( id, acc) ->
                   "id[]=#{id}&#{acc}"
                 end)
-                {query, token}
+                {query, token, overall}
             end
 
           records =
             case oai_result do
               {:halt, _} = halt ->
                 halt
-              {"", _} ->
+              {"", _, _} ->
                 []
-              {query, _} ->
+              {query, _, _} ->
                 ArgosCore.HTTPClient.get(
                   "#{@base_url}/api/v1/record?#{query}",
                   :json
@@ -161,7 +172,7 @@ defmodule ArgosCore.Bibliography do
                   error ->
                     error
                 end
-                |> Stream.chunk_every(50) # Process in chunks to throttle the number of parallel processes
+                |> Stream.chunk_every(20) # Process in chunks to throttle the number of parallel processes
                 |> Enum.map(fn(chunk) ->
                   chunk
                   |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
@@ -174,20 +185,22 @@ defmodule ArgosCore.Bibliography do
             {:halt, _} = halt ->
               halt
             val ->
-              {_, token} = oai_result
+              {_, token, overall_count} = oai_result
               {
                 val,
-                Map.put(params, "resumptionToken", token)
+                params
+                |> Map.update!(:query, fn(query) ->
+                  Map.put(query, :resumptionToken, token)
+                end)
+                |> Map.put(:overall_count, overall_count)
+                |> Map.update!(:current_count, fn(last) ->
+                  last + Enum.count(val)
+                end)
               }
           end
         end,
         fn(msg) ->
-          case msg do
-            {:halt, reason} ->
-              Logger.info(reason)
-            msg ->
-              msg
-          end
+          Logger.info(msg)
         end
       )
     end
