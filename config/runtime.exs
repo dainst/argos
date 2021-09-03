@@ -4,10 +4,9 @@
 # This configuration file is loaded before any dependency and
 # is restricted to this project.
 
-# General application runtime (!) only evaluated by ArgosAPI configuration for release builds
+# General application runtime (!) configuration for release builds
 import Config
 
-config :argos_api,
-  host_url: System.fetch_env!("HOST")
-
-import_config "runtime.exs"
+config :argos_core, ArgosCore.Mailer,
+  username: System.fetch_env!("SMTP_USERNAME"),
+  password: System.fetch_env!("SMPT_USERPASSWORD"),
