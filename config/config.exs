@@ -28,6 +28,19 @@ config :argos_core,
   thesauri_url: "http://thesauri.dainst.org",
   thesauri_type_key: "concept"
 
+config :argos_core, ArgosCore.Mailer,
+  adapter: Bamboo.SMTPAdapter,
+  server: "mail.dainst.de",
+  hostname: "idai.world",
+  port: 587,
+  tls: :if_available,
+  allowed_tls_versions: [:tlsv1, :"tlsv1.1", :"tlsv1.2"],
+  tls_log_level: :error,
+  ssl: false,
+  retries: 1,
+  no_mx_lookups: false,
+  auth: :always
+
 port = 4001
 
 config :argos_api,
@@ -43,6 +56,13 @@ config :argos_harvesting,
     ArgosCore.Collection.Harvester,
     ArgosCore.Bibliography.Harvester
   ]
+
+secrets_config_filename = "config.secrets.exs"
+if not File.exists?("config/#{secrets_config_filename}") do
+  File.copy!("config/config.secrets.exs_template", "config/#{secrets_config_filename}")
+end
+
+import_config(secrets_config_filename)
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

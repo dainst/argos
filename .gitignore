@@ -31,3 +31,5 @@ erl_crash.dump
 apps/argos_api/.elixir_ls/**
 apps/argos_core/.elixir_ls/**
 apps/argos_harvesting/.elixir_ls/**
+
+config/config.secrets.exs

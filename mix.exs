@@ -31,7 +31,8 @@ defmodule Argos.MixProject do
   # Run "mix help deps" for examples and options.
   defp deps do
     [
-      {:poison, "~> 4.0", override: true} # :api's open_api_spex dependency wants a lower poison version.
+      {:poison, "~> 4.0", override: true}, # :api's open_api_spex dependency wants a lower poison version.
+      {:mime, "~> 2.0.1", override: true}  # :core's bamboo dependency wants a lower mime version
     ]
   end
 
