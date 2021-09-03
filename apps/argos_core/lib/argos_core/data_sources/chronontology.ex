@@ -43,6 +43,7 @@ defmodule ArgosCore.Chronontology do
       case force_reload do
         true ->
           get_by_id_from_source(id)
+
         false ->
           get_by_id_locally(id)
       end
@@ -54,6 +55,7 @@ defmodule ArgosCore.Chronontology do
       case response do
         {:ok, data} ->
           parse_period_data(data)
+
         error ->
           error
       end
@@ -63,48 +65,60 @@ defmodule ArgosCore.Chronontology do
       case ArgosCore.ElasticSearch.DataProvider.get_doc("temporal_concept_#{id}") do
         {:error, %{status: 404}} ->
           get_by_id_from_source(id)
+
         {:ok, tc} ->
           {:ok, tc}
       end
-     end
+    end
 
     def get_by_date(%Date{} = date) do
-      get_batches(%{"q"=>"modified.date:[#{Date.to_iso8601(date)} TO *]"})
+      get_batches(%{"q" => "modified.date:[#{Date.to_iso8601(date)} TO *]"})
     end
+
     def get_by_date(%DateTime{} = date) do
-      get_batches(%{"q"=>"modified.date:[#{DateTime.to_iso8601(date)} TO *]"})
+      get_batches(%{"q" => "modified.date:[#{DateTime.to_iso8601(date)} TO *]"})
     end
 
     def get_batches(query_params) do
       Stream.resource(
-        fn () ->
+        fn ->
           final_params =
             query_params
             |> Map.put("from", 0)
             |> Map.put("size", 100)
 
-          Logger.info("Running chronontology batch query with for #{@base_url}/data/period?#{URI.encode_query(final_params)}")
+          Logger.info(
+            "Running chronontology harvest with #{@base_url}/data/period?#{URI.encode_query(final_params)}."
+          )
 
           final_params
         end,
-        fn (params) ->
+        fn params ->
           case process_batch_query(params) do
             {:error, reason} ->
-              Logger.error("Error while processing batch. #{reason}")
-              {:halt, params}
+              {:halt, "Error while processing batch. #{reason}"}
+
             [] ->
-              {:halt, params}
+              {:halt, "No more records."}
+
             result_list ->
-              Logger.info("Retrieving from #{params["from"]}.")
+              if params["from"] != 0 do
+                Logger.info("Processed from #{params["from"]} records.")
+              end
               {
                 result_list,
                 params
-                |> Map.update!("from", fn (old) -> old + 100 end)
+                |> Map.update!("from", fn old -> old + 100 end)
               }
           end
         end,
-        fn (_params) ->
-          Logger.info("Finished search.")
+        fn msg ->
+          case msg do
+            msg when is_binary(msg) ->
+              Logger.info(msg)
+            %{"from" => from} ->
+              Logger.info("Stopping. Processed #{from} records.")
+          end
         end
       )
     end
@@ -119,6 +133,7 @@ defmodule ArgosCore.Chronontology do
           results
           |> Enum.map(&Task.async(fn -> parse_period_data(&1) end))
           |> Enum.map(&Task.await(&1, 1000 * 60))
+
         {:error, reason} ->
           {:error, reason}
       end
@@ -137,10 +152,11 @@ defmodule ArgosCore.Chronontology do
         case data["resource"]["hasTimespan"] do
           [%{"begin" => %{"at" => at}}] ->
             parse_any_to_numeric_string(at)
+
           [%{"begin" => %{"notBefore" => notBefore}}] ->
             parse_any_to_numeric_string(notBefore)
           _ ->
-            Logger.warning("Found no begin date for period #{data["resource"]["id"]}")
+            Logger.debug("Found no begin date for period #{data["resource"]["id"]}")
             ""
         end
 
@@ -148,10 +164,12 @@ defmodule ArgosCore.Chronontology do
         case data["resource"]["hasTimespan"] do
           [%{"end" => %{"at" => at}}] ->
             parse_any_to_numeric_string(at)
+
           [%{"end" => %{"notAfter" => notAfter}}] ->
             parse_any_to_numeric_string(notAfter)
+
           _ ->
-            Logger.warning("Found no end date for period #{data["resource"]["id"]}")
+            Logger.debug("Found no end date for period #{data["resource"]["id"]}")
             ""
         end
 
@@ -162,14 +180,20 @@ defmodule ArgosCore.Chronontology do
         "source_id" => data["resource"]["id"],
         "uri" => "#{@base_url}/period/#{data["resource"]["id"]}",
         "title" => parse_names(data["resource"]["names"]),
-        "description" => if(data["resource"]["description"]!=nil, do: [
-          %{
-            "lang" => NaturalLanguageDetector.get_language_key(data["resource"]["description"]),
-            "text" => data["resource"]["description"]
-          }
-        ], else: []),
+        "description" =>
+          if(data["resource"]["description"] != nil,
+            do: [
+              %{
+                "lang" =>
+                  NaturalLanguageDetector.get_language_key(data["resource"]["description"]),
+                "text" => data["resource"]["description"]
+              }
+            ],
+            else: []
+          ),
         "full_record" => data
       }
+
       {
         :ok,
         %{
@@ -184,6 +208,7 @@ defmodule ArgosCore.Chronontology do
       case Integer.parse(string) do
         {_val, _remainder} ->
           string
+
         :error ->
           ""
       end
