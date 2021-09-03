@@ -65,20 +65,24 @@ defmodule ArgosCore.Collection do
     end
 
     defp get_collection_list(url) do
+      Logger.info("Starting collection harvest with #{url}.")
       result =
         ArgosCore.HTTPClient.get(
           url,
           :json
         )
 
-      case result do
-        {:ok, data} ->
-          data["data"]
-          |> Enum.map(&CollectionParser.parse_collection(&1))
+      collections =
+        case result do
+          {:ok, data} ->
+            data["data"]
+            |> Enum.map(&CollectionParser.parse_collection(&1))
 
-        {:error, _} ->
-          []
-      end
+          {:error, _} ->
+            []
+        end
+      Logger.info("Done.")
+      collections
     end
 
     def get_by_id(id) do
