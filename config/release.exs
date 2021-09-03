@@ -9,4 +9,4 @@ import Config
 
 config :argos_core, ArgosCore.Mailer,
   username: System.fetch_env!("SMTP_USERNAME"),
-  password: System.fetch_env!("SMPT_USERPASSWORD"),
+  password: System.fetch_env!("SMPT_USERPASSWORD")
