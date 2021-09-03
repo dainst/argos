@@ -26,12 +26,14 @@ config :argos_core,
   gazetteer_type_key: "place",
 
   thesauri_url: "http://thesauri.dainst.org",
-  thesauri_type_key: "concept"
+  thesauri_type_key: "concept",
+
+  status_mail_sender: "argos-status@idai.world",
+  status_mail_recipient: "dev@dainst.org"
 
 config :argos_core, ArgosCore.Mailer,
   adapter: Bamboo.SMTPAdapter,
   server: "mail.dainst.de",
-  hostname: "idai.world",
   port: 587,
   tls: :if_available,
   allowed_tls_versions: [:tlsv1, :"tlsv1.1", :"tlsv1.2"],

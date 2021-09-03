@@ -5,19 +5,14 @@ defmodule ArgosCore.Mailer do
 
   require Logger
 
-  def welcome_email do
-    new_email(
-      to: "simon.hohl@dainst.org",
-      from: "support@myapp.com",
-      subject: "Welcome to the app.",
-      html_body: "<strong>Thanks for joining!</strong>",
-      text_body: "Thanks for joining!"
-    )
-  end
-
-  def send_welcome_email() do
+  def send_email(%{subject: subject, text_body: text_body}) do
     email =
-      welcome_email()
+      new_email(
+        to: Application.get_env(:argos_core, :status_mail_recipient),
+        from: Application.get_env(:argos_core, :status_mail_sender),
+        subject: subject,
+        text_body: text_body
+      )
 
     case Application.get_env(:argos_core, ArgosCore.Mailer)[:username] do
       "<username>" ->
