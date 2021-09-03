@@ -54,7 +54,7 @@ defmodule ArgosHarvesting.Bibliography do
     end)
     |> Stream.reject(fn val -> is_nil(val) end)
     |> Enum.map(&Task.async(fn -> Indexer.index(&1) end))
-    |> Enum.map(&Task.await/1)
+    |> Enum.each(&Task.await/1)
   end
 
   def run_harvest(%DateTime{} = datetime) do
@@ -72,6 +72,6 @@ defmodule ArgosHarvesting.Bibliography do
     end)
     |> Stream.reject(fn val -> is_nil(val) end)
     |> Enum.map(&Task.async(fn -> Indexer.index(&1) end))
-    |> Enum.map(&Task.await/1)
+    |> Enum.each(&Task.await/1)
   end
 end

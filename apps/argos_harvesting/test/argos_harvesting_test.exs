@@ -44,7 +44,7 @@ defmodule ArgosHarvestingTest do
         DateTime.now!("Etc/UTC")
         |> Bibliography.run_harvest()
 
-      assert [] = result
+      assert :ok = result
     end
   end
 end
