@@ -82,9 +82,9 @@ Alternatively pull specific versions. To use the specific version you have to ad
 cd /opt/argos && docker-compose -f docker-compose.deploy.yml up -d
 ```
 
-6. __Serverside__, run release functions for [harvesting](apps/argos_harvesting/lib/release_cli.ex) or [core](apps/argos_core/lib/release_cli.ex) as required by your recent changes. For example, you can update the ES mapping and reindex all projects by running:
+6. __Serverside__, run release functions for [harvesting](apps/argos_harvesting/lib/release_cli.ex) or [core](apps/argos_core/lib/release_cli.ex) as required by your recent changes. For example, you can update the ES mapping and reindex all [collections](https://collections.dainst.org) by running:
 
 ```
 docker exec -it argos-harvesting /app/bin/harvesting eval "ArgosCore.ReleaseCLI.update_mapping()"
-docker exec -it argos-harvesting /app/bin/harvesting eval "ArgosHarvesting.ReleaseCLI.seed_projects()"
+docker exec -it argos-harvesting /app/bin/harvesting eval "ArgosHarvesting.ReleaseCLI.seed_collections()"
 ```
