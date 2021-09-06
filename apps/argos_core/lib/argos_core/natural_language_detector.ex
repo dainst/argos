@@ -5,6 +5,7 @@ defmodule ArgosCore.NaturalLanguageDetector do
 
   def get_language_key(string, threshold \\ 0.9)
   def get_language_key(string, threshold) when is_binary(string) do
+    try do
       detection_result =
         string
         |> Tongue.detect()
@@ -23,6 +24,11 @@ defmodule ArgosCore.NaturalLanguageDetector do
           # Nothing over threshold
           ""
       end
+    catch
+      :exit, {:timeout, _} ->
+        Logger.debug("Language detection processed timed out. Retrying...")
+        get_language_key(string, threshold)
+    end
   end
 
   def get_language_key(no_string, _) do
@@ -32,17 +38,23 @@ defmodule ArgosCore.NaturalLanguageDetector do
   end
 
   def get_language_keys_with_scores(string) when is_binary(string) do
-    string
-    |> Tongue.detect()
-    |> Enum.sort(fn ({_key, value}, :desc) ->
-      value
-    end)
-    |> Enum.map(fn({key, score}) ->
-      %{
-        lang: Atom.to_string(key),
-        score: score
-      }
-    end)
+    try do
+      string
+      |> Tongue.detect()
+      |> Enum.sort(fn ({_key, value}, :desc) ->
+        value
+      end)
+      |> Enum.map(fn({key, score}) ->
+        %{
+          lang: Atom.to_string(key),
+          score: score
+        }
+      end)
+    catch
+      :exit, {:timeout, _} ->
+        Logger.debug("Language detection processed timed out. Retrying...")
+        get_language_keys_with_scores(string)
+    end
   end
 
   def get_language_keys_with_scores(no_string) do
