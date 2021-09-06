@@ -171,13 +171,8 @@ defmodule ArgosCore.Bibliography do
                   error ->
                     error
                 end
-                |> Stream.chunk_every(20) # Process in chunks to throttle the number of parallel processes
-                |> Enum.map(fn(chunk) ->
-                  chunk
-                  |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
-                  |> Enum.map(&Task.await(&1, 1000 * 60))
-                end)
-                |> List.flatten()
+                |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
+                |> Enum.map(&Task.await(&1, 1000 * 60))
             end
 
           case records do
