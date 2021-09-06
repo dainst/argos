@@ -265,27 +265,6 @@ defmodule ArgosCore.Bibliography do
     @field_type Application.get_env(:argos_core, :bibliography_type_key)
 
     def parse_record(record) do
-
-      publications_links =
-        case DataProvider.get_publications_link(record["id"]) do
-          {:ok, nil} ->
-            []
-          {:ok, url} ->
-            [%{
-              "url" => url,
-              "type" => :website,
-              "label" => [%{"lang" => "en", "text" => "Available online"}, %{"lang" => "de", "text" => "Online verfügbar"}]
-            }]
-        end
-
-      external_links =
-        record["urls"]
-        |> Enum.map(&parse_url(&1))
-
-      external_links =
-        publications_links ++ external_links
-        |> Enum.uniq_by(fn(%{"url" => url}) -> url end)
-
       spatial_topics =
         record["DAILinks"]["gazetteer"]
         |> Enum.map(&parse_place/1)
@@ -309,6 +288,27 @@ defmodule ArgosCore.Bibliography do
               true
           end
         end)
+
+      publications_links =
+        case DataProvider.get_publications_link(record["id"]) do
+          {:ok, nil} ->
+            []
+          {:ok, url} ->
+            [%{
+              "url" => url,
+              "type" => :website,
+              "label" => [%{"lang" => "en", "text" => "Available online"}, %{"lang" => "de", "text" => "Online verfügbar"}]
+            }]
+        end
+
+      external_links =
+        record["urls"]
+        |> Enum.map(&parse_url(&1))
+
+      external_links =
+        publications_links ++ external_links
+        |> Enum.uniq_by(fn(%{"url" => url}) -> url end)
+
       core_fields = %{
         "type" => @field_type,
         "source_id" => record["id"],
