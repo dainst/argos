@@ -55,8 +55,8 @@ config :argos_harvesting,
   temporal_concepts_harvest_interval: 1000 * 60 * 30, # 30 minutes
 
   active_harvesters: [
-    ArgosCore.Collection.Harvester,
-    ArgosCore.Bibliography.Harvester
+    ArgosHarvesting.Collection,
+    ArgosHarvesting.Bibliography
   ]
 
 secrets_config_filename = "config.secrets.exs"

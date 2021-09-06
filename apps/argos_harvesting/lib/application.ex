@@ -5,7 +5,7 @@ defmodule ArgosHarvesting.Application do
 
   use Application
 
-  @active_harvesters Application.get_env(:argos_core, :active_harvesters)
+  @active_harvesters Application.get_env(:argos_harvesting, :active_harvesters)
 
   require Logger
 
@@ -32,6 +32,10 @@ defmodule ArgosHarvesting.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ArgosHarvesting.Supervisor]
+
+    if children != [] do
+      Logger.info("Starting harvesters...")
+    end
 
     Supervisor.start_link(children, opts)
   end
