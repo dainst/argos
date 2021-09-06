@@ -383,9 +383,9 @@ defmodule ArgosCore.Bibliography do
     defp parse_url(%{"url" => url, "desc" => desc}) do
       %{"url" => url,
         "type" => :website,
-        "label" => case String.trim(desc)=="" do
-          true->[%{"lang" => NaturalLanguageDetector.get_language_key(desc), "text" => desc}]
-          _->[%{"lang" => NaturalLanguageDetector.get_language_key("External link"), "text" => "External link"}]
+        "label" => case String.trim(desc) == "" do
+          false->[%{"lang" => NaturalLanguageDetector.get_language_key(desc), "text" => desc}]
+          _->[%{"lang" => "en", "text" => "External link"}, %{"de" => "Externer link"}]
         end
       }
     end
