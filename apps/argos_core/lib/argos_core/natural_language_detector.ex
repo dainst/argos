@@ -25,8 +25,9 @@ defmodule ArgosCore.NaturalLanguageDetector do
       end
   end
 
-  def get_language_key(_no_string, _) do
-    Logger.warning("Received a non-string!")
+  def get_language_key(no_string, _) do
+    Logger.warning("Received a non-string while determining language key:")
+    Logger.warning(no_string)
     ""
   end
 
@@ -44,8 +45,9 @@ defmodule ArgosCore.NaturalLanguageDetector do
     end)
   end
 
-  def get_language_keys_with_scores(_no_string) do
-    Logger.warning("Received a non-string!")
+  def get_language_keys_with_scores(no_string) do
+    Logger.warning("Received a non-string while determining scored language keys:")
+    Logger.warning(no_string)
     %{}
   end
 end
