@@ -7,6 +7,9 @@
 # General application runtime (!) configuration for release builds
 import Config
 
+config :argos_api,
+  host_url: System.fetch_env!("HOST")
+
 config :argos_core, ArgosCore.Mailer,
   username: System.fetch_env!("SMTP_USERNAME"),
   password: System.fetch_env!("SMPT_USERPASSWORD")
