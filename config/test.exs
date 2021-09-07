@@ -14,4 +14,4 @@ config :argos_core,
 config :argos_api,
   await_index: false
 
-config :logger, level: :info
+config :logger, level: :warning
