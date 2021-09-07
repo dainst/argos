@@ -113,6 +113,10 @@ defmodule ArgosCore.Gazetteer do
       end
     end
 
+    def get_by_date(%DateTime{} = date) do
+      get_by_date(DateTime.to_date(date))
+    end
+
     def get_by_date(%Date{} = date) do
       "(lastChangeDate:>=#{Date.to_iso8601(date)})"
       |> get_batches

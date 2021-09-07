@@ -6,7 +6,6 @@ defmodule ArgosHarvesting.Gazetteer do
   def run_harvest(%{last_run: last_run}) do
 
     last_run
-    |> DateTime.to_date()
     |> DataProvider.get_by_date()
     |> Stream.map(fn val ->
       case val do
