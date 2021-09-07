@@ -42,18 +42,22 @@ defmodule Argos.MixProject do
         "run --eval 'ArgosCore.Release.update_mapping()' -- --script"
       ],
       seed: [
-        "seed.collections", "seed.bibliography"
-      ],
-      "seed.collections": [
-        "run --eval 'ArgosHarvesting.CollectionCLI.run()' -- --script"
-      ],
-      "seed.chronontology": [
-        "run --eval 'ArgosHarvesting.ChronontologyCLI.run()' -- --script"
+        "seed.bibliography", "seed.collections"
       ],
       "seed.bibliography": [
-        "run --eval 'ArgosHarvesting.BibliographyCLI.run(
-          DateTime.utc_now() |> DateTime.add(-60 * 60 * 24 * #{seed_days_ago}) |> DateTime.to_iso8601()
-        )' -- --script"
+        "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(bibliography), Date.utc_today() |> Date.add(-#{seed_days_ago}) |> to_string())' -- --script"
+      ],
+      "seed.chronontology": [
+        "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(chronontology))' -- --script"
+      ],
+      "seed.collections": [
+        "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(collection))' -- --script"
+      ],
+      "seed.gazetteer": [
+        "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(gazetteer))' -- --script"
+      ],
+      "seed.thesauri": [
+        "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(thesauri))' -- --script"
       ]
     ]
   end
