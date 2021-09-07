@@ -36,7 +36,8 @@ defmodule Argos.MixProject do
   end
 
   defp aliases do
-    seed_days_ago = 3
+    bibliography_seed_days_ago = 3
+    gazetteer_seed_days_ago = 7
     [
       "update-mapping": [
         "run --eval 'ArgosCore.Release.update_mapping()' -- --script"
@@ -45,7 +46,7 @@ defmodule Argos.MixProject do
         "seed.bibliography", "seed.collections"
       ],
       "seed.bibliography": [
-        "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(bibliography), Date.utc_today() |> Date.add(-#{seed_days_ago}) |> to_string())' -- --script"
+        "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(bibliography), Date.utc_today() |> Date.add(-#{bibliography_seed_days_ago}) |> to_string())' -- --script"
       ],
       "seed.chronontology": [
         "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(chronontology))' -- --script"
@@ -54,7 +55,7 @@ defmodule Argos.MixProject do
         "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(collection))' -- --script"
       ],
       "seed.gazetteer": [
-        "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(gazetteer))' -- --script"
+        "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(gazetteer), Date.utc_today() |> Date.add(-#{gazetteer_seed_days_ago}) |> to_string())' -- --script"
       ],
       "seed.thesauri": [
         "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(thesauri))' -- --script"
