@@ -9,6 +9,11 @@ import Config
 
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
+
+config :logger, :console,
+  format: "[$level - $metadata] $message \n",
+  metadata: [:application, :module]
+
 config :argos_core,
   elasticsearch_url: "http://localhost:9200",
   index_name: "argos",

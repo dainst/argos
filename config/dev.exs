@@ -6,7 +6,3 @@
 
 # General application configuration
 import Config
-
-config :logger, :console,
-  format: "[$level] $message [$metadata]\n",
-  metadata: [:application, :module]
