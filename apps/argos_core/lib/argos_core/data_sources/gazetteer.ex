@@ -123,25 +123,31 @@ defmodule ArgosCore.Gazetteer do
     end
 
     defp get_batches(base_query) do
-      Logger.debug("Starting batch query with q=#{base_query}.")
+      Logger.info("Starting batch query with q=#{base_query}.")
       Stream.resource(
-        fn -> nil end,
-        fn (scroll_id) ->
+        fn -> %{scroll_id: nil} end,
+        fn (%{scroll_id: scroll_id}) ->
           case process_batch_query(base_query, scroll_id, @batch_size) do
             {:error, reason} ->
-              Logger.error("Error while processing batch. #{reason}")
-              {:halt, scroll_id}
+              {:halt, "Error while processing batch. #{reason}"}
             {:ok, []} ->
-              {:halt, scroll_id}
+              {:halt, "No more records."}
             {:ok, %{result: results, scroll: scroll, total: total}} ->
               if is_nil(scroll_id) do
-                Logger.debug("Found #{total} entries.")
+                Logger.info("Found #{total} entries.")
+              else
+                Logger.info("Processing next batch.")
               end
-              {results, scroll}
+              {results, %{scroll_id: scroll}}
           end
         end,
-        fn (_scroll_id) ->
-          Logger.debug("Finished scrolling batches.")
+        fn (msg) ->
+          case msg do
+            msg when is_binary(msg) ->
+              Logger.info(msg)
+            %{scroll_id: _scroll_id} ->
+              Logger.info("Stopped without processing all records.")
+          end
         end
       )
     end
