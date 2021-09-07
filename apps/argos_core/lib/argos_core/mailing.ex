@@ -18,6 +18,7 @@ defmodule ArgosCore.Mailer do
       "<username>" ->
         Logger.info("Mailer not configured, would have sent the following email:")
         Logger.info(Poison.encode!(email, [pretty: true]))
+        email
       _ ->
         email
         |> deliver_now()
