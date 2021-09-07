@@ -97,6 +97,17 @@ defmodule ArgosCore.Bibliography do
       |> get_batches()
     end
 
+    def get_by_date(%Date{} = date) do
+      encoded_date =
+        date
+        |> to_string()
+
+      %{
+        from: encoded_date
+      }
+      |> get_batches()
+    end
+
     defp get_id_list_via_oai(params) do
       case params do
         %{resumptionToken: ""} ->
@@ -138,7 +149,8 @@ defmodule ArgosCore.Bibliography do
             %{overall_count: overall_count, current_count: current_count} ->
               Logger.info("Processed records: #{current_count} of possible #{overall_count}.")
             _ ->
-              Logger.info("Starting bibliography harvest (Records marked as deleted are being ignored).")
+              Logger.info("Starting bibliography harvest (Records marked as deleted are being ignored), query:")
+              Logger.info(Poison.encode!(params[:query], pretty: true))
           end
 
           oai_result =
