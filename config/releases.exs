@@ -15,4 +15,7 @@ config :argos_core, ArgosCore.Mailer,
   password: System.fetch_env!("SMTP_USERPASSWORD")
 
 config :argos_core,
-  mail_recipient: System.fetch_env!("MAILER_RECIPIENT")
+  mail_recipient: {
+    System.fetch_env!("MAILER_RECIPIENT_NAME"),
+    System.fetch_env!("MAILER_RECIPIENT_ADDRESS")
+  }

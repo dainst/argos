@@ -8,8 +8,8 @@ defmodule ArgosCore.Mailer do
   def send_email(%{subject: subject, text_body: text_body}) do
     email =
       new_email(
-        to: Application.get_env(:argos_core, :mail_recipient),
-        from: Application.get_env(:argos_core, :mail_sender),
+        to: [Application.get_env(:argos_core, :mail_recipient)],
+        from: [Application.get_env(:argos_core, :mail_sender)],
         subject: subject,
         text_body: text_body
       )
@@ -18,7 +18,7 @@ defmodule ArgosCore.Mailer do
       "<username>" ->
         Logger.info("Mailer not configured, would have sent the following email:")
         Logger.info(Poison.encode!(email, [pretty: true]))
-        email
+        {:ok, email}
       _ ->
         email
         |> deliver_now()

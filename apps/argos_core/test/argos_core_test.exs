@@ -3,15 +3,19 @@ defmodule ArgosCoreTest do
   doctest ArgosCore
 
   test "mailer creates email based on configuration" do
+    # To actually send an email, you have to adjust the configuration in your config.secrets.exs
     subject = "Test subject"
     body = "Test body"
 
-    %{
-      subject: ^subject,
-      text_body: ^body,
-      from: from,
-      to: to
-      } =
+    {
+      :ok,
+      %{
+        subject: ^subject,
+        text_body: ^body,
+        from: [from],
+        to: [to]
+      }
+    } =
       %{subject: "Test subject", text_body: "Test body"}
       |> ArgosCore.Mailer.send_email()
 
