@@ -11,8 +11,8 @@ config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
 
 config :logger, :console,
-  format: "[$level - $metadata] $message \n",
-  metadata: [:application, :module]
+  format: "$date $time [$level|$metadata] $message\n",
+  metadata: [:module]
 
 config :argos_core,
   elasticsearch_url: "http://localhost:9200",
@@ -55,11 +55,11 @@ config :argos_api,
   host_url: "http://localhost:#{port}"
 
 config :argos_harvesting,
-  bibliography_harvest_interval: 1000 * 60 * 60 * 24, # Once a day (that is also zenon's update interval)
-  collections_harvest_interval: 1000 * 60 * 30, # 30 minutes
-  chronontology_harvest_interval: 1000 * 60 * 30, # 30 minutes
-  gazetteer_harvest_interval: 1000 * 60 * 60 * 24, # Once a day
-  thesauri_harvest_interval: 1000 * 60 * 60 * 24 # Once a day
+  bibliography_harvest_interval: 1000 * 60 * 60 * 24,
+  collections_harvest_interval: 1000 * 60 * 60 * 24,
+  chronontology_harvest_interval: 1000 * 60 * 60 * 24,
+  gazetteer_harvest_interval: 1000 * 60 * 60 * 24,
+  thesauri_harvest_interval: 1000 * 60 * 60 * 24
 
 secrets_config_filename = "config.secrets.exs"
 if not File.exists?("config/#{secrets_config_filename}") do
