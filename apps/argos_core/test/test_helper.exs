@@ -8,7 +8,7 @@ defmodule ArgosCore.TestHelpers do
     mapping = File.read!(@elasticsearch_mapping_path)
 
     ArgosCore.HTTPClient.put(@elasticsearch_url)
-    ArgosCore.HTTPClient.put(
+    ArgosCore.HTTPClient.put_payload(
       "#{@elasticsearch_url}/_mapping",
       [{"Content-Type", "application/json"}],
       mapping

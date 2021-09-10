@@ -1,50 +1,57 @@
 defmodule ArgosHarvestingTest do
   use ExUnit.Case
-  doctest ArgosHarvesting.Application
+  doctest ArgosHarvesting.BaseHarvester
 
   alias ArgosHarvesting.{
     Gazetteer,
     Thesauri,
-    Bibliography
+    Bibliography,
+    Chronontology,
+    Collection
   }
 
-  alias ArgosHarvesting.TestHelpers
+  @timezone "Etc/UTC"
 
-  describe "elastic search tests" do
+  @tag timeout: (1000 * 60 * 5)
+  # This test may take some time because a lot of "deleted" records are skipped
+  # while searching OAI PMH for existing records.
+  test "bibliography harvester generalises for base harvester module" do
+    ensure_generalisability(Bibliography)
+  end
 
-    setup %{} do
-      TestHelpers.create_index()
+  test "chronontology harvester generalises for base harvester module" do
+    ensure_generalisability(Chronontology)
+  end
 
-      on_exit(fn ->
-        TestHelpers.remove_index()
-      end)
-      :ok
-    end
+  test "collection harvester generalises for base harvester module" do
+    ensure_generalisability(Collection)
+  end
 
-    test "gazetteer harvester harvests by date" do
-      result =
-        Date.utc_today()
-        |> Date.add(-7)
-        |> Gazetteer.run_harvest()
+  test "gazetteer harvester generalises for base harvester module" do
+    ensure_generalisability(Gazetteer)
+  end
 
-      assert :ok = result
-    end
+  test "thesauri harvester generalises for base harvester module" do
+    ensure_generalisability(Thesauri)
+  end
 
-    test "thesauri harvester harvests by date" do
-      result =
-        Date.utc_today()
-        |> Date.add(-7)
-        |> Thesauri.run_harvest()
+  defp ensure_generalisability(harvester) do
+    result =
+      harvester.run_harvest(%{})
+      |> Enum.take(10)
 
-      assert :ok = result
-    end
+    assert is_list(result)
+    assert Enum.count(result) == 10
 
-    test "bibliography harvester harvests by date" do
-      result =
-        DateTime.now!("Etc/UTC")
-        |> Bibliography.run_harvest()
+    datetime =
+      DateTime.now!(@timezone)
+      |> DateTime.add(-60 * 24 * 3)
 
-      assert [] = result
-    end
+    result =
+      harvester.run_harvest(%{last_run: datetime})
+      |> Enum.take(1)
+
+    assert is_list(result)
+    assert Enum.count(result) == 0 or Enum.count(result) == 1
   end
 end

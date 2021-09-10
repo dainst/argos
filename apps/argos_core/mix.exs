@@ -4,7 +4,7 @@ defmodule ArgosCore.MixProject do
   def project do
     [
       app: :argos_core,
-      version: "0.1.1",
+      version: "0.2.2",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
@@ -37,7 +37,9 @@ defmodule ArgosCore.MixProject do
       {:geo, "~> 3.3.7"},
       {:sweet_xml, "~> 0.6.6"},
       {:tongue, "~> 2.2"},
-      {:ecto, "~> 3.6"}
+      {:ecto, "~> 3.6"},
+      {:bamboo, "~> 2.2.0"},
+      {:bamboo_smtp, "~> 4.1.0"}
     ]
   end
 end

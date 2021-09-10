@@ -99,11 +99,11 @@ defmodule ArgosCore.Chronontology do
               {:halt, "Error while processing batch. #{reason}"}
 
             [] ->
-              {:halt, "No more records."}
+              {:halt, "No more records. Processed #{params["from"]}"}
 
             result_list ->
               if params["from"] != 0 do
-                Logger.info("Processed from #{params["from"]} records.")
+                Logger.info("Processed #{params["from"]} records.")
               end
               {
                 result_list,

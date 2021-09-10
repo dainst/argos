@@ -11,7 +11,7 @@ defmodule ArgosHarvesting.TestHelpers do
       _ -> {:ok}
     end
 
-    case ArgosCore.HTTPClient.put(
+    case ArgosCore.HTTPClient.put_payload(
       "#{@elasticsearch_url}/_mapping",
       [{"Content-Type", "application/json"}],
       mapping

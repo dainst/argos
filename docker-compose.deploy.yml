@@ -63,6 +63,10 @@ services:
     container_name: "argos-api"
     environment: 
       - HOST=https://${HOST}
+      - SMTP_USERNAME
+      - SMTP_USERPASSWORD
+      - MAILER_RECIPIENT_NAME
+      ⁻ MAILER_RECIPIENT_ADDRESS
     labels:
       - traefik.enable=true
       - traefik.http.routers.api.rule=Host(`${HOST}`)        
@@ -74,6 +78,12 @@ services:
   harvesting:
     image: "dainst/argos_harvesting:${ARGOS_HARVESTING_VERSION}"
     container_name: "argos-harvesting"
+    environment: 
+      - HOST=https://${HOST}
+      - SMTP_USERNAME
+      - SMTP_USERPASSWORD
+      - MAILER_RECIPIENT_NAME
+      ⁻ MAILER_RECIPIENT_ADDRESS
     volumes: 
       - "./elasticsearch-mapping.json:/elasticsearch-mapping.json"
     labels:

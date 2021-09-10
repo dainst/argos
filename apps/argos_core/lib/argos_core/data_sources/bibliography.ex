@@ -97,6 +97,17 @@ defmodule ArgosCore.Bibliography do
       |> get_batches()
     end
 
+    def get_by_date(%Date{} = date) do
+      encoded_date =
+        date
+        |> to_string()
+
+      %{
+        from: encoded_date
+      }
+      |> get_batches()
+    end
+
     defp get_id_list_via_oai(params) do
       case params do
         %{resumptionToken: ""} ->
@@ -138,7 +149,8 @@ defmodule ArgosCore.Bibliography do
             %{overall_count: overall_count, current_count: current_count} ->
               Logger.info("Processed records: #{current_count} of possible #{overall_count}.")
             _ ->
-              Logger.info("Starting bibliography harvest (Records marked as deleted are being ignored).")
+              Logger.info("Starting bibliography harvest (Records marked as deleted are being ignored), query:")
+              Logger.info(Poison.encode!(params[:query], pretty: true))
           end
 
           oai_result =
@@ -171,13 +183,8 @@ defmodule ArgosCore.Bibliography do
                   error ->
                     error
                 end
-                |> Stream.chunk_every(20) # Process in chunks to throttle the number of parallel processes
-                |> Enum.map(fn(chunk) ->
-                  chunk
-                  |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
-                  |> Enum.map(&Task.await(&1, 1000 * 60))
-                end)
-                |> List.flatten()
+                |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
+                |> Enum.map(&Task.await(&1, 1000 * 60))
             end
 
           case records do
@@ -265,27 +272,6 @@ defmodule ArgosCore.Bibliography do
     @field_type Application.get_env(:argos_core, :bibliography_type_key)
 
     def parse_record(record) do
-
-      publications_links =
-        case DataProvider.get_publications_link(record["id"]) do
-          {:ok, nil} ->
-            []
-          {:ok, url} ->
-            [%{
-              "url" => url,
-              "type" => :website,
-              "label" => [%{"lang" => "en", "text" => "Available online"}, %{"lang" => "de", "text" => "Online verfügbar"}]
-            }]
-        end
-
-      external_links =
-        record["urls"]
-        |> Enum.map(&parse_url(&1))
-
-      external_links =
-        publications_links ++ external_links
-        |> Enum.uniq_by(fn(%{"url" => url}) -> url end)
-
       spatial_topics =
         record["DAILinks"]["gazetteer"]
         |> Enum.map(&parse_place/1)
@@ -309,6 +295,27 @@ defmodule ArgosCore.Bibliography do
               true
           end
         end)
+
+      publications_links =
+        case DataProvider.get_publications_link(record["id"]) do
+          {:ok, nil} ->
+            []
+          {:ok, url} ->
+            [%{
+              "url" => url,
+              "type" => :website,
+              "label" => [%{"lang" => "en", "text" => "Available online"}, %{"lang" => "de", "text" => "Online verfügbar"}]
+            }]
+        end
+
+      external_links =
+        record["urls"]
+        |> Enum.map(&parse_url(&1))
+
+      external_links =
+        publications_links ++ external_links
+        |> Enum.uniq_by(fn(%{"url" => url}) -> url end)
+
       core_fields = %{
         "type" => @field_type,
         "source_id" => record["id"],
@@ -383,9 +390,9 @@ defmodule ArgosCore.Bibliography do
     defp parse_url(%{"url" => url, "desc" => desc}) do
       %{"url" => url,
         "type" => :website,
-        "label" => case String.trim(desc)=="" do
-          true->[%{"lang" => NaturalLanguageDetector.get_language_key(desc), "text" => desc}]
-          _->[%{"lang" => NaturalLanguageDetector.get_language_key("External link"), "text" => "External link"}]
+        "label" => case String.trim(desc) == "" do
+          false->[%{"lang" => NaturalLanguageDetector.get_language_key(desc), "text" => desc}]
+          _->[%{"lang" => "en", "text" => "External link"}, %{"de" => "Externer link"}]
         end
       }
     end

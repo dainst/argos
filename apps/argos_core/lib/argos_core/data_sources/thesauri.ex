@@ -283,7 +283,7 @@ defmodule ArgosCore.Thesauri do
 
       def check_validity(xml) do
         try do
-         doc = xml |> parse()
+         doc = SweetXml.parse(xml, quiet: true)
          {:ok, doc}
         catch
           :exit, _ -> {:error, "Malformed xml document"}
