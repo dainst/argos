@@ -33,8 +33,7 @@ config :argos_core,
   thesauri_url: "http://thesauri.dainst.org",
   thesauri_type_key: "concept",
 
-  status_mail_sender: "argos-status@idai.world",
-  status_mail_recipient: "dev@dainst.org"
+  mail_sender: "argos-status@idai.world"
 
 config :argos_core, ArgosCore.Mailer,
   adapter: Bamboo.SMTPAdapter,

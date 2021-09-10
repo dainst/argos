@@ -8,8 +8,8 @@ defmodule ArgosCore.Mailer do
   def send_email(%{subject: subject, text_body: text_body}) do
     email =
       new_email(
-        to: Application.get_env(:argos_core, :status_mail_recipient),
-        from: Application.get_env(:argos_core, :status_mail_sender),
+        to: Application.get_env(:argos_core, :mail_recipient),
+        from: Application.get_env(:argos_core, :mail_sender),
         subject: subject,
         text_body: text_body
       )
