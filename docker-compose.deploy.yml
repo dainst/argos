@@ -65,6 +65,7 @@ services:
       - HOST=https://${HOST}
       - SMTP_USERNAME=${SMTP_USERNAME}
       - SMTP_USERPASSWORD=${SMTP_USERPASSWORD}
+      - MAILER_RECIPIENT=${MAILER_RECIPIENT}
     labels:
       - traefik.enable=true
       - traefik.http.routers.api.rule=Host(`${HOST}`)        
@@ -80,6 +81,7 @@ services:
       - HOST=https://${HOST}
       - SMTP_USERNAME=${SMTP_USERNAME}
       - SMTP_USERPASSWORD=${SMTP_USERPASSWORD}
+      - MAILER_RECIPIENT=${MAILER_RECIPIENT}
     volumes: 
       - "./elasticsearch-mapping.json:/elasticsearch-mapping.json"
     labels:
