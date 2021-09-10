@@ -21,7 +21,7 @@ defmodule ArgosHarvesting.Gazetteer do
     |> Stream.reject(fn val -> is_nil(val) end)
   end
 
-  def run_harvest(_state) do
+  def run_harvest(%{}) do
     DataProvider.get_all()
     |> Stream.map(fn val ->
       case val do
