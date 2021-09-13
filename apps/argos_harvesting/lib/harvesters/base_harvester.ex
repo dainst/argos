@@ -41,7 +41,7 @@ defmodule ArgosHarvesting.BaseHarvester do
 
           ArgosCore.Mailer.send_email(%{
             subject: "#{source} harvester error",
-            text_body: "#{e.__struct__}\n #{Exception.message(e)}}"
+            text_body: "#{e.__struct__}\n #{inspect(e)}}"
           })
 
           state
