@@ -235,7 +235,7 @@ defmodule ArgosCore.Bibliography do
               Cachex.put(:argos_core_cache, :biblio_to_ojs_mappings, mapping, ttl: :timer.seconds(60 * 30))
               {:ok, mapping}
             {:error, reason} = error ->
-              Logger.error("Received #{reason} while tryig to load publications' journal mapping.")
+              Logger.error("Received #{inspect(reason)} while tryig to load publications' journal mapping.")
               error
           end
         cached_value ->
@@ -258,7 +258,7 @@ defmodule ArgosCore.Bibliography do
               Cachex.put(:argos_core_cache, :biblio_to_omp_mappings, mapping, ttl: :timer.seconds(60 * 30))
               {:ok, mapping}
             {:error, %{status: status} = error} ->
-              Logger.error("Received #{status} while trying to load publications' book mapping.")
+              Logger.error("Received #{inspect(status)} while trying to load publications' book mapping.")
               error
           end
         cached_value ->
@@ -408,9 +408,8 @@ defmodule ArgosCore.Bibliography do
           %{
             "resource" => place
           }
-        {:error, %{status: status} = msg} = error ->
-            Logger.error("Received #{status} for #{data["uri"]}:")
-            Logger.error(msg)
+        {:error, msg} = error ->
+            Logger.error("Received #{inspect(msg)} for #{data["uri"]}:")
             error
       end
     end
@@ -426,9 +425,8 @@ defmodule ArgosCore.Bibliography do
           %{
             "resource" => concept
           }
-        {:error, %{status: status} = msg} = error ->
-          Logger.error("Received #{status} for #{data["uri"]}:")
-          Logger.error(msg)
+        {:error, msg} = error ->
+          Logger.error("Received #{inspect(msg)} for #{data["uri"]}:")
           error
       end
     end

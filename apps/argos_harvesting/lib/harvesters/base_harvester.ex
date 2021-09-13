@@ -27,12 +27,35 @@ defmodule ArgosHarvesting.BaseHarvester do
       try do
         now = DateTime.now!(@timezone)
 
-        state
-        |> source.run_harvest()
-        |> Enum.each(&Indexer.index/1)
-        # TODO: Indexing in parallel? How to throttle?
-        # |> Enum.map(&Task.async(fn -> Indexer.index(&1) end))
-        # |> Enum.each(&Task.await/1)
+        error_msg =
+          state
+          |> source.run_harvest()
+          |> Stream.map(fn (element) ->
+            case element do
+              {:ok, doc} ->
+                Indexer.index(doc)
+              error ->
+                error
+            end
+          end)
+          |> Stream.filter(fn(element) ->
+            case element do
+              {:error, _} ->
+                true
+              _ ->
+                false
+            end
+          end)
+          |> Enum.reduce("", fn(element, acc) ->
+            "#{acc}\n#{inspect(element)}"
+          end)
+
+        if error_msg != "" do
+          ArgosCore.Mailer.send_email(%{
+            subject: "#{source} harvester error(s)",
+            text_body: error_msg
+          })
+        end
 
         Map.replace!(state, :last_run, now)
       rescue

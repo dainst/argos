@@ -96,7 +96,7 @@ defmodule ArgosCore.Chronontology do
         fn params ->
           case process_batch_query(params) do
             {:error, reason} ->
-              {:halt, "Error while processing batch. #{reason}"}
+              {:halt, "Error while processing batch. #{inspect(reason)}"}
 
             [] ->
               {:halt, "No more records. Processed #{params["from"]}"}
@@ -134,8 +134,8 @@ defmodule ArgosCore.Chronontology do
           |> Enum.map(&Task.async(fn -> parse_period_data(&1) end))
           |> Enum.map(&Task.await(&1, 1000 * 60))
 
-        {:error, reason} ->
-          {:error, reason}
+        error ->
+          error
       end
     end
 

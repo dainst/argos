@@ -56,9 +56,9 @@ defmodule ArgosHarvesting.ReleaseCLI do
       case val do
         {:error, msg} ->
           Logger.error("Error while harvesting:")
-          Logger.error(msg)
+          Logger.error(inspect(msg))
           nil
-        data ->
+        {:ok, data} ->
           data
       end
     end)

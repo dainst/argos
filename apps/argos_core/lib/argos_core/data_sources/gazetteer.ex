@@ -128,8 +128,8 @@ defmodule ArgosCore.Gazetteer do
         fn -> %{scroll_id: nil} end,
         fn (%{scroll_id: scroll_id}) ->
           case process_batch_query(base_query, scroll_id, @batch_size) do
-            {:error, reason} ->
-              {:halt, "Error while processing batch. #{reason}"}
+            {:error, _} = error ->
+              {:halt, error}
             {:ok, []} ->
               {:halt, "No more records."}
             {:ok, %{result: results, scroll: scroll, total: total}} ->
