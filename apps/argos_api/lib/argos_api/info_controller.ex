@@ -15,7 +15,7 @@ defmodule ArgosAPI.InfoController do
 
     info = %{
       argos_api_version: argos_vsn,
-      records: count_docs,
+      document_count: count_docs,
       swagger_ui: "#{host_url}/swagger",
       swagger_spec: "#{host_url}/public/openapi.json"
     }
