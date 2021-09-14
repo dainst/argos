@@ -77,10 +77,8 @@ defmodule ArgosCore.Collection do
           {:ok, data} ->
             data["data"]
             |> Enum.map(&CollectionParser.parse_collection(&1))
-
-          {:error, reason} = error ->
-            Logger.error("Error while loading #{url} data: #{inspect(reason)}")
-            [error]
+          {:error, reason} ->
+            raise(reason)
         end
       Logger.info("Done.")
       collections

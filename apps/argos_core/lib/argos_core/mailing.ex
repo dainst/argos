@@ -17,7 +17,7 @@ defmodule ArgosCore.Mailer do
     case Application.get_env(:argos_core, ArgosCore.Mailer)[:username] do
       "<username>" ->
         Logger.info("Mailer not configured, would have sent the following email:")
-        Logger.info(Poison.encode!(email, [pretty: true]))
+        Logger.info(email)
         {:ok, email}
       _ ->
         email

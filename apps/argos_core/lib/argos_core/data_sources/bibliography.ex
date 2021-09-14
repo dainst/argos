@@ -131,8 +131,8 @@ defmodule ArgosCore.Bibliography do
                   xpath(xml, ~x"count(/OAI-PMH/ListRecords/record)"s)
                 }
               end
-            error ->
-              error
+            {:error, reason} ->
+              raise(reason)
           end
       end
     end
@@ -180,8 +180,8 @@ defmodule ArgosCore.Bibliography do
                 |> case do
                   {:ok, %{"records" => records}} ->
                     records
-                  error ->
-                    error
+                  {:error, reason} ->
+                    raise(reason)
                 end
                 |> Enum.map(&Task.async(fn -> BibliographyParser.parse_record(&1) end))
                 |> Enum.map(&Task.await(&1, 1000 * 60))

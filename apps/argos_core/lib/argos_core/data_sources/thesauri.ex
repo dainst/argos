@@ -134,9 +134,8 @@ defmodule ArgosCore.Thesauri do
         #next_fun
         fn (root_data) ->
           case root_data do
-            {:error, error} ->
-              Logger.error(error)
-              {[{:error, error}], nil}
+            {:error, reason} ->
+              raise(reason)
             # last case roots are empty
             nil ->
               Logger.info("stopped becaus of nil")
