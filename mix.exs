@@ -43,7 +43,7 @@ defmodule Argos.MixProject do
         "run --eval 'ArgosCore.ReleaseCLI.update_mapping()' -- --script"
       ],
       seed: [
-        "seed.bibliography", "seed.collections"
+        "seed.bibliography", "seed.chronontology", "seed.collections", "seed.gazetteer", "seed.thesauri"
       ],
       "seed.bibliography": [
         "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(bibliography), Date.utc_today() |> Date.add(-#{bibliography_seed_days_ago}) |> to_string())' -- --script"
