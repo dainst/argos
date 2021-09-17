@@ -191,13 +191,31 @@ defmodule ArgosCore.Gazetteer do
         "title" => parse_names([gazetteer_data["prefName"]] ++ Map.get(gazetteer_data, "names", [])),
         "full_record" => gazetteer_data
       }
-      {
-        :ok,
+
+      result =
         %{
           "core_fields" => core_fields,
-          "geometry" => parse_geometries_as_geo_json(gazetteer_data["prefLocation"])
         }
-      }
+
+      # ElasticSearch does not allow empty :geometries for GeometryCollections, so
+      # we do not add a "geometry" key to the Argos document if there are no geometries in the collection.
+      result =
+          %Geo.GeometryCollection{
+            geometries: parse_geometries_as_geo_json(gazetteer_data["prefLocation"])
+          }
+          |> case do
+            %{geometries: []} ->
+              result
+            values ->
+              Map.put(
+              result,
+              "geometry",
+              Geo.JSON.encode!(values)
+            )
+          end
+
+      {:ok, result}
+
     end
 
     defp parse_names(names) do
@@ -220,32 +238,13 @@ defmodule ArgosCore.Gazetteer do
       end)
     end
 
-    defp parse_geometries_as_geo_json(%{"coordinates" => coor, "shape" => shp}) do
-      %{
-        "point" => create_point(coor),
-        "shape" => create_polygons(shp)
-      }
-    end
-    defp parse_geometries_as_geo_json(%{"shape" => shp})  do
-      %{
-        "shape" => create_polygons(shp)
-      }
-    end
-    defp parse_geometries_as_geo_json(%{"coordinates" => coor}) do
-      %{
-        "point" => create_point(coor)
-      }
-    end
-    defp parse_geometries_as_geo_json(_) do
-      %{}
-    end
+    defp parse_geometries_as_geo_json(%{"coordinates" => coor, "shape" => shp}), do: [ create_point(coor), create_polygons(shp) ]
+    defp parse_geometries_as_geo_json(%{"shape" => shp}),  do: [ create_polygons(shp)]
+    defp parse_geometries_as_geo_json(%{"coordinates" => coor}), do: [ create_point(coor)]
+    defp parse_geometries_as_geo_json(_),  do: []
 
     defp create_point(coords) do
-      [lng, lat] = coords
-      %{
-        "lat" => lat,
-        "lon" => lng
-      }
+      %Geo.Point{ coordinates: List.to_tuple(coords) }
     end
 
     defp create_polygons(multi_polygon_list) do
@@ -260,7 +259,6 @@ defmodule ArgosCore.Gazetteer do
       |> (fn val ->
         %Geo.MultiPolygon{coordinates: val}
       end).()
-      |> Geo.JSON.encode!()
     end
   end
 end
