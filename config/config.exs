@@ -30,6 +30,9 @@ config :argos_core,
   gazetteer_url: "https://gazetteer.dainst.org",
   gazetteer_type_key: "place",
 
+  geoserver_url: "https://geoserver.dainst.org",
+  geoserver_type_key: "map",
+
   thesauri_url: "http://thesauri.dainst.org",
   thesauri_type_key: "concept",
 

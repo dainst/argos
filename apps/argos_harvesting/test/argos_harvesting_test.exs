@@ -4,6 +4,7 @@ defmodule ArgosHarvestingTest do
 
   alias ArgosHarvesting.{
     Gazetteer,
+    Geoserver,
     Thesauri,
     Bibliography,
     Chronontology,
@@ -31,9 +32,14 @@ defmodule ArgosHarvestingTest do
     ensure_generalisability(Gazetteer)
   end
 
+  test "geoserver harvester generalises for base harvester module" do
+    ensure_generalisability(Geoserver)
+  end
+
   test "thesauri harvester generalises for base harvester module" do
     ensure_generalisability(Thesauri)
   end
+
 
   defp ensure_generalisability(harvester) do
     result =
