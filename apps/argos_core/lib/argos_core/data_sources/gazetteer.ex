@@ -9,7 +9,7 @@ defmodule ArgosCore.Gazetteer do
 
     embedded_schema do
       embeds_one(:core_fields, CoreFields)
-      field :geometry, {:array, :map}
+      field :geometry, :map
     end
 
     def changeset(place, params \\ %{}) do
@@ -220,15 +220,32 @@ defmodule ArgosCore.Gazetteer do
       end)
     end
 
-    defp parse_geometries_as_geo_json(%{"coordinates" => coor, "shape" => shp}), do: [ create_point(coor), create_polygons(shp) ]
-    defp parse_geometries_as_geo_json(%{"shape" => shp}),  do: [ create_polygons(shp)]
-    defp parse_geometries_as_geo_json(%{"coordinates" => coor}), do: [ create_point(coor)]
-    defp parse_geometries_as_geo_json(_),  do: []
+    defp parse_geometries_as_geo_json(%{"coordinates" => coor, "shape" => shp}) do
+      %{
+        "point" => create_point(coor),
+        "shape" => create_polygons(shp)
+      }
+    end
+    defp parse_geometries_as_geo_json(%{"shape" => shp})  do
+      %{
+        "shape" => create_polygons(shp)
+      }
+    end
+    defp parse_geometries_as_geo_json(%{"coordinates" => coor}) do
+      %{
+        "point" => create_point(coor)
+      }
+    end
+    defp parse_geometries_as_geo_json(_) do
+      %{}
+    end
 
     defp create_point(coords) do
-      Geo.JSON.encode!(
-        %Geo.Point{ coordinates: List.to_tuple(coords) }
-      )
+      [lng, lat] = coords
+      %{
+        "lat" => lat,
+        "lon" => lng
+      }
     end
 
     defp create_polygons(multi_polygon_list) do

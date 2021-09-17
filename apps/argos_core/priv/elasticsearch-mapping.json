@@ -13,6 +13,16 @@
         "type": {
             "type": "alias",
             "path": "core_fields.type"
+        },
+        "geometry": {
+            "properties": {
+                "point": {
+                    "type": "geo_point"
+                },
+                "shape": {
+                    "type": "geo_shape"
+                }
+            }
         }
     },
     "dynamic_templates": [
