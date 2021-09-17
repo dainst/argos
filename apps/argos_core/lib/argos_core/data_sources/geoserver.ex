@@ -92,7 +92,7 @@ defmodule ArgosCore.Geoserver do
           "source_id" => "#{data["pk"]}",
           "uri" => data["detail_url"],
           "title" => get_translated_content(data["title"]),
-          "description" => get_descriptions(data) |> IO.inspect,
+          "description" => get_descriptions(data),
           "external_links" => get_external_links(data),
           "full_record" => data
         }
@@ -117,18 +117,16 @@ defmodule ArgosCore.Geoserver do
         |> case do
           nil -> result
           poly ->
-            IO.inspect poly
             Map.put(
               result,
               "geometry",
               Geo.JSON.encode!(
                 %Geo.GeometryCollection{
                   geometries: [poly]
-                } |> IO.inspect
+                }
               )
             )
         end
-        |> IO.inspect
       {:ok, result}
     end
 
