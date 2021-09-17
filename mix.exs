@@ -40,7 +40,7 @@ defmodule Argos.MixProject do
     gazetteer_seed_days_ago = 7
     [
       "update-mapping": [
-        "run --eval 'ArgosCore.Release.update_mapping()' -- --script"
+        "run --eval 'ArgosCore.ReleaseCLI.update_mapping()' -- --script"
       ],
       seed: [
         "seed.bibliography", "seed.collections"
