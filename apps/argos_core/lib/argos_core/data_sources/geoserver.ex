@@ -94,6 +94,7 @@ defmodule ArgosCore.Geoserver do
           "title" => get_translated_content(data["title"]),
           "description" => get_descriptions(data),
           "external_links" => get_external_links(data),
+          "persons" => get_persons(data),
           "full_record" => data
         }
 
@@ -183,5 +184,32 @@ defmodule ArgosCore.Geoserver do
 
       thumbnail_link ++ embed_link
     end
+
+    defp get_persons(data) do
+      owner =
+        case Map.get(data, "owner") do
+          nil -> []
+          %{"first_name" => first_name, "last_name" => last_name} ->
+            [%{"name" => "#{first_name} #{last_name}"}]
+        end
+
+      poc =
+        case Map.get(data, "poc") do
+          nil -> []
+          %{"first_name" => first_name, "last_name" => last_name} ->
+            [%{"name" => "#{first_name} #{last_name}"}]
+        end
+
+      metadata_author =
+        case Map.get(data, "metadata_author") do
+          nil -> []
+          %{"first_name" => first_name, "last_name" => last_name} ->
+            [%{"name" => "#{first_name} #{last_name}"}]
+        end
+
+      owner ++ poc ++ metadata_author
+      |> Enum.dedup()
+    end
   end
+
 end
