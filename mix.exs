@@ -59,6 +59,9 @@ defmodule Argos.MixProject do
       ],
       "seed.thesauri": [
         "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(thesauri))' -- --script"
+      ],
+      "seed.geoserver": [
+        "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(geoserver))' -- --script"
       ]
     ]
   end
