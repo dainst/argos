@@ -5,7 +5,7 @@ defmodule ArgosCore.GeoserverTest do
   doctest ArgosCore.Geoserver
 
   alias ArgosCore.Geoserver.{
-    MapRecord,
+    MapDocument,
     DataProvider
   }
 
@@ -22,9 +22,9 @@ defmodule ArgosCore.GeoserverTest do
       |> case do
         {:ok, params} -> params
       end
-      |> MapRecord.create()
+      |> MapDocument.create()
 
-    assert %MapRecord{core_fields: %CoreFields{source_id: ^id}} = map_record
+    assert %MapDocument{core_fields: %CoreFields{source_id: ^id}} = map_record
   end
 
   test "get by id with unknown id yields 404 error" do
@@ -40,7 +40,7 @@ defmodule ArgosCore.GeoserverTest do
 
     records
     |> Enum.each(fn {:ok, record} ->
-      assert {:ok, %MapRecord{}} = MapRecord.create(record)
+      assert {:ok, %MapDocument{}} = MapDocument.create(record)
     end)
   end
 

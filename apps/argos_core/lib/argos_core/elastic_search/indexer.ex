@@ -53,7 +53,7 @@ defmodule ArgosCore.ElasticSearch.Indexer do
     Bibliography.BibliographicRecord.create(params)
   end
   defp validate(%{"core_fields" => %{"type" => @geoserver_type_key}} = params) do
-    Geoserver.MapRecord.create(params)
+    Geoserver.MapDocument.create(params)
   end
 
   def upsert(%{doc: %_{core_fields: %CoreFields{id: id}}} = data) do
