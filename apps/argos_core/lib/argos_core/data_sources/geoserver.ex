@@ -122,8 +122,8 @@ defmodule ArgosCore.Geoserver do
                 )
                 result
               {:error, msg} ->
-                Logger.error("#{msg}: #{inspect(val)}")
-                Logger.error("Layer: #{core_fields["uri"]}.")
+                Logger.warning("#{msg}: #{inspect(val)}")
+                Logger.warning("Layer: #{core_fields["uri"]}.")
                 nil
             end
         end
