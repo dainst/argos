@@ -275,6 +275,14 @@ defmodule ArgosCore.Geoserver do
         end
 
       (owner ++ poc ++ metadata_author)
+      |> Enum.map(fn(person) ->
+        Map.update!(person, "name", fn(val) ->
+          String.trim(val)
+        end)
+      end)
+      |> Enum.reject(fn(person) ->
+        person["name"] == ""
+      end)
       |> Enum.dedup()
     end
 
