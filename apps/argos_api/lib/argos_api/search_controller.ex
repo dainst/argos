@@ -63,6 +63,8 @@ defmodule ArgosAPI.SearchController do
           |> Enum.map(&String.split(&1, ":", parts: 2))
           |> Enum.map(fn split ->
             case split do
+              ["distance", params] ->
+                parse_distance_filter(params)
               [key, val] ->
                 %{"term" => %{key => val}}
               _ ->
@@ -85,6 +87,26 @@ defmodule ArgosAPI.SearchController do
   end
   defp parse_filters({:error, _} = error, _, _) do
     error
+  end
+
+  defp parse_distance_filter(opts) do
+    with [lon, lat, dist] <- String.split(opts, ","),
+      {longitude, _} <- Float.parse(lon),
+      {latitude, _} <- Float.parse(lat),
+      {distance, _} <- Float.parse(dist) do
+      %{
+        "geo_distance" => %{
+          "distance" => "#{distance}km",
+          "geometry" => %{
+            "lat" => latitude,
+            "lon" => longitude
+          }
+        }
+      }
+    else
+      _e ->
+        {:error, "Invalid distance filter query: #{inspect(opts)}. Please provide 'latitude, longitude, distance in km'."}
+    end
   end
 
   defp finalize_query({:ok, %{"q" => q, "size" => size, "from" => from, "filter" => filters, "!filter" => must_not }}) do
