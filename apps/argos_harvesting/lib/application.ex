@@ -65,6 +65,16 @@ defmodule ArgosHarvesting.Application do
         {
           ArgosHarvesting.BaseHarvester,
           %{
+            source: ArgosHarvesting.Geoserver,
+            interval: Application.get_env(:argos_harvesting, :geoserver_harvest_interval)
+          }
+        },
+        id: :geoserver
+      ),
+      Supervisor.child_spec(
+        {
+          ArgosHarvesting.BaseHarvester,
+          %{
             source: ArgosHarvesting.Thesauri,
             interval: Application.get_env(:argos_harvesting, :thesauri_harvest_interval)
           }

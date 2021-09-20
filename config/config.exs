@@ -61,6 +61,7 @@ config :argos_harvesting,
   collections_harvest_interval: 1000 * 60 * 60 * 24,
   chronontology_harvest_interval: 1000 * 60 * 60 * 24,
   gazetteer_harvest_interval: 1000 * 60 * 60 * 24,
+  geoserver_harvest_interval: 1000 * 60 * 60 * 24,
   thesauri_harvest_interval: 1000 * 60 * 60 * 24
 
 secrets_config_filename = "config.secrets.exs"
