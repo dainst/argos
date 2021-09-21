@@ -36,6 +36,12 @@ defmodule ArgosCore.Application do
       [{"Content-Type", "application/json"}],
       mapping
     )
+    |> case do
+      {:error, error} ->
+        Logger.error(inspect(error))
+      other ->
+        Logger.info(inspect(other))
+    end
   end
 
   defp initialize_index() do
