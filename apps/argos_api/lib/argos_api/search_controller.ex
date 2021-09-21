@@ -73,6 +73,7 @@ defmodule ArgosAPI.SearchController do
                 {:error, "Invalid filter query: #{Plug.Conn.Query.encode(params)}. Expected a query like filter[]=<field>:<value>."}
             end
           end)
+          |> List.flatten()
         _no_list ->
           [
             {:error, "Invalid filter query: #{Plug.Conn.Query.encode(params)}. Expected a list query like filter[]=<field>:<value>."}
@@ -96,15 +97,30 @@ defmodule ArgosAPI.SearchController do
       {longitude, _} <- Float.parse(lon),
       {latitude, _} <- Float.parse(lat),
       {distance, _} <- Float.parse(dist) do
-      %{
-        "geo_distance" => %{
-          "distance" => "#{distance}km",
-          "geometry" => %{
-            "lat" => latitude,
-            "lon" => longitude
+        %{
+          "bool" => %{
+            "should" => [
+              %{
+                "geo_distance" => %{
+                  "distance" => "#{distance}km",
+                  "geometry" => %{
+                    "lat" => latitude,
+                    "lon" => longitude
+                  }
+                }
+              },
+              %{
+                "geo_distance" => %{
+                  "distance" => "#{distance}km",
+                  "core_fields.spatial_topics.resource.geometry" => %{
+                    "lat" => latitude,
+                    "lon" => longitude
+                  }
+                }
+              }
+            ]
           }
         }
-      }
     else
       _e ->
         {:error, "Invalid distance filter query: #{inspect(opts)}. Please provide '<longitude>,<latidude>,<distance in km>'."}
@@ -126,17 +142,37 @@ defmodule ArgosAPI.SearchController do
           {:error, "Invalid bounding box filter query: #{inspect(opts)}, longitude left is to the right. #{@generic_help}"}
         true ->
           %{
-            "geo_bounding_box" => %{
-              "geometry" => %{
-                "top_left" => %{
-                  "lat" => topleft_latitude,
-                  "lon" => topleft_longitude
+            "bool" => %{
+              "should" => [
+                %{
+                  "geo_bounding_box" => %{
+                    "geometry" => %{
+                      "top_left" => %{
+                        "lat" => topleft_latitude,
+                        "lon" => topleft_longitude
+                      },
+                      "bottom_right" => %{
+                        "lat" => bottom_right_latitude,
+                        "lon" => bottom_right_longitude
+                      }
+                    }
+                  }
                 },
-                "bottom_right" => %{
-                  "lat" => bottom_right_latitude,
-                  "lon" => bottom_right_longitude
+                %{
+                  "geo_bounding_box" => %{
+                    "core_fields.spatial_topics.resource.geometry" => %{
+                      "top_left" => %{
+                        "lat" => topleft_latitude,
+                        "lon" => topleft_longitude
+                      },
+                      "bottom_right" => %{
+                        "lat" => bottom_right_latitude,
+                        "lon" => bottom_right_longitude
+                      }
+                    }
+                  }
                 }
-              }
+              ]
             }
           }
       end
