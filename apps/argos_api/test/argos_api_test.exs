@@ -43,6 +43,35 @@ defmodule ArgosAPITest do
     assert response.status == 400
   end
 
+  test "invalid bounding box filter yields 400 status" do
+    response =
+      conn(:get, "/search?filter[]=bounding_box:invalid")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 400
+
+
+    response =
+      conn(:get, "/search?filter[]=bounding_box:a,b,c,d")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 400
+
+    # Top is below bottom corner (latitudes invalid: parameter 1 < parameter 3)
+    response =
+      conn(:get, "/search?filter[]=bounding_box:0,0,50,50")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 400
+
+    # Left is to the right corner (longitudes invalid: parameter 0 > parameter 2)
+    response =
+      conn(:get, "/search?filter[]=bounding_box:50,50,0,0")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 400
+  end
+
   test "invalid from yields 400 status" do
     response =
       conn(:get, "/search?from=invalid")
@@ -177,6 +206,14 @@ defmodule ArgosAPITest do
     test "valid distance filter yields 200 status" do
       response =
         conn(:get, "/search?filter[]=distance:13.30039,52.4599,5")
+        |> ArgosAPI.Router.call(%{})
+
+      assert response.status == 200
+    end
+
+    test "valid bounding box filter yields 200 status" do
+      response =
+        conn(:get, "/search?filter[]=bounding_box:0,50,50,0")
         |> ArgosAPI.Router.call(%{})
 
       assert response.status == 200
