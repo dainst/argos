@@ -29,6 +29,20 @@ defmodule ArgosAPITest do
     assert response.status == 400
   end
 
+  test "invalid distance filter yields 400 status" do
+    response =
+      conn(:get, "/search?filter[]=distance:invalid")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 400
+
+    response =
+      conn(:get, "/search?filter[]=distance:0,0,-5")
+      |> ArgosAPI.Router.call(%{})
+
+    assert response.status == 400
+  end
+
   test "invalid from yields 400 status" do
     response =
       conn(:get, "/search?from=invalid")
@@ -158,6 +172,14 @@ defmodule ArgosAPITest do
         |> ArgosAPI.Router.call(%{})
 
       assert status == 404
+    end
+
+    test "valid distance filter yields 200 status" do
+      response =
+        conn(:get, "/search?filter[]=distance:13.30039,52.4599,5")
+        |> ArgosAPI.Router.call(%{})
+
+      assert response.status == 200
     end
   end
 end
