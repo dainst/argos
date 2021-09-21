@@ -16,7 +16,7 @@ defmodule ArgosCore.GeoserverTest do
   test "get by id yields map with requested id" do
     id = "5459"
 
-    {:ok, map_record} =
+    {:ok, map_document} =
       id
       |> DataProvider.get_by_id()
       |> case do
@@ -24,23 +24,23 @@ defmodule ArgosCore.GeoserverTest do
       end
       |> MapDocument.create()
 
-    assert %MapDocument{core_fields: %CoreFields{source_id: ^id}} = map_record
+    assert %MapDocument{core_fields: %CoreFields{source_id: ^id}} = map_document
   end
 
   test "get by id with unknown id yields 404 error" do
     {:error, %{status: 404}} = DataProvider.get_by_id("non-existant")
   end
 
-  test "get all yields places as result" do
-    records =
+  test "get all yields map as result" do
+    doc_params =
       DataProvider.get_all()
       |> Enum.take(10)
 
-    assert Enum.count(records) == 10
+    assert Enum.count(doc_params) == 10
 
-    records
-    |> Enum.each(fn {:ok, record} ->
-      assert {:ok, %MapDocument{}} = MapDocument.create(record)
+    doc_params
+    |> Enum.each(fn {:ok, doc_params} ->
+      assert {:ok, %MapDocument{}} = MapDocument.create(doc_params)
     end)
   end
 
@@ -55,10 +55,10 @@ defmodule ArgosCore.GeoserverTest do
       :ok
     end
 
-    test "map records can be added to index" do
-      {:ok, map_record} = DataProvider.get_by_id("5459")
+    test "map documents can be added to index" do
+      {:ok, map_document} = DataProvider.get_by_id("5459")
 
-      indexing_response = ArgosCore.ElasticSearch.Indexer.index(map_record)
+      indexing_response = ArgosCore.ElasticSearch.Indexer.index(map_document)
 
       %{
         upsert_response: {:ok, %{"_id" => "map_5459", "result" => "created"}}
