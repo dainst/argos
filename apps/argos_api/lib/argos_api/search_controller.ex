@@ -96,7 +96,7 @@ defmodule ArgosAPI.SearchController do
     with [lon, lat, dist] <- String.split(opts, ","),
       {longitude, _} <- Float.parse(lon),
       {latitude, _} <- Float.parse(lat),
-      {distance, _} <- Float.parse(dist) do
+      {distance, _} when distance > 0 <- Float.parse(dist) do
         %{
           "bool" => %{
             "should" => [
