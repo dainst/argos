@@ -36,7 +36,9 @@ config :argos_core,
   thesauri_url: "http://thesauri.dainst.org",
   thesauri_type_key: "concept",
 
-  mail_sender: {"Argos Status Mailer", "argos-status@idai.world"}
+  mail_sender: {"Argos Status Mailer", "argos-status@idai.world"},
+
+  env: Mix.env()
 
 config :argos_core, ArgosCore.Mailer,
   adapter: Bamboo.SMTPAdapter,

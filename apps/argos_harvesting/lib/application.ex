@@ -86,8 +86,8 @@ defmodule ArgosHarvesting.Application do
 
   def start(_type, _args) do
     children =
-      if running_script?(System.argv()) do
-        # We do not want to (re)start the harvesters when running exs scripts.
+      if running_script?(System.argv()) or Application.get_env(:argos_core, :env) == :test do
+        # We do not want to (re)start the harvesters when running exs scripts or tests.
         []
       else
         get_harvesters()
