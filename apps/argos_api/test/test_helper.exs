@@ -7,32 +7,19 @@ defmodule ArgosAPI.TestHelpers do
   def create_index() do
     mapping = File.read!(@elasticsearch_mapping_path)
 
-    case ArgosCore.HTTPClient.put(@elasticsearch_url) do
-      {:error, error} -> raise error
-      _ -> {:ok}
-    end
-
-    case ArgosCore.HTTPClient.put_payload(
+    ArgosCore.HTTPClient.put(@elasticsearch_url)
+    ArgosCore.HTTPClient.put_payload(
       "#{@elasticsearch_url}/_mapping",
       [{"Content-Type", "application/json"}],
       mapping
-    ) do
-      {:error, error} -> raise error
-      _ -> {:ok}
-    end
+    )
   end
 
   def refresh_index() do
-    case ArgosCore.HTTPClient.get("#{@elasticsearch_url}/_refresh") do
-      {:error, error} -> raise error
-      _ -> {:ok}
-    end
+    ArgosCore.HTTPClient.get("#{@elasticsearch_url}/_refresh")
   end
 
   def remove_index() do
-    case ArgosCore.HTTPClient.delete(@elasticsearch_url) do
-      {:error, error} -> raise error
-      _ -> {:ok}
-    end
+    ArgosCore.HTTPClient.delete(@elasticsearch_url)
   end
 end
