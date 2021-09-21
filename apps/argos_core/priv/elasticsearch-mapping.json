@@ -13,11 +13,8 @@
         "type": {
             "type": "alias",
             "path": "core_fields.type"
-        },
-        "geometry": {
-            "type": "geo_shape"
         }
-    },
+    },   
     "dynamic_templates": [
         {
             "general_topic_id": {
@@ -56,6 +53,15 @@
                     "type": "keyword",
                     "store": true
                 }
+            }
+        },
+        {
+            "geometry": {
+              "match": "geometry",
+              "match_mapping_type": "object",
+              "mapping": {
+                "type": "geo_shape"
+              }
             }
         }
     ]
