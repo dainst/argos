@@ -225,7 +225,7 @@ defmodule ArgosCore.Thesauri do
         labels = xml
           |> xml_to_labels(id)
         description = xml
-        |> xml_to_description(id)
+        |> read_path(~x(//skos:definition)l)
         concept = create_field_map(labels, description, id)
         { :ok, concept }
       end
@@ -240,14 +240,6 @@ defmodule ArgosCore.Thesauri do
             "description" => description,
           }
         }
-      end
-
-      defp xml_to_description(xml,id) do
-        case read_path(xml, ~x(//skos:definition)l) do
-          [] -> Logger.info("No definition found for concept #{@base_url}/#{id}.")
-          val ->
-            val
-        end
       end
 
       defp xml_to_labels(xml, id) do
