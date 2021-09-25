@@ -222,21 +222,22 @@ defmodule ArgosCore.Thesauri do
       require Logger
 
       def assemble_concept(xml, id) do
-        concept =
-          xml
+        labels = xml
           |> xml_to_labels(id)
-          |> create_field_map(id)
-
+        description = xml
+        |> read_path(~x(//skos:definition)l)
+        concept = create_field_map(labels, description, id)
         { :ok, concept }
       end
 
-      defp create_field_map(labels, id) do
+      defp create_field_map(labels, description, id) do
         %{
           "core_fields" => %{
             "source_id" => id,
             "type" => @field_type,
             "uri" => "#{@base_url}/#{id}",
-            "title" => labels
+            "title" => labels,
+            "description" => description,
           }
         }
       end
