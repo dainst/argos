@@ -64,9 +64,8 @@ defmodule ArgosHarvesting.BaseHarvester do
 
           ArgosCore.Mailer.send_email(%{
             subject: "#{source} harvester error",
-            text_body: "#{e.__struct__}\n #{inspect(e)}}"
+            text_body: "#{e.__struct__}\n#{inspect(e)}\n\nRescheduling for previous DateTime: #{inspect(Map.get(state, :last_run))}"
           })
-
           state
       end
 
