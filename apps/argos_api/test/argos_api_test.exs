@@ -92,7 +92,7 @@ defmodule ArgosAPITest do
     assert response.status == 200
   end
 
-  describe "elastic search tests" do
+  describe "elastic search interaction |" do
 
     setup do
       TestHelpers.create_index()
@@ -122,8 +122,8 @@ defmodule ArgosAPITest do
         body
         |> Poison.decode!()
 
-      # 1 collection, 2 places, 1 concept
-      assert total == 4
+      # 1 collection, 2 places, 1 temporal concept, 5 places linked to the temporal concept
+      assert total == 9
     end
 
     test "urls provided by info controller resolve" do
