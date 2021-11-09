@@ -32,6 +32,7 @@ defmodule ArgosCore.Chronontology do
     @field_type Application.get_env(:argos_core, :chronontology_type_key)
 
     alias ArgosCore.NaturalLanguageDetector
+    alias ArgosCore.Gazetteer
 
     require Logger
 
@@ -97,6 +98,7 @@ defmodule ArgosCore.Chronontology do
           case process_batch_query(params) do
             {:error, reason} ->
               raise(reason)
+
             [] ->
               {:halt, "No more records. Processed #{params["from"]}"}
 
@@ -104,6 +106,7 @@ defmodule ArgosCore.Chronontology do
               if params["from"] != 0 do
                 Logger.info("Processed #{params["from"]} records.")
               end
+
               {
                 result_list,
                 params
@@ -115,6 +118,7 @@ defmodule ArgosCore.Chronontology do
           case msg do
             msg when is_binary(msg) ->
               Logger.info(msg)
+
             %{"from" => from} ->
               Logger.info("Stopping. Processed #{from} records.")
           end
@@ -145,7 +149,7 @@ defmodule ArgosCore.Chronontology do
       )
     end
 
-    defp parse_period_data(data) do
+    def parse_period_data(data) do
       # Zukunft: Es gibt potenziell mehrere timespan, wie damit umgehen?
       beginning =
         case data["resource"]["hasTimespan"] do
@@ -154,6 +158,7 @@ defmodule ArgosCore.Chronontology do
 
           [%{"begin" => %{"notBefore" => notBefore}}] ->
             parse_any_to_numeric_string(notBefore)
+
           _ ->
             Logger.debug("Found no begin date for period #{data["resource"]["id"]}")
             ""
@@ -190,6 +195,7 @@ defmodule ArgosCore.Chronontology do
             ],
             else: []
           ),
+        "spatial_topics" => parse_spatial_topics(data["resource"]),
         "full_record" => data
       }
 
@@ -226,6 +232,64 @@ defmodule ArgosCore.Chronontology do
         end)
       end)
       |> List.flatten()
+    end
+
+    defp parse_spatial_topics(chronontology_data) do
+      part_of_region =
+        Map.get(chronontology_data, "spatiallyPartOfRegion", [])
+        |> create_spatial_topics([
+          %{
+            "lang" => "en",
+            "text" => "is spatially part of region"
+          },
+          %{
+            "lang" => "de",
+            "text" => "ist räumlich Teil der Region"
+          }
+        ])
+
+      core_area =
+        Map.get(chronontology_data, "hasCoreArea", [])
+        |> create_spatial_topics([
+          %{
+            "lang" => "en",
+            "text" => "is spatially part of region"
+          },
+          %{
+            "lang" => "de",
+            "text" => "ist räumlich Teil der Region"
+          }
+        ])
+
+      part_of_region ++ core_area
+    end
+
+    defp create_spatial_topics(urls, topic_context_notes) do
+      urls
+      |> Stream.map(fn url ->
+        case url do
+          "http://gazetteer.dainst.org/place/" <> gaz_id ->
+            gaz_id
+
+          _ ->
+            nil
+        end
+      end)
+      |> Stream.reject(&is_nil/1)
+      |> Stream.map(&Gazetteer.DataProvider.get_by_id(&1, false))
+      |> Enum.map(fn result ->
+        case result do
+          {:ok, place} ->
+            %{
+              "resource" => place,
+              "topic_context_note" => topic_context_notes
+            }
+
+          {:error, msg} = error ->
+            Logger.error("Received #{inspect(msg)}.")
+            error
+        end
+      end)
     end
   end
 end
