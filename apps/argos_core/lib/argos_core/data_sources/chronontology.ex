@@ -93,24 +93,24 @@ defmodule ArgosCore.Chronontology do
 
           final_params
         end,
-fn params ->
-  case process_batch_query(params) do
-    {:error, reason} ->
-      raise(reason)
-    [] ->
-      {:halt, "No more records. Processed #{params["from"]}"}
+        fn params ->
+          case process_batch_query(params) do
+            {:error, reason} ->
+              raise(reason)
+            [] ->
+              {:halt, "No more records. Processed #{params["from"]}"}
 
-    result_list ->
-      if params["from"] != 0 do
-        Logger.info("Processed #{params["from"]} records.")
-      end
-      {
-        result_list,
-        params
-        |> Map.update!("from", fn old -> old + 100 end)
-      }
-  end
-end,
+            result_list ->
+              if params["from"] != 0 do
+                Logger.info("Processed #{params["from"]} records.")
+              end
+              {
+                result_list,
+                params
+                |> Map.update!("from", fn old -> old + 100 end)
+              }
+          end
+        end,
         fn msg ->
           case msg do
             msg when is_binary(msg) ->
