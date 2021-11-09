@@ -5,9 +5,13 @@ defmodule ArgosCore.TestHelpers do
   @elasticsearch_mapping_path Application.app_dir(:argos_core, "priv/elasticsearch-mapping.json")
 
   def create_index() do
+    # Always ensure that there is no index before (re-) creating
+    remove_index()
+
     mapping = File.read!(@elasticsearch_mapping_path)
 
     ArgosCore.HTTPClient.put(@elasticsearch_url)
+
     ArgosCore.HTTPClient.put_payload(
       "#{@elasticsearch_url}/_mapping",
       [{"Content-Type", "application/json"}],
