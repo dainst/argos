@@ -15,6 +15,18 @@ defmodule ArgosCore.ThesauriTest do
   alias ArgosCore.TestHelpers
 
   describe "dataprovider tests" do
+
+    test "concept description parsed successfully" do
+      id = "_e04cc3e7"
+
+      {:ok, concept} =
+        with {:ok, params} <- DataProvider.get_by_id(id) do
+          params |> Concept.create()
+        end
+
+      assert %Concept{core_fields: %CoreFields{description: [%ArgosCore.TranslatedContent{lang: "de"}]}} = concept
+    end
+
     test "get by id yields concept with requested id" do
       id = "_b7707545"
 

@@ -96,6 +96,10 @@ defmodule ArgosCore.ElasticSearch.DataProvider do
     }
   end
 
+  defp extract_search_result_from_response(error) do
+    error
+  end
+
   defp transform_to_sparse_doc(doc) do
     # TODO: Cast to ecto schemas?
     # The document and all linked 'topic'-documents are stripped down to their :core_fields.

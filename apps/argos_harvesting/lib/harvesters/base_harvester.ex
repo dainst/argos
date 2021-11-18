@@ -47,7 +47,11 @@ defmodule ArgosHarvesting.BaseHarvester do
             end
           end)
           |> Enum.reduce("", fn(element, acc) ->
-            "#{acc}\n#{inspect(element)}"
+            """
+            #{acc}
+
+            #{inspect(element, pretty: true, printable_limit: :infinity)}
+            """
           end)
 
         if error_msg != "" do
@@ -64,9 +68,13 @@ defmodule ArgosHarvesting.BaseHarvester do
 
           ArgosCore.Mailer.send_email(%{
             subject: "#{source} harvester error",
-            text_body: "#{e.__struct__}\n #{inspect(e)}}"
+            text_body:
+              """
+              #{e.__struct__}
+              #{inspect(e, pretty: true, printable_limit: :infinity)}
+              Rescheduling for previous DateTime: #{inspect(Map.get(state, :last_run))}
+              """
           })
-
           state
       end
 

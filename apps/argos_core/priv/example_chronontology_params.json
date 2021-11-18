@@ -1,0 +1,301 @@
+{
+  "resource": {
+    "names": {
+      "en": [
+        "Chaldeans"
+      ]
+    },
+    "types": [
+      "political",
+      "material_culture"
+    ],
+    "provenance": "Chronontology",
+    "description": "the leader of the Chaldeans, Nabopolassar of Bit Yakini [...] gained full control of the south defeating the last Assyrian garrisons in Babylon, and marche noth in the Assyrian territories. The Babylonina's king expansion maonly moved in two directions. Along the euprates [...] along the Tigris. [...] The last year of Nabopolassar' reign (605 BC) marked the decisive victory of the Chaldeans. Nebuchadnezzar crossed the Euphrates at carchemish, the operative centre of the Egyptina. the city was sieged, the Egyptians retreated and Nebuchadnezzar followed them to Hama [...] Following his father's death, Nebuchadnezzar continued to be engaged in Syria and the Levant. [...] Following this victory, the borders were consolidated: the babylonians controlled Mesopotamia, Syria and the Levant. soon after the conquest, Cyrus arrived and was welcomed as loberator, while Nabonidus was captured. [...] Babylon was neither destroyed nor sacked, but was annexed to the rising Persian Empire.\nTable 31.1 Chronology of the Ancient Near East, ca. 650-500 BC: Nabopolassar (625-605) and Nabonidus (555-539)\n(source: The ancient Near East : history, society and economy. 2014. Mario Liverani; https://zenon.dainst.org/Record/001451426)",
+    "hasTimespan": [
+      {
+        "begin": {
+          "at": "-625",
+          "isImprecise": true
+        },
+        "end": {
+          "at": "-539",
+          "isImprecise": true
+        }
+      }
+    ],
+    "spatiallyPartOfRegion": [
+      "http://gazetteer.dainst.org/place/2043218",
+      "http://gazetteer.dainst.org/place/2086499",
+      "http://gazetteer.dainst.org/place/2277479"
+    ],
+    "hasCoreArea": [
+      "http://gazetteer.dainst.org/place/2751681",
+      "http://gazetteer.dainst.org/place/2283158",
+      "https://dbpedia.org/page/Italy"
+    ],
+    "relations": {
+      "follows": [
+        "bvLwqFcGyoaL",
+        "xG5xeqXuiYOG"
+      ],
+      "fallsWithin": [
+        "GH4yBNfv1uuY"
+      ],
+      "isSimilarTo": [
+        "Sx45kVuiFl4W"
+      ],
+      "isFollowedBy": [
+        "piMkQgDAaqPa"
+      ]
+    },
+    "id": "X5lOSI8YQFiL",
+    "type": "period"
+  },
+  "dataset": "none",
+  "version": 3,
+  "created": {
+    "user": "import",
+    "date": "2018-10-31T16:21:06.132+01:00"
+  },
+  "modified": [
+    {
+      "user": "import",
+      "date": "2018-10-31T16:36:07.123+01:00"
+    },
+    {
+      "user": "enricher",
+      "date": "2018-10-31T16:49:06.607+01:00"
+    }
+  ],
+  "boost": 8,
+  "related": {
+    "http://gazetteer.dainst.org/place/2043218": {
+      "prefName": {
+        "title": "Mesopotamien",
+        "language": "deu"
+      },
+      "names": [
+        {
+          "title": "Mesopotamia",
+          "language": "eng"
+        }
+      ],
+      "parents": [
+        {
+          "prefName": {
+            "title": "Vorderasien",
+            "language": "deu"
+          },
+          "names": [
+            {
+              "title": "Near East",
+              "language": "eng"
+            },
+            {
+              "title": "Vorderer Orient",
+              "language": "deu"
+            },
+            {
+              "title": "Südwestasien",
+              "language": "deu"
+            }
+          ]
+        },
+        {
+          "prefName": {
+            "title": "Asia",
+            "language": "eng"
+          },
+          "names": [
+            {
+              "title": "Asien",
+              "language": "deu"
+            },
+            {
+              "title": "Asia",
+              "language": "eng"
+            }
+          ]
+        }
+      ]
+    },
+    "http://gazetteer.dainst.org/place/2086499": {
+      "prefName": {
+        "title": "Syria",
+        "language": "eng"
+      },
+      "names": [
+        {
+          "title": "Syrien",
+          "language": "deu"
+        }
+      ],
+      "parents": [
+        {
+          "prefName": {
+            "title": "Asia",
+            "language": "eng"
+          },
+          "names": [
+            {
+              "title": "Asien",
+              "language": "deu"
+            },
+            {
+              "title": "Asia",
+              "language": "eng"
+            }
+          ]
+        }
+      ]
+    },
+    "http://gazetteer.dainst.org/place/2277479": {
+      "prefName": {
+        "title": "Levante",
+        "language": "deu"
+      },
+      "names": [
+        {
+          "title": "Levant",
+          "language": "eng"
+        }
+      ],
+      "parents": [
+        {
+          "prefName": {
+            "title": "Vorderasien",
+            "language": "deu"
+          },
+          "names": [
+            {
+              "title": "Near East",
+              "language": "eng"
+            },
+            {
+              "title": "Vorderer Orient",
+              "language": "deu"
+            },
+            {
+              "title": "Südwestasien",
+              "language": "deu"
+            }
+          ]
+        },
+        {
+          "prefName": {
+            "title": "Asia",
+            "language": "eng"
+          },
+          "names": [
+            {
+              "title": "Asien",
+              "language": "deu"
+            },
+            {
+              "title": "Asia",
+              "language": "eng"
+            }
+          ]
+        }
+      ]
+    },
+    "http://gazetteer.dainst.org/place/2751681": {
+      "prefName": {
+        "title": "Lower Mesopotamia",
+        "language": "eng"
+      },
+      "names": [
+        {
+          "title": "Arabian Irāq",
+          "language": "eng"
+        },
+        {
+          "title": "al-'Irāq al-'Arabi",
+          "language": "eng",
+          "transliterated": true
+        },
+        {
+          "title": "Sawad",
+          "language": "eng",
+          "transliterated": true
+        },
+        {
+          "title": "Südmesopotamien",
+          "language": "deu"
+        }
+      ]
+    },
+    "http://gazetteer.dainst.org/place/2283158": {
+      "prefName": {
+        "title": "Babylon",
+        "language": "deu"
+      },
+      "names": [
+        {
+          "title": "Babylon",
+          "language": "eng"
+        },
+        {
+          "title": "Babylon",
+          "language": "deu"
+        }
+      ],
+      "parents": [
+        {
+          "prefName": {
+            "title": "Irak",
+            "language": "deu"
+          },
+          "names": [
+            {
+              "title": "Iraq",
+              "language": "eng"
+            },
+            {
+              "title": "Irak",
+              "language": "deu"
+            },
+            {
+              "title": "Republic of Iraq",
+              "language": "eng"
+            }
+          ]
+        },
+        {
+          "prefName": {
+            "title": "Asia",
+            "language": "eng"
+          },
+          "names": [
+            {
+              "title": "Asien",
+              "language": "deu"
+            },
+            {
+              "title": "Asia",
+              "language": "eng"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "regions": [
+    {
+      "de": "Südmesopotamien",
+      "en": "Lower Mesopotamia"
+    },
+    {
+      "de": "Irak",
+      "en": "Iraq"
+    },
+    {
+      "de": "Babylon",
+      "en": "Babylon"
+    },
+    {
+      "de": "Asien",
+      "en": "Asia"
+    }
+  ]
+}

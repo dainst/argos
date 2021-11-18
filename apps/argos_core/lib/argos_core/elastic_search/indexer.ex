@@ -115,6 +115,13 @@ defmodule ArgosCore.ElasticSearch.Indexer do
           error ->
             error
         end
+      %{"type" => @chronontology_type_key} = core_fields ->
+        case Chronontology.DataProvider.get_by_id(core_fields["source_id"]) do
+          {:ok, chrono} ->
+            index(chrono)
+          error ->
+            error
+        end
       unhandled_reference ->
         msg = "Updating reference for type #{unhandled_reference["type"]} not implemented."
         Logger.error(msg)

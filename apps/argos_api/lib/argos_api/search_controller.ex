@@ -4,6 +4,8 @@ defmodule ArgosAPI.SearchController do
   alias ArgosCore.ElasticSearch.DataProvider
   alias ArgosAPI.Errors
 
+  require Logger
+
   def search(conn) do
 
     query = build_query(conn.params)
@@ -17,7 +19,8 @@ defmodule ArgosAPI.SearchController do
         case result do
           {:ok, val} ->
             send_resp(conn, 200, Poison.encode!(val))
-          {:error, _} ->
+          {:error, error} ->
+            Logger.error(error)
             Errors.send(conn, 500)
         end
       {:error, msg} ->
