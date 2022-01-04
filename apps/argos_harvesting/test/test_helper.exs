@@ -4,6 +4,8 @@ defmodule ArgosHarvesting.TestHelpers do
   @elasticsearch_url "#{Application.get_env(:argos_core, :elasticsearch_url)}/#{Application.get_env(:argos_core, :index_name)}"
   @elasticsearch_mapping_path Application.app_dir(:argos_core, "priv/elasticsearch-mapping.json")
   def create_index() do
+    remove_index()
+
     mapping = File.read!(@elasticsearch_mapping_path)
 
     ArgosCore.HTTPClient.put(@elasticsearch_url)
@@ -12,6 +14,8 @@ defmodule ArgosHarvesting.TestHelpers do
       [{"Content-Type", "application/json"}],
       mapping
     )
+
+    refresh_index()
   end
 
   def refresh_index() do
