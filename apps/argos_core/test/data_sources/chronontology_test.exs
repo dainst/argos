@@ -66,7 +66,7 @@ defmodule ArgosCore.ChronontologyTest do
     end)
   end
 
-  test "chronotology record's core_fields contains full_record data" do
+  test "chronontology record's core_fields contains full_record data" do
     id = "X5lOSI8YQFiL"
 
     {:ok, %{core_fields: %{full_record: %{"resource" => %{"id" => record_id}}}}} =
@@ -80,6 +80,38 @@ defmodule ArgosCore.ChronontologyTest do
     assert record_id == id
   end
 
+  test "gazetteer urls in chronontology data get parsed as external link" do
+    {:ok, %{core_fields: %{spatial_topics: spatial_topics}}} =
+      @example_json
+      |> DataProvider.parse_period_data()
+      |> case do
+        {:ok, params} ->
+          params
+      end
+      |> TemporalConcept.create()
+
+    count =
+      Enum.count(
+        @example_json["resource"]["spatiallyPartOfRegion"]
+      ) + Enum.count(
+        @example_json["resource"]["hasCoreArea"]
+      )
+
+    # One "hasCoreArea" url in the example is not a gazetteer url, thus expect -1
+    assert count - 1 == Enum.count(spatial_topics)
+  end
+
+  test "temporal concept can be added to index" do
+    {:ok, temporalConcept} = DataProvider.get_by_id("X5lOSI8YQFiL")
+
+    indexing_response = ArgosCore.ElasticSearch.Indexer.index(temporalConcept)
+
+    %{
+      upsert_response: {:ok, %{"_id" => "temporal_concept_X5lOSI8YQFiL", "result" => "created"}
+    }}  = indexing_response
+  end
+
+
   describe "elastic search interaction |" do
 
     setup %{} do
@@ -89,37 +121,6 @@ defmodule ArgosCore.ChronontologyTest do
         TestHelpers.remove_index()
       end)
       :ok
-    end
-
-    test "gazetteer urls in chronontology data get parsed as external link" do
-      {:ok, %{core_fields: %{spatial_topics: spatial_topics}}} =
-        @example_json
-        |> DataProvider.parse_period_data()
-        |> case do
-          {:ok, params} ->
-            params
-        end
-        |> TemporalConcept.create()
-
-      count =
-        Enum.count(
-          @example_json["resource"]["spatiallyPartOfRegion"]
-        ) + Enum.count(
-          @example_json["resource"]["hasCoreArea"]
-        )
-
-      # One "hasCoreArea" url in the example is not a gazetteer url, thus expect -1
-      assert count - 1 == Enum.count(spatial_topics)
-    end
-
-    test "temporal concept can be added to index" do
-      {:ok, temporalConcept} = DataProvider.get_by_id("X5lOSI8YQFiL")
-
-      indexing_response = ArgosCore.ElasticSearch.Indexer.index(temporalConcept)
-
-      %{
-        upsert_response: {:ok, %{"_id" => "temporal_concept_X5lOSI8YQFiL", "result" => "created"}
-      }}  = indexing_response
     end
 
     test "updating referenced gazetteer place updates temporal concept" do
