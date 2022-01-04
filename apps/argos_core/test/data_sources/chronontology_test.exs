@@ -80,28 +80,6 @@ defmodule ArgosCore.ChronontologyTest do
     assert record_id == id
   end
 
-  test "gazetteer urls in chronontology data get parsed as external link" do
-    {:ok, %{core_fields: %{spatial_topics: spatial_topics}}} =
-      @example_json
-      |> DataProvider.parse_period_data()
-      |> case do
-        {:ok, params} ->
-          params
-      end
-      |> TemporalConcept.create()
-
-    count =
-      Enum.count(
-        @example_json["resource"]["spatiallyPartOfRegion"]
-      ) + Enum.count(
-        @example_json["resource"]["hasCoreArea"]
-      )
-
-    # One "haseCoreArea" url in the example is not a gazetteer url, thus expect -1
-    assert count - 1 == Enum.count(spatial_topics)
-  end
-
-
   describe "elastic search interaction |" do
 
     setup %{} do
@@ -111,6 +89,27 @@ defmodule ArgosCore.ChronontologyTest do
         TestHelpers.remove_index()
       end)
       :ok
+    end
+
+    test "gazetteer urls in chronontology data get parsed as external link" do
+      {:ok, %{core_fields: %{spatial_topics: spatial_topics}}} =
+        @example_json
+        |> DataProvider.parse_period_data()
+        |> case do
+          {:ok, params} ->
+            params
+        end
+        |> TemporalConcept.create()
+
+      count =
+        Enum.count(
+          @example_json["resource"]["spatiallyPartOfRegion"]
+        ) + Enum.count(
+          @example_json["resource"]["hasCoreArea"]
+        )
+
+      # One "hasCoreArea" url in the example is not a gazetteer url, thus expect -1
+      assert count - 1 == Enum.count(spatial_topics)
     end
 
     test "temporal concept can be added to index" do
