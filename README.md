@@ -63,11 +63,11 @@ docker push dainst/argos_harvesting:MAJOR.MINOR.PATCH
 ```
 
 3. __Locally__ (optional), if change occurred, copy config files to server:
-- docker-compose.{prod|test}.yml
+- docker-compose.deploy.yml 
 - traefik.toml 
 - priv/elasticsearch-mapping.json
 
-See VM documentation for the appropriate locations.
+See the respective VM's documentation for the installation directory.
 
 4. __Serverside__, pull the latest image(s)
 ```bash
