@@ -177,8 +177,6 @@ defmodule ArgosCore.Chronontology do
             ""
         end
 
-      # TODO Gazetteer Place spatiallyPartOfRegion and hasCoreArea? https://chronontology.dainst.org/period/X5lOSI8YQFiL
-
       core_fields = %{
         "type" => @field_type,
         "source_id" => data["resource"]["id"],
