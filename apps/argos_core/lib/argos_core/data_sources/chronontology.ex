@@ -64,7 +64,7 @@ defmodule ArgosCore.Chronontology do
 
     defp get_by_id_locally(id) do
       case ArgosCore.ElasticSearch.DataProvider.get_doc("temporal_concept_#{id}") do
-        {:error, %{status: 404}} ->
+        {:error, _} ->
           get_by_id_from_source(id)
 
         {:ok, tc} ->
@@ -176,8 +176,6 @@ defmodule ArgosCore.Chronontology do
             Logger.debug("Found no end date for period #{data["resource"]["id"]}")
             ""
         end
-
-      # TODO Gazetteer Place spatiallyPartOfRegion and hasCoreArea? https://chronontology.dainst.org/period/X5lOSI8YQFiL
 
       core_fields = %{
         "type" => @field_type,

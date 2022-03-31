@@ -102,7 +102,7 @@ defmodule ArgosCore.Gazetteer do
       case ArgosCore.ElasticSearch.DataProvider.get_doc("place_#{id}") do
         {:ok, _} = place ->
           place
-        {:error, %{status: 404}} ->
+        {:error, _} ->
           case get_by_id_from_source(id) do
             {:ok, place} = res ->
               ArgosCore.ElasticSearch.Indexer.index(place)

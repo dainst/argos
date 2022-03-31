@@ -196,7 +196,7 @@ defmodule ArgosCore.Thesauri do
     defp get_by_id_locally(id) do
       case DataSourceClient.Local.request_single_node(id) do
         {:ok, _} = concept -> concept
-        {:error, %{status: 404}} ->
+        {:error, _} ->
           case get_by_id_from_source(id) do
             {:ok, concept} = res ->
               ArgosCore.ElasticSearch.Indexer.index(concept)

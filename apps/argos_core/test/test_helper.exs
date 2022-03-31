@@ -5,7 +5,6 @@ defmodule ArgosCore.TestHelpers do
   @elasticsearch_mapping_path Application.app_dir(:argos_core, "priv/elasticsearch-mapping.json")
 
   def create_index() do
-    # Always ensure that there is no index before (re-) creating
     remove_index()
 
     mapping = File.read!(@elasticsearch_mapping_path)
@@ -17,6 +16,8 @@ defmodule ArgosCore.TestHelpers do
       [{"Content-Type", "application/json"}],
       mapping
     )
+
+    refresh_index()
   end
 
   def refresh_index() do
