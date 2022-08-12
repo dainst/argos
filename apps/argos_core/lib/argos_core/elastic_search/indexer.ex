@@ -1,7 +1,7 @@
 defmodule ArgosCore.ElasticSearch.Indexer do
   require Logger
   alias ArgosCore.{
-    Chronontology, Gazetteer, Thesauri, Collection, Bibliography, CoreFields
+    Chronontology, Gazetteer, Thesauri, Collection, Bibliography, CoreFields, Geoserver
   }
   @base_url "#{Application.get_env(:argos_core, :elasticsearch_url)}/#{Application.get_env(:argos_core, :index_name)}"
   @headers [{"Content-Type", "application/json"}]
@@ -10,6 +10,7 @@ defmodule ArgosCore.ElasticSearch.Indexer do
   @chronontology_type_key Application.get_env(:argos_core, :chronontology_type_key)
   @collection_type_key Application.get_env(:argos_core, :collection_type_key)
   @bibliography_type_key Application.get_env(:argos_core, :bibliography_type_key)
+  @geoserver_type_key Application.get_env(:argos_core, :geoserver_type_key)
 
   def index(data) do
     validation = validate(data)
@@ -50,6 +51,9 @@ defmodule ArgosCore.ElasticSearch.Indexer do
   end
   defp validate(%{"core_fields" => %{"type" => @bibliography_type_key}} = params) do
     Bibliography.BibliographicRecord.create(params)
+  end
+  defp validate(%{"core_fields" => %{"type" => @geoserver_type_key}} = params) do
+    Geoserver.MapDocument.create(params)
   end
 
   def upsert(%{doc: %_{core_fields: %CoreFields{id: id}}} = data) do

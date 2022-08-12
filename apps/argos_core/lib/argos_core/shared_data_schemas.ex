@@ -45,7 +45,7 @@ defmodule ArgosCore.CoreFields do
   embedded_schema do
     field :id, :string
     field :source_id, :string
-    field :type, Ecto.Enum, values: [:place, :concept, :temporal_concept, :collection, :biblio]
+    field :type, Ecto.Enum, values: [:place, :concept, :map, :temporal_concept, :collection, :biblio]
     field :uri, :string
     field :full_record, :map
     embeds_many :title, TranslatedContent
@@ -85,7 +85,7 @@ defmodule ArgosCore.ExternalLink do
 
   embedded_schema do
     embeds_many :label, ArgosCore.TranslatedContent
-    field :type, Ecto.Enum, values: [:image, :website]
+    field :type, Ecto.Enum, values: [:embed, :image, :website]
     field :url, :string
   end
 

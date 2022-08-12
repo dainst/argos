@@ -9,7 +9,7 @@ defmodule ArgosCore.Gazetteer do
 
     embedded_schema do
       embeds_one(:core_fields, CoreFields)
-      field :geometry, {:array, :map}
+      field :geometry, :map
     end
 
     def changeset(place, params \\ %{}) do
@@ -191,13 +191,31 @@ defmodule ArgosCore.Gazetteer do
         "title" => parse_names([gazetteer_data["prefName"]] ++ Map.get(gazetteer_data, "names", [])),
         "full_record" => gazetteer_data
       }
-      {
-        :ok,
+
+      result =
         %{
           "core_fields" => core_fields,
-          "geometry" => parse_geometries_as_geo_json(gazetteer_data["prefLocation"])
         }
-      }
+
+      # ElasticSearch does not allow empty :geometries for GeometryCollections, so
+      # we do not add a "geometry" key to the Argos document if there are no geometries in the collection.
+      result =
+          %Geo.GeometryCollection{
+            geometries: parse_geometries_as_geo_json(gazetteer_data["prefLocation"])
+          }
+          |> case do
+            %{geometries: []} ->
+              result
+            values ->
+              Map.put(
+              result,
+              "geometry",
+              Geo.JSON.encode!(values)
+            )
+          end
+
+      {:ok, result}
+
     end
 
     defp parse_names(names) do
@@ -226,9 +244,7 @@ defmodule ArgosCore.Gazetteer do
     defp parse_geometries_as_geo_json(_),  do: []
 
     defp create_point(coords) do
-      Geo.JSON.encode!(
-        %Geo.Point{ coordinates: List.to_tuple(coords) }
-      )
+      %Geo.Point{ coordinates: List.to_tuple(coords) }
     end
 
     defp create_polygons(multi_polygon_list) do
@@ -243,7 +259,6 @@ defmodule ArgosCore.Gazetteer do
       |> (fn val ->
         %Geo.MultiPolygon{coordinates: val}
       end).()
-      |> Geo.JSON.encode!()
     end
   end
 end

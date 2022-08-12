@@ -66,12 +66,17 @@ defmodule ArgosAPI.SearchController do
           |> Enum.map(&String.split(&1, ":", parts: 2))
           |> Enum.map(fn split ->
             case split do
+              ["distance", params] ->
+                parse_distance_filter(params)
+              ["bounding_box", params] ->
+                parse_bounding_box_filter(params)
               [key, val] ->
                 %{"term" => %{key => val}}
               _ ->
                 {:error, "Invalid filter query: #{Plug.Conn.Query.encode(params)}. Expected a query like filter[]=<field>:<value>."}
             end
           end)
+          |> List.flatten()
         _no_list ->
           [
             {:error, "Invalid filter query: #{Plug.Conn.Query.encode(params)}. Expected a list query like filter[]=<field>:<value>."}
@@ -88,6 +93,96 @@ defmodule ArgosAPI.SearchController do
   end
   defp parse_filters({:error, _} = error, _, _) do
     error
+  end
+
+  defp parse_distance_filter(opts) do
+    with [lon, lat, dist] <- String.split(opts, ","),
+      {longitude, _} <- Float.parse(lon),
+      {latitude, _} <- Float.parse(lat),
+      {distance, _} when distance > 0 <- Float.parse(dist) do
+        %{
+          "bool" => %{
+            "should" => [
+              %{
+                "geo_distance" => %{
+                  "distance" => "#{distance}km",
+                  "geometry" => %{
+                    "lat" => latitude,
+                    "lon" => longitude
+                  }
+                }
+              },
+              %{
+                "geo_distance" => %{
+                  "distance" => "#{distance}km",
+                  "core_fields.spatial_topics.resource.geometry" => %{
+                    "lat" => latitude,
+                    "lon" => longitude
+                  }
+                }
+              }
+            ]
+          }
+        }
+    else
+      _e ->
+        {:error, "Invalid distance filter query: #{inspect(opts)}. Please provide '<longitude>,<latidude>,<distance in km>'."}
+    end
+  end
+
+  @generic_help "Please provide '<longitude(top left)>,<latitude(top left)>,<longitude(bottom right)>,<latitude(bottom right)>'."
+  defp parse_bounding_box_filter(opts) do
+    with [lon_a, lat_a, lon_b, lat_b] <- String.split(opts, ","),
+      {topleft_longitude, _} <- Float.parse(lon_a),
+      {topleft_latitude, _} <- Float.parse(lat_a),
+      {bottom_right_longitude, _} <- Float.parse(lon_b),
+      {bottom_right_latitude, _} <- Float.parse(lat_b) do
+
+      cond do
+        topleft_latitude < bottom_right_latitude ->
+          {:error, "Invalid bounding box filter query: #{inspect(opts)}, top is below bottom corner. #{@generic_help}"}
+        topleft_longitude > bottom_right_longitude ->
+          {:error, "Invalid bounding box filter query: #{inspect(opts)}, longitude left is to the right. #{@generic_help}"}
+        true ->
+          %{
+            "bool" => %{
+              "should" => [
+                %{
+                  "geo_bounding_box" => %{
+                    "geometry" => %{
+                      "top_left" => %{
+                        "lat" => topleft_latitude,
+                        "lon" => topleft_longitude
+                      },
+                      "bottom_right" => %{
+                        "lat" => bottom_right_latitude,
+                        "lon" => bottom_right_longitude
+                      }
+                    }
+                  }
+                },
+                %{
+                  "geo_bounding_box" => %{
+                    "core_fields.spatial_topics.resource.geometry" => %{
+                      "top_left" => %{
+                        "lat" => topleft_latitude,
+                        "lon" => topleft_longitude
+                      },
+                      "bottom_right" => %{
+                        "lat" => bottom_right_latitude,
+                        "lon" => bottom_right_longitude
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+      end
+    else
+      _e ->
+        {:error, "Invalid bounding box filter query: #{inspect(opts)}. #{@generic_help}"}
+    end
   end
 
   defp finalize_query({:ok, %{"q" => q, "size" => size, "from" => from, "filter" => filters, "!filter" => must_not }}) do

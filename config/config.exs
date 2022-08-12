@@ -30,10 +30,15 @@ config :argos_core,
   gazetteer_url: "https://gazetteer.dainst.org",
   gazetteer_type_key: "place",
 
+  geoserver_url: "https://geoserver.dainst.org",
+  geoserver_type_key: "map",
+
   thesauri_url: "http://thesauri.dainst.org",
   thesauri_type_key: "concept",
 
-  mail_sender: {"Argos Status Mailer", "argos-status@idai.world"}
+  mail_sender: {"Argos Status Mailer", "argos-status@idai.world"},
+
+  env: Mix.env()
 
 config :argos_core, ArgosCore.Mailer,
   adapter: Bamboo.SMTPAdapter,
@@ -58,6 +63,7 @@ config :argos_harvesting,
   collections_harvest_interval: 1000 * 60 * 60 * 24,
   chronontology_harvest_interval: 1000 * 60 * 60 * 24,
   gazetteer_harvest_interval: 1000 * 60 * 60 * 24,
+  geoserver_harvest_interval: 1000 * 60 * 60 * 24,
   thesauri_harvest_interval: 1000 * 60 * 60 * 24
 
 secrets_config_filename = "config.secrets.exs"

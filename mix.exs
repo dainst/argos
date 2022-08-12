@@ -40,10 +40,10 @@ defmodule Argos.MixProject do
     gazetteer_seed_days_ago = 7
     [
       "update-mapping": [
-        "run --eval 'ArgosCore.Release.update_mapping()' -- --script"
+        "run --eval 'ArgosCore.ReleaseCLI.update_mapping()' -- --script"
       ],
       seed: [
-        "seed.bibliography", "seed.collections"
+        "seed.bibliography", "seed.chronontology", "seed.collections", "seed.gazetteer", "seed.thesauri"
       ],
       "seed.bibliography": [
         "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(bibliography), Date.utc_today() |> Date.add(-#{bibliography_seed_days_ago}) |> to_string())' -- --script"
@@ -59,6 +59,9 @@ defmodule Argos.MixProject do
       ],
       "seed.thesauri": [
         "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(thesauri))' -- --script"
+      ],
+      "seed.geoserver": [
+        "run --eval 'ArgosHarvesting.ReleaseCLI.seed(~s(geoserver))' -- --script"
       ]
     ]
   end

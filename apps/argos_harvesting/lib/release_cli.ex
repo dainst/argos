@@ -6,7 +6,8 @@ defmodule ArgosHarvesting.ReleaseCLI do
     Chronontology,
     Collection,
     Gazetteer,
-    Thesauri
+    Thesauri,
+    Geoserver
   }
 
   alias ArgosCore.ElasticSearch.Indexer
@@ -23,6 +24,7 @@ defmodule ArgosHarvesting.ReleaseCLI do
         run_harvest(Collection, since)
         run_harvest(Gazetteer, since)
         run_harvest(Thesauri, since)
+        run_harvest(Geoserver, since)
       "bibliography" ->
         run_harvest(Bibliography, since)
       "chronontology" ->
@@ -33,6 +35,8 @@ defmodule ArgosHarvesting.ReleaseCLI do
         run_harvest(Gazetteer, since)
       "thesauri" ->
         run_harvest(Thesauri, since)
+      "geoserver" ->
+        run_harvest(Geoserver, since)
     end
   end
 

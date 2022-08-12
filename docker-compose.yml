@@ -3,7 +3,7 @@ version: "3.6"
 services:
 
   elasticsearch:
-    image: "docker.elastic.co/elasticsearch/elasticsearch:7.8.0"
+    image: "docker.elastic.co/elasticsearch/elasticsearch:7.14.0"
     environment:
       - "discovery.type=single-node"      
       - "cluster.routing.allocation.disk.watermark.low=2gb"

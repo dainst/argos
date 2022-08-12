@@ -65,6 +65,16 @@ defmodule ArgosHarvesting.Application do
         {
           ArgosHarvesting.BaseHarvester,
           %{
+            source: ArgosHarvesting.Geoserver,
+            interval: Application.get_env(:argos_harvesting, :geoserver_harvest_interval)
+          }
+        },
+        id: :geoserver
+      ),
+      Supervisor.child_spec(
+        {
+          ArgosHarvesting.BaseHarvester,
+          %{
             source: ArgosHarvesting.Thesauri,
             interval: Application.get_env(:argos_harvesting, :thesauri_harvest_interval)
           }
@@ -76,8 +86,8 @@ defmodule ArgosHarvesting.Application do
 
   def start(_type, _args) do
     children =
-      if running_script?(System.argv()) do
-        # We do not want to (re)start the harvesters when running exs scripts.
+      if running_script?(System.argv()) or Application.get_env(:argos_core, :env) == :test do
+        # We do not want to (re)start the harvesters when running exs scripts or tests.
         []
       else
         get_harvesters()
